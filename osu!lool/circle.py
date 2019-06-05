@@ -35,6 +35,7 @@ class Circle(object):
 		pos = (self.x, self.y)
 		pygame.draw.circle(self.surface, (255,255,255), pos, self.radius, 2)
 		pygame.draw.circle(self.surface, (128,128,128), pos, (self.radius + 1), 1)
+		
 		if g.texture_count > 9:
 			g.texture_count = 0
 
