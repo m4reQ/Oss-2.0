@@ -7,6 +7,11 @@ pygame.init()
 width = 1280
 height = 720
 
+#load textures
+cursor_texture = pygame.image.load('textures/cursor.png')
+cursor_texture = pygame.transform.scale(cursor_texture, (16, 16))
+miss_texture = pygame.image.load('textures/miss.png')
+
 pygame.mouse.set_visible(False)
 
 class Game():
@@ -23,9 +28,8 @@ class Game():
 		self.combo = 0
 		self.combo_color = (255, 255, 255)
 		self.texture_count = 0
-		self.cursor_texture = pygame.image.load('textures/cursor.png')
-		self.cursor_texture = pygame.transform.scale(self.cursor_texture, (16, 16))
-		self.miss_texture = pygame.image.load('textures/miss.png')
+		self.cursor_texture = cursor_texture
+		self.miss_texture = miss_texture
 
 	def Run(self):
 		self.Generate_circle(self.texture_count)
@@ -44,9 +48,9 @@ class Game():
 		for circle in self.circles:
 			if event.type == pygame.KEYDOWN:
 				if event.key == pygame.K_z or event.key == pygame.K_x:
-					if self.Check_cursor_pos(circle):
+					if self.Collide(circle):
 						circle.Click(g, circle)
-					if not self.Check_cursor_pos(circle):
+					if not self.Collide(circle):
 						self.Miss()
 
 					self.click_count += 1
@@ -62,7 +66,7 @@ class Game():
 		
 		self.win.blit(self.cursor_texture, (self.cursor_pos[0] - self.cursor_texture.get_width()/2, self.cursor_pos[1] - self.cursor_texture.get_height()/2))
 
-	def Check_cursor_pos(self, circle):
+	def Collide(self, circle):
 		is_hit = False
 		if self.cursor_pos[0] > (circle.x - circle.radius) and self.cursor_pos[1] > (circle.y - circle.radius):
 			if self.cursor_pos[0] < (circle.x + circle.radius) and self.cursor_pos[1] < (circle.y + circle.radius):
