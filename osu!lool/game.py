@@ -46,7 +46,6 @@ class Game():
 		self.texture_count = 0
 		self.cursor_texture = cursor_texture
 		self.miss_texture = miss_texture
-		self.bg_texture = bg_texture
 		self.maxhealth = 100
 		self.health = self.maxhealth
 
@@ -83,6 +82,7 @@ class Game():
 				self.is_running = False
 
 			self.win.blit(bg_texture, (0, 0))
+			self.win.blit(dark, (0, 0))
 			circle.Draw(g)
 
 	def Generate_circle(self, texture_count):
@@ -136,17 +136,19 @@ class Game():
 
 	def Time(self):
 		font = pygame.font.SysFont("comicsansms", 24)
-		text = font.render('Time: ' + str(Timer.time), True, (255, 255, 255))
+		time = round((Timer.time/Timer.tick)*10, 2)
+		text = font.render('Time: ' + str(time) + 's', True, (255, 255, 255))
 		pos = (self.width/10, (self.height/10) - 50)
 
 		self.win.blit(text, pos)
 
 if __name__ == '__main__':
 	g = Game(width, height)
-	Timer = timer.Timer(60)
+	Timer = timer.Timer(240)
 
 	g.Run()
 
 
 #fix miss!!!
+#for miss animation use image.alpha operations
 #change indents to NORMAL lenght!!!
