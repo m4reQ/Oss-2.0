@@ -7,7 +7,9 @@ pygame.init()
 width = 1280
 height = 720
 
-#load textures
+win = pygame.display.set_mode((width, height))
+darken_percent = 0.30 #change
+
 cursor_texture = pygame.image.load('textures/cursor.png')
 cursor_texture = pygame.transform.scale(cursor_texture, (16, 16))
 miss_texture = pygame.image.load('textures/miss.png')
@@ -23,18 +25,21 @@ texture_no = bg_textures[random.randint(0, 4)]
 bg_texture = pygame.image.load('textures/backgrounds/' + texture_no + '.jpg')
 bg_texture = pygame.transform.scale(bg_texture, (width, height))
 
+dark = pygame.Surface(bg_texture.get_size()).convert_alpha()
+dark.fill((0, 0, 0, darken_percent*255))
+
 pygame.mouse.set_visible(False)
 
 class Game():
 	def __init__(self, width, height):
 		self.width = width
 		self.height = height
-		self.win = pygame.display.set_mode((width, height))
+		self.win = win
 		self.is_running = True
 		self.circles = []
 		self.click_count = 0
 		self.cursor_pos = (0, 0)
-		self.playfield = (self.width - (self.width/10), self.height - (self.height/10))
+		self.playfield = (self.width - (self.width/10), self.height - (self.height/9))
 		self.points = 0
 		self.combo = 0
 		self.combo_color = (255, 255, 255)
@@ -136,7 +141,6 @@ class Game():
 
 		self.win.blit(text, pos)
 
-
 if __name__ == '__main__':
 	g = Game(width, height)
 	Timer = timer.Timer(60)
@@ -145,5 +149,4 @@ if __name__ == '__main__':
 
 
 #fix miss!!!
-#work on serial textures importing
 #change indents to NORMAL lenght!!!
