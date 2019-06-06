@@ -11,7 +11,16 @@ height = 720
 cursor_texture = pygame.image.load('textures/cursor.png')
 cursor_texture = pygame.transform.scale(cursor_texture, (16, 16))
 miss_texture = pygame.image.load('textures/miss.png')
-bg_texture = pygame.image.load('textures/bg.jpg')
+
+bg_textures = []
+i = 1
+while i <= 5:
+        string = 'bg' + str(i)
+        bg_textures.append(string)
+        i += 1
+
+texture_no = bg_textures[random.randint(0, 4)]
+bg_texture = pygame.image.load('textures/backgrounds/' + texture_no + '.jpg')
 bg_texture = pygame.transform.scale(bg_texture, (width, height))
 
 pygame.mouse.set_visible(False)
