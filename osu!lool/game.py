@@ -11,6 +11,8 @@ height = 720
 cursor_texture = pygame.image.load('textures/cursor.png')
 cursor_texture = pygame.transform.scale(cursor_texture, (16, 16))
 miss_texture = pygame.image.load('textures/miss.png')
+bg_texture = pygame.image.load('textures/bg.jpg')
+bg_texture = pygame.transform.scale(bg_texture, (width, height))
 
 pygame.mouse.set_visible(False)
 
@@ -30,6 +32,7 @@ class Game():
 		self.texture_count = 0
 		self.cursor_texture = cursor_texture
 		self.miss_texture = miss_texture
+		self.bg_texture = bg_texture
 		self.maxhealth = 100
 		self.health = self.maxhealth
 
@@ -42,6 +45,9 @@ class Game():
 			self.Cursor()
 			self.Time()
 			Timer.Tick()
+
+		pygame.quit()
+		quit()
 
 	def Draw(self):
 		for circle in self.circles:
@@ -57,16 +63,12 @@ class Game():
 						if not self.Collide(circle):
 							self.Miss()
 							self.health -= 10
+				if event.type == pygame.QUIT:
+					self.is_running = False
+			if self.health <= 0:
+				self.is_running = False
 
-						if event.type == pygame.QUIT:
-							self.is_running = False
-
-						if self.health <= 0:
-							self.is_running = False
-
-						self.click_count += 1
-
-			self.win.fill((0, 0, 0, 0))
+			self.win.blit(bg_texture, (0, 0))
 			circle.Draw(g)
 
 	def Generate_circle(self, texture_count):
@@ -96,7 +98,6 @@ class Game():
 		self.win.blit(text_combo, (10, (self.height - 70)))
 
 	def Miss(self):
-			print('miss')
 			self.combo = 0
 			miss_pos = pygame.mouse.get_pos()
 
@@ -135,3 +136,5 @@ if __name__ == '__main__':
 
 
 #fix miss!!!
+#work on serial textures importing
+#change indents to NORMAL lenght!!!
