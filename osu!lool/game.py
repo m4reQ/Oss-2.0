@@ -122,7 +122,7 @@ class Game():
 
 if __name__ == '__main__':
 	g = Game(width, height)
-	Timer = timer.Timer(240)
+	Timer = timer.Timer(60)
 
 	g.Run()
 
