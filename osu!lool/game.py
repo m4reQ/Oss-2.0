@@ -30,42 +30,41 @@ class Game():
 		self.texture_count = 0
 		self.cursor_texture = cursor_texture
 		self.miss_texture = miss_texture
-		self.font = pygame.font.SysFont("comicsansms", 48)
 		self.maxhealth = 100
 		self.health = self.maxhealth
 
 	def Run(self):
 		self.Generate_circle(self.texture_count)
 		while self.is_running:
-			for event in pygame.event.get():
-				self.Draw(event)
-				self.HealthBar()
-				self.Combo()
-				self.Cursor()
-
-				if event.type == pygame.QUIT:
-					self.is_running = False
-
-				if self.health <= 0:
-					self.is_running = False
-
+			self.Draw()
+			self.HealthBar()
+			self.Combo()
+			self.Cursor()
+			self.Time()
 			Timer.Tick()
 
-	def Draw(self, event):
+	def Draw(self):
 		for circle in self.circles:
-			if event.type == pygame.KEYDOWN:
-				if event.key == pygame.K_z or event.key == pygame.K_x:
-					if self.Collide(circle):
-						circle.Click(g, circle)
+			for event in pygame.event.get():
+				if event.type == pygame.KEYDOWN:
+					if event.key == pygame.K_z or event.key == pygame.K_x:
+						if self.Collide(circle):
+							circle.Click(g, circle)
 
-						if self.combo >= 5:
-							self.health += self.combo * 0.2
+							if self.combo >= 5:
+								self.health += self.combo * 0.2
 
-					if not self.Collide(circle):
-						self.Miss()
-						self.health -= 10
+						if not self.Collide(circle):
+							self.Miss()
+							self.health -= 10
 
-					self.click_count += 1
+						if event.type == pygame.QUIT:
+							self.is_running = False
+
+						if self.health <= 0:
+							self.is_running = False
+
+						self.click_count += 1
 
 			self.win.fill((0, 0, 0, 0))
 			circle.Draw(g)
@@ -87,9 +86,10 @@ class Game():
 		return is_hit
 
 	def Combo(self):
+		font = pygame.font.SysFont("comicsansms", 48)
 		text = 'points: ' + str(self.points)
-		text_points = self.font.render(text, True, self.combo_color)
-		text_combo = self.font.render('combo: ' + str(self.combo), True, (255, 255, 255))
+		text_points = font.render(text, True, self.combo_color)
+		text_combo = font.render('combo: ' + str(self.combo), True, (255, 255, 255))
 		lenght = len(text)
 
 		self.win.blit(text_points, (self.width - lenght * 25, (self.height - 70)))
@@ -118,6 +118,13 @@ class Game():
 		if self.health >= 0:
 			size = ((self.playfield[0] - self.width/10) * self.health/self.maxhealth, 30)
 			bar = pygame.draw.rect(self.win, (0, 255, 0), (pos, size))
+
+	def Time(self):
+		font = pygame.font.SysFont("comicsansms", 24)
+		text = font.render('Time: ' + str(Timer.time), True, (255, 255, 255))
+		pos = (self.width/10, (self.height/10) - 50)
+
+		self.win.blit(text, pos)
 
 
 if __name__ == '__main__':
