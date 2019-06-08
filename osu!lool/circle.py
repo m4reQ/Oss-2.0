@@ -13,13 +13,13 @@ while i < 10:
 	i += 1
 
 class Circle(object):
-	def __init__(self, surf, X, Y, texture_count):
+	def __init__(self, surf, X, Y, time, texture_count):
 		self.x = X
 		self.y = Y
-		self.to_click = False
 		self.surface = surf
 		self.font_textures = font_textures
 		self.radius = radius
+		self.time = time
 
 	def Click(self, game, circle):
 		g = game
@@ -27,18 +27,19 @@ class Circle(object):
 		g.points += (g.combo * 300)
 		g.texture_count += 1
 		g.circles.remove(circle)
-		g.Generate_circle(g.texture_count)
 		g.combo_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
 	def Draw(self, game):
 		g = game
 		pos = (self.x, self.y)
-		pygame.draw.circle(self.surface, (255,255,255), pos, self.radius, 2)
-		pygame.draw.circle(self.surface, (128,128,128), pos, (self.radius + 1), 1)
-		
-		if g.texture_count > 9:
-			g.texture_count = 0
+		if self.time >= g.time:
+			pygame.draw.circle(self.surface, (255,255,255), pos, self.radius, 2)
+			pygame.draw.circle(self.surface, (128,128,128), pos, (self.radius + 1), 1)
+			
+			if g.texture_count > 9:
+				g.health += 10
+				g.texture_count = 0
 
-		font_position = (pos[0] - self.radius, pos[1] - self.radius)
-		self.surface.blit(self.font_textures[g.texture_count], font_position)
+			font_position = (pos[0] - self.radius, pos[1] - self.radius)
+			self.surface.blit(self.font_textures[g.texture_count], font_position)
 		

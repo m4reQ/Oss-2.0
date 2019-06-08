@@ -1,5 +1,5 @@
 import pygame
-import circle, timer
+import circle
 import random
 
 pygame.init()
@@ -7,8 +7,9 @@ pygame.init()
 width = 1280
 height = 720
 
+darken_percent = 0.50
+
 win = pygame.display.set_mode((width, height))
-darken_percent = 0.30 #change
 
 cursor_texture = pygame.image.load('textures/cursor.png')
 cursor_texture = pygame.transform.scale(cursor_texture, (16, 16))
@@ -16,12 +17,12 @@ miss_texture = pygame.image.load('textures/miss.png')
 
 bg_textures = []
 i = 1
-while i <= 5:
+while i <= 10:
         string = 'bg' + str(i)
         bg_textures.append(string)
         i += 1
 
-texture_no = bg_textures[random.randint(0, 4)]
+texture_no = bg_textures[random.randint(0, 9)]
 bg_texture = pygame.image.load('textures/backgrounds/' + texture_no + '.jpg')
 bg_texture = pygame.transform.scale(bg_texture, (width, height))
 
@@ -30,13 +31,29 @@ dark.fill((0, 0, 0, darken_percent*255))
 
 pygame.mouse.set_visible(False)
 
+def Load_map(file):
+	f = open('maps/' + file + '.txt')
+	for line in f:
+		time = int(line[15:21])
+		pos_x = int(line[3:6])
+		pos_y = int(line[8:11])
+
+		circles = []
+		circles.append(circle.Circle(win, pos_x, pos_y, time, 0))
+
+	f.close()
+	return circles
+	
+
 class Game():
 	def __init__(self, width, height):
+		self.time = 0
 		self.width = width
 		self.height = height
 		self.win = win
+		self.map = 'test'
 		self.is_running = True
-		self.circles = []
+		self.circles = Load_map(self.map)
 		self.click_count = 0
 		self.cursor_pos = (0, 0)
 		self.playfield = (self.width - (self.width/10), self.height - (self.height/9))
@@ -50,15 +67,17 @@ class Game():
 		self.health = self.maxhealth
 
 	def Run(self):
-		self.Generate_circle(self.texture_count)
 		while self.is_running:
 			self.Draw()
 			self.HealthBar()
 			self.Combo()
 			self.Cursor()
 			self.Time()
-			Timer.Tick()
 
+			pygame.display.update()
+			self.time = pygame.time.get_ticks()
+			print(self.time)
+			
 		pygame.quit()
 		quit()
 
@@ -71,7 +90,7 @@ class Game():
 							circle.Click(g, circle)
 
 							if self.combo >= 5:
-								self.health += self.combo * 0.2
+								self.health += 2.5
 
 						if not self.Collide(circle):
 							self.Miss()
@@ -81,12 +100,14 @@ class Game():
 			if self.health <= 0:
 				self.is_running = False
 
-			self.win.blit(bg_texture, (0, 0))
-			self.win.blit(dark, (0, 0))
+			
 			circle.Draw(g)
+		self.win.blit(bg_texture, (0, 0))
+		self.win.blit(dark, (0, 0))
 
-	def Generate_circle(self, texture_count):
-		self.circles.append(circle.Circle(self.win, random.randint(self.width/10, self.playfield[0]), random.randint(self.width/10, self.playfield[1]), self.texture_count))
+	# def Generate_circle(self):
+	# 	circle = self.circles[-1]
+	# 	return circle
 
 	def Cursor(self):
 		self.cursor_pos = pygame.mouse.get_pos()
@@ -122,6 +143,7 @@ class Game():
 		font = pygame.font.SysFont("comicsansms", 12)
 		bar_text = font.render('HEALTH', True, (255, 255, 255))
 		self.win.blit(bar_text, (self.width/10, 0))
+		self.health -= 0.15
 
 		if self.health > 100:
 			self.health = 100
@@ -136,7 +158,7 @@ class Game():
 
 	def Time(self):
 		font = pygame.font.SysFont("comicsansms", 24)
-		time = round((Timer.time/Timer.tick)*10, 2)
+		time = round((self.time/1000), 2)
 		text = font.render('Time: ' + str(time) + 's', True, (255, 255, 255))
 		pos = (self.width/10, (self.height/10) - 50)
 
@@ -144,10 +166,11 @@ class Game():
 
 if __name__ == '__main__':
 	g = Game(width, height)
-	Timer = timer.Timer(240)
+	Load_map(g.map)
+	clock = pygame.time.Clock()
+	clock.tick(1000)
 
 	g.Run()
-
 
 #fix miss!!!
 #for miss animation use image.alpha operations
