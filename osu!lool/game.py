@@ -1,6 +1,13 @@
-import pygame
-import circle
-import random
+try:
+	import os
+	os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+	import pygame
+	import circle
+	import random
+except ImportError:
+	print('Error! One of modules cannot be resolved. \nTry restarting your application or reinstalling it.')
+	os.system("pause >NUL")
+	exit()
 
 pygame.init()
 
@@ -76,7 +83,6 @@ class Game():
 
 			pygame.display.update()
 			self.time = pygame.time.get_ticks()
-			print(self.time)
 			
 		pygame.quit()
 		quit()
@@ -174,4 +180,3 @@ if __name__ == '__main__':
 
 #fix miss!!!
 #for miss animation use image.alpha operations
-#change indents to NORMAL lenght!!!
