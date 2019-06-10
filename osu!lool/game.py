@@ -24,12 +24,12 @@ miss_texture = pygame.image.load('textures/miss.png')
 
 bg_textures = []
 i = 1
-while i <= 10:
+while i <= 9:
         string = 'bg' + str(i)
         bg_textures.append(string)
         i += 1
 
-texture_no = bg_textures[random.randint(0, 9)]
+texture_no = bg_textures[random.randint(0, 8)]
 bg_texture = pygame.image.load('textures/backgrounds/' + texture_no + '.jpg')
 bg_texture = pygame.transform.scale(bg_texture, (width, height))
 
@@ -58,9 +58,8 @@ class Game():
 		self.width = width
 		self.height = height
 		self.win = win
-		self.map = 'test'
 		self.is_running = True
-		self.circles = Load_map(self.map)
+		self.circles = Load_map('test')
 		self.click_count = 0
 		self.cursor_pos = (0, 0)
 		self.playfield = (self.width - (self.width/10), self.height - (self.height/9))
@@ -80,6 +79,7 @@ class Game():
 			self.Combo()
 			self.Cursor()
 			self.Time()
+			self.Clicks()
 
 			pygame.display.update()
 			self.time = pygame.time.get_ticks()
@@ -101,6 +101,8 @@ class Game():
 						if not self.Collide(circle):
 							self.Miss()
 							self.health -= 10
+
+						self.click_count += 1
 				if event.type == pygame.QUIT:
 					self.is_running = False
 			if self.health <= 0:
@@ -110,10 +112,6 @@ class Game():
 			circle.Draw(g)
 		self.win.blit(bg_texture, (0, 0))
 		self.win.blit(dark, (0, 0))
-
-	# def Generate_circle(self):
-	# 	circle = self.circles[-1]
-	# 	return circle
 
 	def Cursor(self):
 		self.cursor_pos = pygame.mouse.get_pos()
@@ -170,13 +168,19 @@ class Game():
 
 		self.win.blit(text, pos)
 
+	def Clicks(self):
+		font = pygame.font.SysFont("comicsansms", 24)
+		pos = ((self.width - (24*1.5)), (self.height/2))
+		text = font.render(str(self.click_count), True, (255, 255, 255))
+
+		self.win.blit(text, pos)
+
 if __name__ == '__main__':
 	g = Game(width, height)
-	Load_map(g.map)
 	clock = pygame.time.Clock()
 	clock.tick(1000)
 
 	g.Run()
 
-#fix miss!!!
-#for miss animation use image.alpha operations
+#finish making clicks display and make background for it
+#add miss animation (use image.alpha operations)
