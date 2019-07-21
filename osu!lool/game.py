@@ -18,6 +18,7 @@ darken_percent = 0.50
 
 win = pygame.display.set_mode((width, height))
 
+#texture loading
 cursor_texture = pygame.image.load('textures/cursor.png')
 cursor_texture = pygame.transform.scale(cursor_texture, (16, 16))
 miss_texture = pygame.image.load('textures/miss.png')
@@ -38,20 +39,6 @@ dark.fill((0, 0, 0, darken_percent*255))
 
 pygame.mouse.set_visible(False)
 
-def Load_map(file):
-	f = open('maps/' + file + '.txt')
-	for line in f:
-		time = int(line[15:21])
-		pos_x = int(line[3:6])
-		pos_y = int(line[8:11])
-
-		circles = []
-		circles.append(circle.Circle(win, pos_x, pos_y, time, 0))
-
-	f.close()
-	return circles
-	
-
 class Game():
 	def __init__(self, width, height):
 		self.time = 0
@@ -59,8 +46,8 @@ class Game():
 		self.height = height
 		self.win = win
 		self.is_running = True
-		self.circles = Load_map('test')
 		self.click_count = 0
+		self.circles = []
 		self.cursor_pos = (0, 0)
 		self.playfield = (self.width - (self.width/10), self.height - (self.height/9))
 		self.points = 0
@@ -72,7 +59,22 @@ class Game():
 		self.maxhealth = 100
 		self.health = self.maxhealth
 
+	def Load_map(self, file):
+		f = open('maps/' + file + '.txt')
+		for line in f:
+			time = int(line[15:21])
+			pos_x = int(line[3:6])
+			pos_y = int(line[8:11])
+
+			circles = []
+			self.circles.append(circle.Circle(win, pos_x, pos_y, time, 0, g))
+
+		f.close()
+		return circles
+
 	def Run(self):
+		self.circles = self.Load_map('test')
+		
 		while self.is_running:
 			self.Draw()
 			self.HealthBar()
@@ -92,13 +94,13 @@ class Game():
 			for event in pygame.event.get():
 				if event.type == pygame.KEYDOWN:
 					if event.key == pygame.K_z or event.key == pygame.K_x:
-						if self.Collide(circle):
-							circle.Click(g, circle)
+						if circle.Collide(circle):
+							circle.Hit(circle)
 
 							if self.combo >= 5:
 								self.health += 2.5
 
-						if not self.Collide(circle):
+						if not circle.Collide:
 							self.Miss()
 							self.health -= 10
 
@@ -118,14 +120,6 @@ class Game():
 		
 		self.win.blit(self.cursor_texture, (self.cursor_pos[0] - self.cursor_texture.get_width()/2, self.cursor_pos[1] - self.cursor_texture.get_height()/2))
 
-	def Collide(self, circle):
-		is_hit = False
-		if self.cursor_pos[0] > (circle.x - circle.radius) and self.cursor_pos[1] > (circle.y - circle.radius):
-			if self.cursor_pos[0] < (circle.x + circle.radius) and self.cursor_pos[1] < (circle.y + circle.radius):
-				is_hit = True
-
-		return is_hit
-
 	def Combo(self):
 		font = pygame.font.SysFont("comicsansms", 48)
 		text = 'points: ' + str(self.points)
@@ -137,11 +131,11 @@ class Game():
 		self.win.blit(text_combo, (10, (self.height - 70)))
 
 	def Miss(self):
-			self.combo = 0
-			miss_pos = pygame.mouse.get_pos()
+		self.combo = 0
+		miss_pos = pygame.mouse.get_pos()
 
-			img = self.miss_texture
-			self.win.blit(img, miss_pos)
+		#img = self.miss_texture
+		#self.win.blit(img, miss_pos)
 
 	def HealthBar(self):
 		font = pygame.font.SysFont("comicsansms", 12)
@@ -184,3 +178,4 @@ if __name__ == '__main__':
 
 #finish making clicks display and make background for it
 #add miss animation (use image.alpha operations)
+#fix circles display
