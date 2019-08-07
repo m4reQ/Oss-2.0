@@ -19,10 +19,15 @@ class Circle(object):
 		self.radius = radius
 		self.game = game
 		self.pos = (X, Y)
+		self.is_visible = False
+		self.time = time
 
 	def Draw(self, game):
 		g = self.game
-		if self.time >= g.time:
+		if self.time >= g.time and self.time <= g.time + 3000:
+                        self.is_visible = True
+
+                if self.is_visible:
 			pygame.draw.circle(self.surface, (255,255,255), self.pos, self.radius, 2)
 			pygame.draw.circle(self.surface, (128,128,128), self.pos, (self.radius + 1), 1)
 			
@@ -51,3 +56,14 @@ class Circle(object):
 		g.texture_count += 1
 		g.circles.remove(circle)
 		g.combo_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+
+	def Miss(self):
+                g = self.game
+
+                g.combo = 0
+                g.health -= 10
+
+                miss_pos = pygame.mouse.get_pos()
+
+                #img = self.miss_texture
+		#self.win.blit(img, miss_pos)

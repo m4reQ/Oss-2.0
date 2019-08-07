@@ -67,7 +67,7 @@ class Game():
 			pos_y = int(line[8:11])
 
 			circles = []
-			self.circles.append(circle.Circle(win, pos_x, pos_y, time, 0, g))
+			circles.append(circle.Circle(win, pos_x, pos_y, time, self.texture_count, g))
 
 		f.close()
 		return circles
@@ -85,33 +85,34 @@ class Game():
 
 			pygame.display.update()
 			self.time = pygame.time.get_ticks()
-			
+
 		pygame.quit()
 		quit()
 
 	def Draw(self):
-		for circle in self.circles:
-			for event in pygame.event.get():
+		for event in pygame.event.get():
+			for circle in self.circles:
+				circle.Draw(g)
+				
 				if event.type == pygame.KEYDOWN:
 					if event.key == pygame.K_z or event.key == pygame.K_x:
-						if circle.Collide(circle):
+						if circle.Collide():
 							circle.Hit(circle)
 
 							if self.combo >= 5:
 								self.health += 2.5
 
-						if not circle.Collide:
-							self.Miss()
+						if not circle.Collide():
+							circle.Miss()
 							self.health -= 10
 
 						self.click_count += 1
-				if event.type == pygame.QUIT:
-					self.is_running = False
+			if event.type == pygame.QUIT:
+				self.is_running = False
+				
 			if self.health <= 0:
 				self.is_running = False
 
-			
-			circle.Draw(g)
 		self.win.blit(bg_texture, (0, 0))
 		self.win.blit(dark, (0, 0))
 
@@ -129,13 +130,6 @@ class Game():
 
 		self.win.blit(text_points, (self.width - lenght * 25, (self.height - 70)))
 		self.win.blit(text_combo, (10, (self.height - 70)))
-
-	def Miss(self):
-		self.combo = 0
-		miss_pos = pygame.mouse.get_pos()
-
-		#img = self.miss_texture
-		#self.win.blit(img, miss_pos)
 
 	def HealthBar(self):
 		font = pygame.font.SysFont("comicsansms", 12)
@@ -179,3 +173,4 @@ if __name__ == '__main__':
 #finish making clicks display and make background for it
 #add miss animation (use image.alpha operations)
 #fix circles display
+#find error in Draw() method in main function
