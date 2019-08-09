@@ -3,6 +3,7 @@ try:
 	os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 	import pygame
 	import circle
+	import map
 	import random
 except ImportError:
 	print('Error! One of modules cannot be resolved. \nTry restarting your application or reinstalling it.')
@@ -21,6 +22,7 @@ height = 480 #720
 darken_percent = 0.50
 
 #debug mode
+global DEBUG_MODE
 DEBUG_MODE = True
 global DEBUG_EXCEPTION
 DEBUG_EXCEPTION = " "
@@ -68,21 +70,38 @@ class Game():
 		self.maxhealth = 100
 		self.health = self.maxhealth
 
-	def Load_map(self, file):
-		f = open('maps/' + file + '.txt')
-		for line in f:
-			time = int(line[15:21])
-			pos_x = int(line[3:6])
-			pos_y = int(line[8:11])
+	def Make_map(self, data):
+		lenght = len(data)
+		ptr = 0
 
-			circles = []
-			circles.append(circle.Circle(win, pos_x, pos_y, time, self.texture_count, g))
+		circles = []
+		for element in data:
+			while ptr <= lenght-1:
+				posX = int(data[ptr])
+				posY = int(data[ptr+1])
+				time = int(data[ptr+2])
 
-		f.close()
-		return circles
+				ptr += 3
+
+				obj = circle.Circle(self.win, posX, posY, time, self.texture_count, g)
+				circles.append(obj)
+
+			return circles
 
 	def Run(self):
-		self.circles = self.Load_map('test')
+		global DEBUG_MODE
+		global DEBUG_EXCEPTION
+		
+		m = map.Map(DEBUG_MODE)
+		map_data = m.Load_map('test')
+		self.circles = self.Make_map(map_data)
+		if type(self.circles).__name__ == 'str' or type(self.circles).__name__ == 'NoneType':
+			DEBUG_EXCEPTION = self.circles
+			print("Program stopped incorrectly. Stop cause: " + DEBUG_EXCEPTION)
+			pygame.quit()
+			quit()
+
+		print(self.circles)
 		
 		while self.is_running:
 			self.Draw()
@@ -119,7 +138,7 @@ class Game():
 							if self.combo >= 5:
 								self.health += 2.5
 
-						if not circle.Collide():
+						else:
 							circle.Miss()
 
 						self.click_count += 1
