@@ -11,10 +11,19 @@ except ImportError:
 
 pygame.init()
 
-width = 1280
-height = 720
+#####overall settings#####
 
+#resolution
+width = 640 #1280
+height = 480 #720
+
+#background dimming
 darken_percent = 0.50
+
+#debug mode
+DEBUG_MODE = True
+global DEBUG_EXCEPTION
+DEBUG_EXCEPTION = " "
 
 win = pygame.display.set_mode((width, height))
 
@@ -26,9 +35,9 @@ miss_texture = pygame.image.load('textures/miss.png')
 bg_textures = []
 i = 1
 while i <= 9:
-        string = 'bg' + str(i)
-        bg_textures.append(string)
-        i += 1
+	string = 'bg' + str(i)
+	bg_textures.append(string)
+	i += 1
 
 texture_no = bg_textures[random.randint(0, 8)]
 bg_texture = pygame.image.load('textures/backgrounds/' + texture_no + '.jpg')
@@ -83,35 +92,53 @@ class Game():
 			self.Time()
 			self.Clicks()
 
+			if DEBUG_MODE and len(self.circles) < 10:
+				print(self.circles)
+
 			pygame.display.update()
 			self.time = pygame.time.get_ticks()
 
+		if DEBUG_MODE:
+			print("Program stopped correctly. Stop cause: " + DEBUG_EXCEPTION)
 		pygame.quit()
 		quit()
 
 	def Draw(self):
+		global DEBUG_EXCEPTION
+		
 		for event in pygame.event.get():
-			for circle in self.circles:
+			for circle in self.circles:	
 				circle.Draw(g)
 				
 				if event.type == pygame.KEYDOWN:
 					if event.key == pygame.K_z or event.key == pygame.K_x:
 						if circle.Collide():
-							circle.Hit(circle)
+							circle.Hit()
+							self.circles.remove(circle)
 
 							if self.combo >= 5:
 								self.health += 2.5
 
 						if not circle.Collide():
 							circle.Miss()
-							self.health -= 10
 
 						self.click_count += 1
+			if not self.circles:
+				if DEBUG_MODE:
+					print("List depleated at: " + str(self.time))
+					DEBUG_EXCEPTION = "Objects list self.circles is empty."
+					
+				self.is_running = False
+						
 			if event.type == pygame.QUIT:
+				if DEBUG_MODE:
+					DEBUG_EXCEPTION = "User interruption by closing window"
 				self.is_running = False
-				
-			if self.health <= 0:
-				self.is_running = False
+
+		if self.health <= 0:
+			if DEBUG_MODE:
+				DEBUG_EXCEPTION = "self.health reached " + str(self.health)
+			self.is_running = False
 
 		self.win.blit(bg_texture, (0, 0))
 		self.win.blit(dark, (0, 0))
@@ -173,4 +200,5 @@ if __name__ == '__main__':
 #finish making clicks display and make background for it
 #add miss animation (use image.alpha operations)
 #fix circles display
+#work with loops and fix that some methods cannot display without objects in circles[]
 #find error in Draw() method in main function
