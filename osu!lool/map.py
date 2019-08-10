@@ -11,9 +11,8 @@ class Map():
 	def Load_map(self, file):
 		global DEBUG_MODE
 
-		if Map.is_loaded == True:
-			if DEBUG_MODE:
-				DEBUG_EXCEPTION = "Map is already loaded."
+		if Map.is_loaded:
+			DEBUG_EXCEPTION = "Map is already loaded."
 
 			return DEBUG_EXCEPTION
 		
@@ -43,8 +42,6 @@ class Map():
 			new_element = element.split('\n')
 			e = new_element[0]
 			formatted_data.append(e)
-			
-		f.close()
 
 		if DEBUG_MODE:
 			print("Raw circle data sheet: " + str(formatted_data))

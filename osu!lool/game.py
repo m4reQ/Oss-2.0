@@ -39,7 +39,7 @@ DEBUG_EXCEPTION = " "
 
 win = pygame.display.set_mode((width, height))
 
-#texture loading
+#textures loading
 cursor_texture = pygame.image.load('textures/cursor.png')
 cursor_texture = pygame.transform.scale(cursor_texture, (16, 16))
 miss_texture = pygame.image.load('textures/miss.png')
@@ -107,7 +107,8 @@ class Game():
 		self.circles = self.Make_map(map_data)
 		if type(self.circles).__name__ == 'str' or type(self.circles).__name__ == 'NoneType':
 			DEBUG_EXCEPTION = self.circles
-			print("Program stopped incorrectly. Stop cause: " + DEBUG_EXCEPTION)
+			if DEBUG_MODE:
+                                print("Program stopped incorrectly. Stop cause: " + DEBUG_EXCEPTION)
 			pygame.quit()
 			quit()
 		
