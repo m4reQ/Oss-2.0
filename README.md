@@ -2,7 +2,7 @@
 
 A for-fun rework of popular rhythm game: Osu!.
 Requirements:
-- python 3.5 or newer
+- python 3.4 or newer
 - pygame library
 
 python download: https://www.python.org/downloads/                    
