@@ -1,6 +1,9 @@
 import os
 import sys
 
+def Check_response():
+    return True
+
 def Check_module(module):
     modules = s.modules.keys()
     if not module in modules:

@@ -5,8 +5,18 @@ try:
 	import circle
 	import map
 	import random
+	import repair
 except ImportError:
 	print('Error! One of modules cannot be resolved. \nTry restarting your application or reinstalling it.')
+	if repair.Check_response():
+		q = ''
+		while not any([q == 'y'], [q == 'Y'], [q == 'n'], [q =='N']):
+			q = input('Do you want to launch the repair module? (Y/N): ')
+			if q == 'Y' or q == 'y':
+				execfile('repair.py')
+			if q == 'N' or q == 'n':
+				exit()
+
 	os.system("pause >NUL")
 	exit()
 
@@ -23,7 +33,7 @@ darken_percent = 0.50
 
 #debug mode
 global DEBUG_MODE
-DEBUG_MODE = True
+DEBUG_MODE = False
 global DEBUG_EXCEPTION
 DEBUG_EXCEPTION = " "
 
@@ -100,8 +110,6 @@ class Game():
 			print("Program stopped incorrectly. Stop cause: " + DEBUG_EXCEPTION)
 			pygame.quit()
 			quit()
-
-		print(self.circles)
 		
 		while self.is_running:
 			self.Draw()
