@@ -1,13 +1,13 @@
 try:
 	import os
 	os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-	import pygame
 	import circle
-	import map
-	import random
 	import repair
+	import map
+	import pygame
+	import random
 	from math import *
-except ImportError:
+except ImportError, ModuleNotFoundError:
 	print('Error! One of modules cannot be resolved. \nTry restarting your application or reinstalling it.')
 	if repair.Check_response():
 		q = ''
