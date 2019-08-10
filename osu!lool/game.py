@@ -31,11 +31,14 @@ height = 480 #720
 #background dimming
 darken_percent = 0.50
 
+#mouse visibility
+pygame.mouse.set_visible(False)
+
 #debug mode
 global DEBUG_MODE
 DEBUG_MODE = False
 global DEBUG_EXCEPTION
-DEBUG_EXCEPTION = " "
+DEBUG_EXCEPTION = ""
 
 win = pygame.display.set_mode((width, height))
 
@@ -57,8 +60,6 @@ bg_texture = pygame.transform.scale(bg_texture, (width, height))
 
 dark = pygame.Surface(bg_texture.get_size()).convert_alpha()
 dark.fill((0, 0, 0, darken_percent*255))
-
-pygame.mouse.set_visible(False)
 
 class Game():
 	def __init__(self, width, height):
@@ -108,7 +109,7 @@ class Game():
 		if type(self.circles).__name__ == 'str' or type(self.circles).__name__ == 'NoneType':
 			DEBUG_EXCEPTION = self.circles
 			if DEBUG_MODE:
-                                print("Program stopped incorrectly. Stop cause: " + DEBUG_EXCEPTION)
+				print("Program stopped incorrectly. Stop cause: " + DEBUG_EXCEPTION)
 			pygame.quit()
 			quit()
 		
@@ -120,7 +121,7 @@ class Game():
 			self.Time()
 			self.Clicks()
 
-			if DEBUG_MODE and len(self.circles) < 10:
+			if DEBUG_MODE and len(self.circles) < 5:
 				print(self.circles)
 
 			pygame.display.update()
@@ -133,31 +134,37 @@ class Game():
 
 	def Draw(self):
 		global DEBUG_EXCEPTION
-		
-		for event in pygame.event.get():
-			for circle in self.circles:	
-				circle.Draw(g)
+
+		self.win.blit(bg_texture, (0, 0))
+		self.win.blit(dark, (0, 0))
+
+		events = pygame.event.get()
+		for circle in self.circles:
+			if self.time >= circle.time and self.time <= circle.time+2000:
+				circle.Draw()
+				for event in events:
+					if event.type == pygame.KEYDOWN:
+						if event.key == pygame.K_z or event.key == pygame.K_x:
+							if circle.Collide():
+								circle.Hit()
+								self.circles.remove(circle)
+							if not circle.Collide():
+								self.circles.remove(circle)
+								circle.Miss()
+
+							self.click_count += 1
+			elif self.time >= circle.time+2000:
+				self.circles.remove(circle)
+				circle.Miss()
 				
-				if event.type == pygame.KEYDOWN:
-					if event.key == pygame.K_z or event.key == pygame.K_x:
-						if circle.Collide():
-							circle.Hit()
-							self.circles.remove(circle)
-
-							if self.combo >= 5:
-								self.health += 2.5
-
-						else:
-							circle.Miss()
-
-						self.click_count += 1
-			if not self.circles:
-				if DEBUG_MODE:
-					print("List depleated at: " + str(self.time))
-					DEBUG_EXCEPTION = "Objects list self.circles is empty."
+		if not self.circles:
+			if DEBUG_MODE:
+				print("List depleated at: " + str(self.time))
+				DEBUG_EXCEPTION = "Objects list self.circles is empty."
 					
-				self.is_running = False
-						
+			self.is_running = False
+
+		for event in events:				
 			if event.type == pygame.QUIT:
 				if DEBUG_MODE:
 					DEBUG_EXCEPTION = "User interruption by closing window"
@@ -167,9 +174,6 @@ class Game():
 			if DEBUG_MODE:
 				DEBUG_EXCEPTION = "self.health reached " + str(self.health)
 			self.is_running = False
-
-		self.win.blit(bg_texture, (0, 0))
-		self.win.blit(dark, (0, 0))
 
 	def Cursor(self):
 		self.cursor_pos = pygame.mouse.get_pos()
@@ -227,6 +231,4 @@ if __name__ == '__main__':
 
 #finish making clicks display and make background for it
 #add miss animation (use image.alpha operations)
-#fix circles display
-#work with loops and fix that some methods cannot display without objects in circles[]
-#find error in Draw() method in main function
+#work with loops
