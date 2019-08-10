@@ -1,7 +1,13 @@
 import pygame
 import random
+import game
 
-radius = 40
+while True:
+        if game.Check_response():
+                break
+
+radius = game.CS
+radius = 150/radius
 
 #textures loading
 font_textures = []

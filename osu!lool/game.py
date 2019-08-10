@@ -6,6 +6,7 @@ try:
 	import map
 	import random
 	import repair
+	from math import *
 except ImportError:
 	print('Error! One of modules cannot be resolved. \nTry restarting your application or reinstalling it.')
 	if repair.Check_response():
@@ -40,6 +41,12 @@ DEBUG_MODE = False
 global DEBUG_EXCEPTION
 DEBUG_EXCEPTION = ""
 
+#circle approach rate
+AR = 8.5
+
+#circle size
+CS = 5
+
 win = pygame.display.set_mode((width, height))
 
 #textures loading
@@ -61,6 +68,9 @@ bg_texture = pygame.transform.scale(bg_texture, (width, height))
 dark = pygame.Surface(bg_texture.get_size()).convert_alpha()
 dark.fill((0, 0, 0, darken_percent*255))
 
+def Check_response():
+	return True
+
 class Game():
 	def __init__(self, width, height):
 		self.time = 0
@@ -80,6 +90,8 @@ class Game():
 		self.miss_texture = miss_texture
 		self.maxhealth = 100
 		self.health = self.maxhealth
+		self.AR = AR
+		self.CS = CS
 
 	def Make_map(self, data):
 		lenght = len(data)
@@ -88,14 +100,23 @@ class Game():
 		circles = []
 		for element in data:
 			while ptr <= lenght-1:
-				posX = int(data[ptr])
-				posY = int(data[ptr+1])
-				time = int(data[ptr+2])
+				try:
+					posX = int(data[ptr])
+					posY = int(data[ptr+1])
+					time = int(data[ptr+2])
 
-				ptr += 3
+					ptr += 3
 
-				obj = circle.Circle(self.win, posX, posY, time, self.texture_count, g)
-				circles.append(obj)
+					obj = circle.Circle(self.win, posX, posY, time, self.texture_count, g)
+					circles.append(obj)
+				except IndexError:
+					if DEBUG_MODE:
+						print("Program stopped incorrectly. Cannot make object, invalid map format.")
+					else:
+						print("Cannot load map. Maybe map has outdated or invalid format.")
+
+					pygame.quit()
+					quit()
 
 			return circles
 
@@ -140,7 +161,7 @@ class Game():
 
 		events = pygame.event.get()
 		for circle in self.circles:
-			if self.time >= circle.time and self.time <= circle.time+2000:
+			if self.time >= circle.time and self.time <= circle.time+(2000/(self.AR/3)):
 				circle.Draw()
 				for event in events:
 					if event.type == pygame.KEYDOWN:
@@ -153,7 +174,7 @@ class Game():
 								circle.Miss()
 
 							self.click_count += 1
-			elif self.time >= circle.time+2000:
+			elif self.time >= circle.time+(2000/(self.AR/3)):
 				self.circles.remove(circle)
 				circle.Miss()
 				
