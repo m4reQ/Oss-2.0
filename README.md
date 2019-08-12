@@ -1,9 +1,9 @@
 # Oss-2.0
 
-A for-fun rework of popular rhythm game: Osu!.
+A for-fun rework of popular rhythm game: Osu!.  
 Requirements:
-- python 3.4 or newer
-- pygame library
+- python 2.7(tested on) or newer
+- pip library
 
 python download: https://www.python.org/downloads/  
 pip download:    https://pip.pypa.io/en/stable/installing/  
