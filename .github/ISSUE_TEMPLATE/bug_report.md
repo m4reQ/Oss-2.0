@@ -27,4 +27,4 @@ If applicable, add screenshots to help explain your problem.
 Add any other context about the problem here.
 
 **For programmers**
-Add information about the line or specific method where the error occurs.
+Add information about the line or specific method where the error occurs. Can be found in log.txt file.
