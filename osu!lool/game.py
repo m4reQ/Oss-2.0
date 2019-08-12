@@ -4,6 +4,7 @@ try:
     import os
     os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
     import repair
+    import update
     import circle
     import map
     import pygame
@@ -26,6 +27,16 @@ except ImportError:
                 pass
 
     exit()
+
+try:
+    update.Check_version()
+except Exception:
+    logf.write(traceback.format_exc())
+    print(traceback.format_exc())
+    logf.close()
+    if not DEBUG_MODE:
+        pygame.quit()
+        quit()
 
 try:
     pygame.init()
@@ -275,5 +286,4 @@ if __name__ == '__main__':
 
 #finish making clicks display and make background for it
 #add miss animation (use image.alpha operations)
-#work with loops
 #improve performance/make more Surfaces
