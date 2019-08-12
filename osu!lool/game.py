@@ -1,4 +1,6 @@
 try:
+	modules = ['os','circle','repair','map','pygame',
+		   'random','requests','traceback','math','numpy']
 	import os
 	os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 	import circle
@@ -6,8 +8,10 @@ try:
 	import map
 	import pygame
 	import random
+	import requests
 	import traceback
-	from math import *
+	import numpy
+	import math
 except ImportError, ModuleNotFoundError:
 	print('Error! One of modules cannot be resolved. \nTry restarting your application or reinstalling it.')
 	if repair.Check_response():
@@ -15,7 +19,7 @@ except ImportError, ModuleNotFoundError:
 		while not any([q == 'y', q == 'Y', q == 'n', q =='N']):
 			q = raw_input("Do you want to launch the repair module? (Y/N): ")
 			if q == 'Y' or q == 'y':
-				repair.main()
+				repair.main(modules)
 			if q == 'N' or q == 'n':
 				exit()
 
@@ -23,66 +27,66 @@ except ImportError, ModuleNotFoundError:
 	exit()
 
 try:
-        pygame.init()
+	pygame.init()
 
-        #####overall settings#####
+	#####overall settings#####
 
-        #resolution
-        width = 640 #1280
-        height = 480 #720
+	#resolution
+	width = 640 #1280
+	height = 480 #720
 
-        #background dimming
-        darken_percent = 0.50
+	#background dimming
+	darken_percent = 0.50
 
-        #mouse visibility
-        pygame.mouse.set_visible(False)
+	#mouse visibility
+	pygame.mouse.set_visible(False)
 
-        #debug mode
-        global DEBUG_MODE
-        DEBUG_MODE = True
-        global DEBUG_EXCEPTION
-        DEBUG_EXCEPTION = ""
+	#debug mode
+	global DEBUG_MODE
+	DEBUG_MODE = True
+	global DEBUG_EXCEPTION
+	DEBUG_EXCEPTION = ""
 
-        #circle approach rate
-        AR = 8.5
+	#circle approach rate
+	AR = 8.5
 
-        #circle size
-        CS = 5
+	#circle size
+	CS = 5
 
-        #window initialization
-        win = pygame.display.set_mode((width, height))
+	#window initialization
+	win = pygame.display.set_mode((width, height))
 
-        #error log file
-        logf = open("log.txt", "w")
+	#error log file
+	logf = open("log.txt", "w")
 
-        #textures loading
-        cursor_texture = pygame.image.load('textures/cursor.png')
-        cursor_texture = pygame.transform.scale(cursor_texture, (16, 16))
-        miss_texture = pygame.image.load('textures/miss.png')
+	#textures loading
+	cursor_texture = pygame.image.load('textures/cursor.png')
+	cursor_texture = pygame.transform.scale(cursor_texture, (16, 16))
+	miss_texture = pygame.image.load('textures/miss.png')
 
-        bg_textures = []
-        i = 1
-        while i <= 9:
-                string = 'bg' + str(i)
-                bg_textures.append(string)
-                i += 1
+	bg_textures = []
+	i = 1
+	while i <= 9:
+		string = 'bg' + str(i)
+		bg_textures.append(string)
+		i += 1
 
-        texture_no = bg_textures[random.randint(0, 8)]
-        bg_texture = pygame.image.load('textures/backgrounds/' + texture_no + '.jpg')
-        bg_texture = pygame.transform.scale(bg_texture, (width, height))
+	texture_no = bg_textures[random.randint(0, 8)]
+	bg_texture = pygame.image.load('textures/backgrounds/' + texture_no + '.jpg')
+	bg_texture = pygame.transform.scale(bg_texture, (width, height))
 
-        #surfaces initialization
-        background_surf = pygame.Surface((width, height)).convert_alpha()
-        playground_surf = pygame.Surface((width - (width/10), height - (height/9)))
+	#surfaces initialization
+	background_surf = pygame.Surface((width, height)).convert_alpha()
+	playground_surf = pygame.Surface((width - (width/10), height - (height/9)))
 
-        dark = pygame.Surface(bg_texture.get_size()).convert_alpha()
-        dark.fill((0, 0, 0, darken_percent*255))
+	dark = pygame.Surface(bg_texture.get_size()).convert_alpha()
+	dark.fill((0, 0, 0, darken_percent*255))
 except Exception:
-                logf.write(traceback.format_exc())
-                print(traceback.format_exc())
-                if not DEBUG_MODE:
-                        pygame.quit()
-                        quit()
+		logf.write(traceback.format_exc())
+		print(traceback.format_exc())
+		if not DEBUG_MODE:
+			pygame.quit()
+			quit()
 
 def Check_response():
 	return True
@@ -260,18 +264,18 @@ class Game():
 		self.win.blit(text, pos)
 
 if __name__ == '__main__':
-        try:
-                g = Game(width, height)
-                clock = pygame.time.Clock()
-                clock.tick(1000)
+	try:
+		g = Game(width, height)
+		clock = pygame.time.Clock()
+		clock.tick(1000)
 
-                g.Run()
-        except Exception:
-                logf.write(traceback.format_exc())
-                if not DEBUG_MODE:
-                        pygame.quit()
-                        quit()
-                
+		g.Run()
+	except Exception:
+		logf.write(traceback.format_exc())
+		if not DEBUG_MODE:
+			pygame.quit()
+			quit()
+		
 
 #finish making clicks display and make background for it
 #add miss animation (use image.alpha operations)

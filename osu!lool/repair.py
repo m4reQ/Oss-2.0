@@ -1,31 +1,46 @@
 import os
 import sys
 
+ver = sys.version_info
+
 def Check_response():
     return True
 
 def Check_module(module):
-    modules = s.modules.keys()
+    modules = sys.modules.keys()
     if not module in modules:
         print('Cannot resolve ' + module)
         q = None
         while not any([q == 'y', q == 'Y', q == 'n', q =='N']):
-            q = raw_input('Do you want to download module ' + module + '? (Y/N)')
+            q = raw_input('Do you want to download module ' + module + '? (Y/N): ')
             if q == 'Y' or q == 'y':
-                if 'pip' in modules:
-                    print('Downloading ' + module + '...')
-                    os.system('python -m pip install ' + module)
+                print('Downloading ' + module + '...')
+                os.system('python -m pip install ' + module)
+                
+                if module in modules:
+                    return True
                 else:
-                    print('Cannot download ' + module)      
+                    print('Cannot download ' + module)
+                    return False
 
             elif q == 'N' or q == 'n':
                 print('module ' + module + " hasn't been installed")
                 os.system('pause >NUL')
                 quit()
+    else:
+        return True
 
-def main():
-    ver = sys.version_info
-    if not ver[:2] == (3,4):
+def Check_pip():
+    global ver
+    ver = str(ver[0]) + str(ver[1])
+    path_main = str('\Python' + ver)
+    path = os.path.join(path_main, 'Scripts', 'pip.exe')
+    if os.path.exists(path):
+        return True
+
+def main(args):
+    global ver
+    if not ver[:2] == (3,4) and not Check_pip():
         print("You don't have required python version")
         print("Go to a python official website to download latest versions. https://www.python.org/downloads")
         os.system('pause >NUL')
@@ -33,8 +48,10 @@ def main():
     else:
         pass
 
-    Check_module('pygame')        
-    
-    modules = s.modules.keys()
-    if 'pygame' in modules:
-              print('All modules installed and available. Now you can safely launch the game.')
+    for arg in args:
+        if Check_module(arg):
+            print('Module ' + arg + ' installed and available.')
+        else:
+            print('An error appeared during module check. Error caused by module: ' + arg)
+
+    print('All modules available. Now you can safely launch the game.')
