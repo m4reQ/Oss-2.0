@@ -25,20 +25,12 @@ except ImportError:
                 repair.main(modules)
             elif q == 'N' or q == 'n':
                 pass
-
+    os.system('pause >NUL')
     exit()
 
 try:
     update.Check_version()
-except Exception:
-    logf.write(traceback.format_exc())
-    print(traceback.format_exc())
-    logf.close()
-    if not DEBUG_MODE:
-        pygame.quit()
-        quit()
-
-try:
+        
     pygame.init()
 
     #####overall settings#####
@@ -53,17 +45,15 @@ try:
     #mouse visibility
     pygame.mouse.set_visible(False)
 
-    #debug mode
-    global DEBUG_MODE
-    DEBUG_MODE = True
-    global DEBUG_EXCEPTION
-    DEBUG_EXCEPTION = ""
-
     #circle approach rate
     AR = 8.5
 
     #circle size
     CS = 5
+
+    #debug mode
+    DEBUG_MODE = True
+    DEBUG_EXCEPTION = ""
 
     #window initialization
     win = pygame.display.set_mode((width, height))
@@ -100,6 +90,8 @@ except Exception:
             pygame.quit()
             quit()
 
+        os.system('pause >NUL')
+
 class Game():
     def __init__(self, width, height):
         self.time = 0
@@ -122,6 +114,8 @@ class Game():
         self.CS = CS
 
     def Make_map(self, data):
+        global DEBUG_MODE
+        global DEBUG_EXCEPTION
         lenght = len(data)
         ptr = 0
 
@@ -179,6 +173,7 @@ class Game():
         quit()
 
     def Draw(self):
+        global DEBUG_MODE
         global DEBUG_EXCEPTION
 
         self.win.blit(bg_texture, (0, 0))
@@ -282,8 +277,9 @@ if __name__ == '__main__':
         if not DEBUG_MODE:
             pygame.quit()
             quit()
-        
 
+        os.system('pause >NUL')
+    
 #finish making clicks display and make background for it
 #add miss animation (use image.alpha operations)
 #improve performance/make more Surfaces
