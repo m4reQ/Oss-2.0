@@ -28,6 +28,7 @@ def Check_module(module):
 
             elif q == 'N' or q == 'n':
                 print('Module ' + module + " hasn't been installed")
+                os.system('pause >NUL')
                 quit()
     else:
         return True
