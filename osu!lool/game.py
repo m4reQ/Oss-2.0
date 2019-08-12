@@ -12,18 +12,20 @@ try:
 	import traceback
 	import numpy
 	import math
-except ImportError, ModuleNotFoundError:
+except ImportError:
 	print('Error! One of modules cannot be resolved. \nTry restarting your application or reinstalling it.')
 	if repair.Check_response():
 		q = None
+		question = "Do you want to launch the repair module? (Y/N): "
 		while not any([q == 'y', q == 'Y', q == 'n', q =='N']):
-			q = raw_input("Do you want to launch the repair module? (Y/N): ")
+			try: q = raw_input(question)
+			except NameError: q = input(question)
+			
 			if q == 'Y' or q == 'y':
 				repair.main(modules)
-			if q == 'N' or q == 'n':
-				exit()
+			elif q == 'N' or q == 'n':
+				pass
 
-	os.system("pause >NUL")
 	exit()
 
 try:

@@ -11,8 +11,11 @@ def Check_module(module):
     if not module in modules:
         print('Cannot resolve ' + module)
         q = None
+        question = 'Do you want to download module ' + module + '? (Y/N): '
         while not any([q == 'y', q == 'Y', q == 'n', q =='N']):
-            q = raw_input('Do you want to download module ' + module + '? (Y/N): ')
+            try: q = raw_input(question)
+            except NameError: q = input(question)
+
             if q == 'Y' or q == 'y':
                 print('Downloading ' + module + '...')
                 os.system('python -m pip install ' + module)
@@ -20,12 +23,11 @@ def Check_module(module):
                 if module in modules:
                     return True
                 else:
-                    print('Cannot download ' + module)
+                    print('Cannot download/install ' + module)
                     return False
 
             elif q == 'N' or q == 'n':
-                print('module ' + module + " hasn't been installed")
-                os.system('pause >NUL')
+                print('Module ' + module + " hasn't been installed")
                 quit()
     else:
         return True
@@ -54,4 +56,4 @@ def main(args):
         else:
             print('An error appeared during module check. Error caused by module: ' + arg)
 
-    print('All modules available. Now you can safely launch the game.')
+    print('Module checking done.')
