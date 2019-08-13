@@ -15,6 +15,7 @@ except IOError:
 
 		if q == 'Y' or q == 'y':
 			Update(directory)
+			break
 		elif q == 'N' or q == 'n':
 			quit()
 
@@ -48,8 +49,8 @@ def Update(dir):
 	os.system("start \"\"" + " " + url)
 
 def Check_version():
-	late_ver = Get_version()
-	if version == late_ver:
+        late_ver = Get_version()
+	if version == str(late_ver):
 		return
 	else:
 		print("Your version of the game is outdated.\nCurrent version: " + version + ".\nLatest version: " + late_ver)
@@ -61,5 +62,6 @@ def Check_version():
 
 			if q == 'Y' or q == 'y':
 				Update(directory)
+				break
 			elif q == 'N' or q == 'n':
-				pass
+				break

@@ -1,5 +1,5 @@
 try:
-    modules = ['os','circle','repair','map','pygame',
+    modules = ['os','repair','update','circle','map','pygame',
            'random','requests','traceback','math']
     import os
     os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
@@ -28,40 +28,53 @@ except ImportError:
     os.system('pause >NUL')
     exit()
 
-try:
-    update.Check_version()
-        
+#####overall settings#####
+
+#resolution
+width = 640 #1280
+height = 480 #720
+
+#background dimming
+darken_percent = 0.50
+
+#mouse visibility
+mouse_visible = False
+
+#circle approach rate
+AR = 8.5
+
+#circle size
+CS = 5
+
+#error log file
+logf = open("log.txt", "w")
+
+#debug mode
+DEBUG_MODE = True
+DEBUG_EXCEPTION = ""
+
+#####STATICS#####
+
+#window initialization
+win = None 
+
+#textures loading
+cursor_texture = None
+miss_texture = None
+bg_texture = None
+
+#surfaces initialization
+bg_surf = None
+pg_surf = None
+dark = None
+
+def Initialize_window():
+    global win, cursor_texture, miss_texture, bg_texture, bg_surf, pg_surf, dark, mouse_visible
     pygame.init()
 
-    #####overall settings#####
-
-    #resolution
-    width = 640 #1280
-    height = 480 #720
-
-    #background dimming
-    darken_percent = 0.50
-
-    #mouse visibility
-    pygame.mouse.set_visible(False)
-
-    #circle approach rate
-    AR = 8.5
-
-    #circle size
-    CS = 5
-
-    #debug mode
-    DEBUG_MODE = True
-    DEBUG_EXCEPTION = ""
-
-    #window initialization
+    pygame.mouse.set_visible(mouse_visible)
     win = pygame.display.set_mode((width, height))
-
-    #error log file
-    logf = open("log.txt", "w")
-
-    #textures loading
+    
     cursor_texture = pygame.image.load('textures/cursor.png')
     cursor_texture = pygame.transform.scale(cursor_texture, (16, 16))
     miss_texture = pygame.image.load('textures/miss.png')
@@ -77,20 +90,11 @@ try:
     bg_texture = pygame.image.load('textures/backgrounds/' + texture_no + '.jpg')
     bg_texture = pygame.transform.scale(bg_texture, (width, height))
 
-    #surfaces initialization
-    background_surf = pygame.Surface((width, height)).convert_alpha()
-    playground_surf = pygame.Surface((width - (width/10), height - (height/9)))
-
+    bg_surf = pygame.Surface((width, height)).convert_alpha()
+    pg_surf = pygame.Surface((width - (width/10), height - (height/9)))
+    
     dark = pygame.Surface(bg_texture.get_size()).convert_alpha()
     dark.fill((0, 0, 0, darken_percent*255))
-except Exception:
-        logf.write(traceback.format_exc())
-        print(traceback.format_exc())
-        if not DEBUG_MODE:
-            pygame.quit()
-            quit()
-
-        os.system('pause >NUL')
 
 class Game():
     def __init__(self, width, height):
@@ -265,6 +269,10 @@ class Game():
 
 if __name__ == '__main__':
     try:
+        update.Check_version()
+
+        Initialize_window()
+        
         g = Game(width, height)
         clock = pygame.time.Clock()
         clock.tick(1000)
@@ -283,3 +291,4 @@ if __name__ == '__main__':
 #finish making clicks display and make background for it
 #add miss animation (use image.alpha operations)
 #improve performance/make more Surfaces
+#remove duplicate repair.Check_version() opening
