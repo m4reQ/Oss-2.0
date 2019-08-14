@@ -1,0 +1,5 @@
+path: ['C:\\Users\\Dell\\Desktop\\Oss-2.0-master\\diagtools', 'C:\\Python27\\Lib\\idlelib', 'C:\\Windows\\system32\\python27.zip', 'C:\\Python27\\DLLs', 'C:\\Python27\\lib', 'C:\\Python27\\lib\\plat-win', 'C:\\Python27\\lib\\lib-tk', 'C:\\Python27', 'C:\\Python27\\lib\\site-packages', 'C:\\Users\\Dell\\Desktop\\Oss-2.0-master\\main']
+Python_ver: 2.7.16.final.0
+System_ver: nt, Windows7
+Screen_res: Width: 1280 Height: 800
+CPU: x86 Family 6 Model 15 Stepping 13, GenuineIntel
