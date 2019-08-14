@@ -9,7 +9,7 @@ except ImportError:
     dont_check_net = True
 
 dir = os.getcwd()
-path = os.path.join(os.getcwd()[:-10], 'main')
+path = os.path.join(os.getcwd()[:-10], 'osu!lool')
 sys.path.append(path)
 
 log = {"System_ver": "",
@@ -58,3 +58,7 @@ def Gen_log():
     for key, val in log.items():
         f.write(str(key + ": " + val + "\n"))
     f.close()
+
+if __name__ == '__main__':
+    Gen_log()
+    exit()
