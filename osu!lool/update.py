@@ -28,7 +28,7 @@ url_main = "https://github.com/m4reQ/Oss-2.0/master/osu!lool"
 url_master = "https://github.com/m4reQ/Oss-2.0/master"
 
 def Get_version():
-	l, r = url_master[:8], url_master[8:]
+	l, r = url_main[:8], url_main[8:]
 	url = l + "raw." + r + "/version.txt"
 	
 	latest_version = requests.get(url)
