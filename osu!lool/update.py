@@ -49,7 +49,7 @@ def Update(dir):
 	os.system("start \"\"" + " " + url)
 
 def Check_version():
-        late_ver = Get_version()
+	late_ver = Get_version()
 	if version == str(late_ver):
 		return
 	else:

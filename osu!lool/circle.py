@@ -18,20 +18,20 @@ class Circle(object):
 		Circle.texture_count += 1
 
 		if not Circle.font_textures:
-                        Circle.radius = 150/game.CS
-                        
-                        i = 0
-                        while i < 10:
-                                texture = pygame.image.load('textures/circles/' + str(i) + '.png')
-                                texture = pygame.transform.scale(texture, (Circle.radius*2, Circle.radius*2))
-                                Circle.font_textures.append(texture)
-                                i += 1
+			Circle.radius = 150/game.CS
+			
+			i = 0
+			while i < 10:
+				texture = pygame.image.load('textures/circles/' + str(i) + '.png')
+				texture = pygame.transform.scale(texture, (Circle.radius*2, Circle.radius*2))
+				Circle.font_textures.append(texture)
+				i += 1
 
-                        if game.DEBUG_MODE:
-                                print("Initialized textures. Texture array: ")
-                                print(Circle.font_textures)
-                else:
-                        pass
+			if game.DEBUG_MODE:
+				print("Initialized textures. Texture array: ")
+				print(Circle.font_textures)
+		else:
+			pass
 
 	def __str__(self):
 		rep = "Circle at: " + str(self.pos[0]) + "," + str(self.pos[1]) + ". At time: " + str(self.time)
