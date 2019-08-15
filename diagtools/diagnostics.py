@@ -43,7 +43,7 @@ def Get_cpu_inf():
     return str(platform.processor())
 
 def Get_path():
-    return str(os.sys.path)
+    return str(os.sys.path) + " " + str(os.popen('echo %path%').read())
 
 def Gen_log():
     print('Generating log file...')
