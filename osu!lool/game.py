@@ -26,9 +26,7 @@ def Add_path():
 try:
     ext_modules = ['pygame','requests','traceback']
     int_modules = ['os', 'sys', 'repair', 'update', 'circle', 'map', 'random', 'math']
-    reload(os)
     os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-    reload(sys)
     import repair
     import update
     import circle
@@ -295,6 +293,8 @@ class Game():
 
 if __name__ == '__main__':
     try:
+        Add_path()
+        
         update.Check_version()
 
         Initialize_window()
