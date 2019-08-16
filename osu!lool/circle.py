@@ -18,7 +18,7 @@ class Circle(object):
 		Circle.texture_count += 1
 
 		if not Circle.font_textures:
-			Circle.radius = 150/game.CS
+			Circle.radius = int(round(150/game.CS))
 			
 			i = 0
 			while i < 10:
