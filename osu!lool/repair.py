@@ -2,36 +2,39 @@ import os
 import sys
 
 ver = sys.version_info
+modules = sys.modules.keys()
 
 def Check_response():
     return True
 
 def Check_module(module):
-    modules = sys.modules.keys()
     if not module in modules:
         print('Cannot resolve ' + module)
-        q = None
-        question = 'Do you want to download module ' + module + '? (Y/N): '
-        while not any([q == 'y', q == 'Y', q == 'n', q =='N']):
-            try: q = raw_input(question)
-            except NameError: q = input(question)
-
-            if q == 'Y' or q == 'y':
-                print('Downloading ' + module + '...')
-                os.system('python -m pip install ' + module)
-                
-                if module in modules:
-                    return True
-                else:
-                    print('Cannot download/install ' + module)
-                    return False
-
-            elif q == 'N' or q == 'n':
-                print('Module ' + module + " hasn't been installed")
-                os.system('pause >NUL')
-                quit()
+        return False
     else:
         return True
+    
+def Download_module(module):
+    q = None
+    question = 'Do you want to download module ' + module + '? (Y/N): '
+    while not any([q == 'y', q == 'Y', q == 'n', q =='N']):
+        try: q = raw_input(question)
+        except NameError: q = input(question)
+
+        if q == 'Y' or q == 'y':
+            print('Downloading ' + module + '...')
+
+            os.system('python -m pip install ' + module)
+
+            if module in modules:
+                return True
+            else:
+                print('Cannot download/install ' + module)
+                return False
+
+        elif q == 'N' or q == 'n':
+            print('Module ' + module + " hasn't been installed")
+            return
 
 def Check_pip():
     global ver
@@ -55,6 +58,11 @@ def main(args):
         if Check_module(arg):
             print('Module ' + arg + ' installed and available.')
         else:
-            print('An error appeared during module check. Error caused by module: ' + arg)
+            if not Download_module(arg):
+                print('An error appeared during module check. Error caused by module: ' + arg)
+                break
 
     print('Module checking done.')
+    
+    os.system('pause >NUL')
+    exit()

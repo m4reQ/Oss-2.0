@@ -25,8 +25,8 @@ def Add_path():
 
 try:
     Add_path()
-    ext_modules = ['pygame','requests','traceback']
-    int_modules = ['os', 'sys', 'repair', 'update', 'circle', 'map', 'random', 'math']
+    ext_modules = ['pygame','requests']
+    int_modules = ['os', 'sys', 'repair', 'update', 'circle', 'map', 'random', 'math', 'traceback']
     os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
     import repair
     import update
