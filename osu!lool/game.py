@@ -1,8 +1,34 @@
 try:
-    modules = ['os','repair','update','circle','map','pygame',
-           'random','requests','traceback','math']
     import os
+    import sys
+except ImportError:
+    print('Critical error! Cannot load os module.')
+    os.system('pause >NUL')
+    exit()
+
+def Add_path():
+    #adding PYTHONPATH to %path%
+    path = os.environ["PATH"]
+    py = sys.path
+    for e in py:
+        if not e in path:
+            os.environ["PATH"] += os.pathsep + e
+        else:
+            pass
+
+    #adding \Scripts to %path%
+    scripts_path = sys.executable[:-11] + 'Scripts\\'
+    if not scripts_path in path:
+        os.environ["PATH"] += os.pathsep + scripts_path 
+    else:
+        return
+
+try:
+    ext_modules = ['pygame','requests','traceback']
+    int_modules = ['os', 'sys', 'repair', 'update', 'circle', 'map', 'random', 'math']
+    reload(os)
     os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+    reload(sys)
     import repair
     import update
     import circle
@@ -22,7 +48,7 @@ except ImportError:
             except NameError: q = input(question)
             
             if q == 'Y' or q == 'y':
-                repair.main(modules)
+                repair.main(ext_modules)
             elif q == 'N' or q == 'n':
                 pass
     os.system('pause >NUL')
