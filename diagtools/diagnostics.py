@@ -2,14 +2,14 @@ dont_check_net = False
 
 try:
     import os
-    import platform
     import sys
     import ctypes
+    import platform
 except ImportError:
     dont_check_net = True
 
 dir = os.getcwd()
-path = os.path.join(os.getcwd()[:-10], 'osu!lool')
+path = os.path.join(dir[:-10], 'osu!lool')
 sys.path.append(path)
 
 log = {"System_ver": "",
