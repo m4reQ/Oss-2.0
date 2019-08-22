@@ -71,6 +71,8 @@ AR = 8.5
 #circle size
 CS = 5
 
+auto_generate = False
+
 #error log file
 logf = open("log.txt", "w")
 
@@ -172,17 +174,25 @@ class Game():
         global DEBUG_MODE
         global DEBUG_EXCEPTION
         
-        m = map.Map(DEBUG_MODE)
-        map_data = m.Load_map('test')
-        self.circles = self.Make_map(map_data)
-        if type(self.circles).__name__ == 'str' or type(self.circles).__name__ == 'NoneType':
-            DEBUG_EXCEPTION = self.circles
-            if DEBUG_MODE:
-                print("Program stopped incorrectly. Stop cause: " + DEBUG_EXCEPTION)
-            pygame.quit()
-            quit()
+        if not auto_generate:
+            m = map.Map(DEBUG_MODE)
+            map_data = m.Load_map('test')
+            self.circles = self.Make_map(map_data)
+            if type(self.circles).__name__ == 'str' or type(self.circles).__name__ == 'NoneType':
+                DEBUG_EXCEPTION = self.circles
+                if DEBUG_MODE:
+                    print("Program stopped incorrectly. Stop cause: " + DEBUG_EXCEPTION)
+                pygame.quit()
+                quit()
+        else:
+            pass
         
         while self.is_running:
+            if auto_generate:
+                if len(self.circles) <= 1:
+                    obj = circle.Circle(self.win, random.randint(0, int(self.playfield[0])), random.randint(0, int(self.playfield[1])), None , g)
+                    self.circles.append(obj)
+
             self.Draw()
             self.HealthBar()
             self.Combo()
@@ -210,22 +220,36 @@ class Game():
 
         events = pygame.event.get()
         for circle in self.circles:
-            if self.time >= circle.time and self.time <= circle.time+(2000/(self.AR/3)):
-                circle.Draw()
-                for event in events:
-                    if event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_z or event.key == pygame.K_x:
-                            if circle.Collide():
-                                circle.Hit()
-                                self.circles.remove(circle)
-                            if not circle.Collide():
-                                self.circles.remove(circle)
-                                circle.Miss()
+                if not auto_generate:
+                    if self.time >= circle.time and self.time <= circle.time+(2000/(self.AR/3)):
+                        circle.Draw()
+                        for event in events:
+                            if event.type == pygame.KEYDOWN:
+                                if event.key == pygame.K_z or event.key == pygame.K_x:
+                                    if circle.Collide():
+                                        circle.Hit()
+                                        self.circles.remove(circle)
+                                    if not circle.Collide():
+                                        self.circles.remove(circle)
+                                        circle.Miss()
 
-                            self.click_count += 1
-            elif self.time >= circle.time+(2000/(self.AR/3)):
-                self.circles.remove(circle)
-                circle.Miss()
+                                    self.click_count += 1
+                    elif self.time >= circle.time+(2000/(self.AR/3)):
+                        self.circles.remove(circle)
+                        circle.Miss()
+                else:
+                    circle.Draw()
+                    for event in events:
+                        if event.type == pygame.KEYDOWN:
+                            if event.key == pygame.K_z or event.key == pygame.K_x:
+                                if circle.Collide():
+                                    circle.Hit()
+                                    self.circles.remove(circle)
+                                if not circle.Collide():
+                                    self.circles.remove(circle)
+                                    circle.Miss()
+
+                                self.click_count += 1
                 
         if not self.circles:
             if DEBUG_MODE:
