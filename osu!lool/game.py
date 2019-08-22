@@ -2,39 +2,18 @@ try:
     import os
     import sys
 except ImportError:
-    print('Critical error! Cannot load os module.')
+    print('Critical error! Cannot load os or sys module.')
     os.system('pause >NUL')
     exit()
 
-def Add_path():
-    #adding PYTHONPATH to %path%
-    path = os.environ["PATH"]
-    py = sys.path
-    for e in py:
-        if not e in path:
-            os.environ["PATH"] += os.pathsep + e
-        else:
-            pass
-
-    #adding \Scripts to %path%
-    scripts_path = sys.executable[:-11] + 'Scripts\\'
-    if not scripts_path in path:
-        os.environ["PATH"] += os.pathsep + scripts_path 
-    else:
-        return
-
 try:
-    Add_path()
-    ext_modules = ['pygame','requests']
+    ext_modules = ['requests', 'pygame']
     int_modules = ['os', 'sys', 'repair', 'update', 'circle', 'map', 'random', 'math', 'traceback']
     os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-    import repair
-    import update
-    import circle
-    import map
+    import repair, update, circle, map
+    import requests
     import pygame
     import random
-    import requests
     import traceback
     import math
 except ImportError:
@@ -50,6 +29,7 @@ except ImportError:
                 repair.main(ext_modules)
             elif q == 'N' or q == 'n':
                 pass
+    print('Module checking done.')
     os.system('pause >NUL')
     exit()
 
@@ -318,8 +298,6 @@ class Game():
 
 if __name__ == '__main__':
     try:
-        Add_path()
-        
         update.Check_version()
 
         Initialize_window()

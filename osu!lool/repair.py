@@ -24,7 +24,7 @@ def Download_module(module):
         if q == 'Y' or q == 'y':
             print('Downloading ' + module + '...')
 
-            os.system('python -m pip install ' + module)
+            os.system('py -m pip install ' + module)
 
             if module in modules:
                 return True
@@ -37,9 +37,7 @@ def Download_module(module):
             return
 
 def Check_pip():
-    global ver
-    ver = str(ver[0]) + str(ver[1])
-    path_main = str('\Python' + ver)
+    path_main = sys.executable[:-11]
     path = os.path.join(path_main, 'Scripts', 'pip.exe')
     if os.path.exists(path):
         return True
@@ -60,9 +58,3 @@ def main(args):
         else:
             if not Download_module(arg):
                 print('An error appeared during module check. Error caused by module: ' + arg)
-                break
-
-    print('Module checking done.')
-    
-    os.system('pause >NUL')
-    exit()
