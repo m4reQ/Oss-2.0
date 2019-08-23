@@ -1,4 +1,5 @@
 import os
+from helper import ask
 import requests
 
 directory = os.getcwd()
@@ -7,17 +8,10 @@ try:
 	f = open('version.txt', 'r')
 except IOError:
 	print("Unable to load file version.txt. Probably file is corrupted or doesn't exist.")
-	q = None
-	question = "Do you want to download the latest version? (Y/N): "
-	while not any([q == 'y', q == 'Y', q == 'n', q =='N']):
-		try: q = raw_input(question)
-		except NameError: q = input(question)
-
-		if q == 'Y' or q == 'y':
-			Update(directory)
-			break
-		elif q == 'N' or q == 'n':
-			quit()
+	if ask("Do you want to download the latest version? (Y/N): "):
+		Update(directory)
+	else:
+		quit()
 
 version = f.readlines()
 version = str(version[0])
@@ -28,16 +22,25 @@ url_main = "https://github.com/m4reQ/Oss-2.0/master/osu!lool"
 url_master = "https://github.com/m4reQ/Oss-2.0/master"
 
 def Get_version():
+	"""
+	rtype: none
+	returns: string or bool
+	"""
 	l, r = url_main[:8], url_main[8:]
 	url = l + "raw." + r + "/version.txt"
 	
-	latest_version = requests.get(url)
+	try:
+		latest_version = requests.get(url)
+	except requests.exceptions.ConnectionError:
+		print('Cannot download latest version. Check your internet connection.')
+		return False
+
 	latest_version = str(latest_version.text)
 	latest_version = latest_version[:11]
 
 	return latest_version
 
-def Update(dir):
+def Update():
 	path = os.path.join(dir, 'tmp')
 	
 	files = os.listdir(path)
@@ -50,18 +53,14 @@ def Update(dir):
 
 def Check_version():
 	late_ver = Get_version()
+	if not late_ver:
+		print("Couldn't update game.")
+		return
 	if version == str(late_ver):
 		return
 	else:
 		print("Your version of the game is outdated.\nCurrent version: " + version + ".\nLatest version: " + late_ver)
-		q = None
-		question = "Do you want to download the latest version? (Y/N): "
-		while not any([q == 'y', q == 'Y', q == 'n', q =='N']):
-			try: q = raw_input(question)
-			except NameError: q = input(question)
-
-			if q == 'Y' or q == 'y':
-				Update(directory)
-				break
-			elif q == 'N' or q == 'n':
-				break
+		if ask("Do you want to download the latest version?"):
+			Update(directory)
+		else:
+			pass

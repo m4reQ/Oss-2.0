@@ -8,7 +8,6 @@ except ImportError:
 
 try:
     ext_modules = ['requests', 'pygame']
-    int_modules = ['os', 'sys', 'repair', 'update', 'circle', 'map', 'random', 'math', 'traceback']
     os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
     import repair, update, circle, map
     import requests
@@ -16,19 +15,14 @@ try:
     import random
     import traceback
     import math
+    from helper import *
 except ImportError:
     print('Error! One of modules cannot be resolved. \nTry restarting your application or reinstalling it.')
     if repair.Check_response():
-        q = None
-        question = "Do you want to launch the repair module? (Y/N): "
-        while not any([q == 'y', q == 'Y', q == 'n', q =='N']):
-            try: q = raw_input(question)
-            except NameError: q = input(question)
-            
-            if q == 'Y' or q == 'y':
-                repair.main(ext_modules)
-            elif q == 'N' or q == 'n':
-                pass
+        if ask("Do you want to launch the repair module?"):
+            repair.main(ext_modules)
+        else:
+            pass
     print('Module checking done.')
     os.system('pause >NUL')
     exit()
@@ -46,12 +40,15 @@ darken_percent = 0.50
 mouse_visible = False
 
 #circle approach rate
-AR = 8.5
+AR = 10
 
 #circle size
-CS = 5
+MIN_CS = 1
+MAX_CS = 10
+CS = 5.5
 
-auto_generate = False
+#automatic circle generation
+auto_generate = True
 
 #error log file
 logf = open("log.txt", "w")
@@ -113,10 +110,14 @@ class Game():
         self.click_count = 0
         self.circles = []
         self.cursor_pos = (0, 0)
-        self.playfield = (self.width - (self.width/10), self.height - (self.height/9))
+        self.playfield = {
+        'topX': (self.width / 10),                      #top right X
+        'topY': (self.height / 10),                     #top right Y
+        'bottomX': (self.width - self.width / 10),      #bottom left X
+        'bottomY': (self.height - self.height / 10)}    #bottom left Y
         self.points = 0
         self.combo = 0
-        self.combo_color = (255, 255, 255)
+        self.combo_color = color.white
         self.cursor_texture = cursor_texture
         self.miss_texture = miss_texture
         self.maxhealth = 100
@@ -124,7 +125,16 @@ class Game():
         self.AR = AR
         self.CS = CS
 
+        if self.CS < MIN_CS:
+            self.CS = MIN_CS
+        elif self.CS > MAX_CS:
+            self.CS = MAX_CS
+
     def Make_map(self, data):
+        """
+        rtype: array
+        returns: array
+        """
         global DEBUG_MODE
         global DEBUG_EXCEPTION
         lenght = len(data)
@@ -167,10 +177,11 @@ class Game():
         else:
             pass
         
+        radius = stats.getCS(self.CS)
         while self.is_running:
             if auto_generate:
                 if len(self.circles) <= 1:
-                    obj = circle.Circle(self.win, random.randint(0, int(self.playfield[0])), random.randint(0, int(self.playfield[1])), None , g)
+                    obj = circle.Circle(self.win, random.randint(int(self.playfield['topX'] + radius), int(self.playfield['bottomX'] - radius)), random.randint(int(self.playfield['topX'] + radius), int(self.playfield['bottomY'] - radius)), None , g)
                     self.circles.append(obj)
 
             self.Draw()
@@ -201,7 +212,7 @@ class Game():
         events = pygame.event.get()
         for circle in self.circles:
                 if not auto_generate:
-                    if self.time >= circle.time and self.time <= circle.time+(2000/(self.AR/3)):
+                    if self.time >= circle.time and self.time <= circle.time + stats.getAR(self.AR):
                         circle.Draw()
                         for event in events:
                             if event.type == pygame.KEYDOWN:
@@ -214,7 +225,7 @@ class Game():
                                         circle.Miss()
 
                                     self.click_count += 1
-                    elif self.time >= circle.time+(2000/(self.AR/3)):
+                    elif self.time >= circle.time + stats.getAR(self.AR):
                         self.circles.remove(circle)
                         circle.Miss()
                 else:
@@ -233,7 +244,7 @@ class Game():
                 
         if not self.circles:
             if DEBUG_MODE:
-                print("List depleated at: " + str(self.time))
+                print("List depleted at: " + str(self.time))
                 DEBUG_EXCEPTION = "Objects list self.circles is empty."
                     
             self.is_running = False
@@ -258,41 +269,42 @@ class Game():
         font = pygame.font.SysFont("comicsansms", 48)
         text = 'points: ' + str(self.points)
         text_points = font.render(text, True, self.combo_color)
-        text_combo = font.render('combo: ' + str(self.combo), True, (255, 255, 255))
+        text_combo = font.render('combo: ' + str(self.combo), True, color.white)
         lenght = len(text)
 
         self.win.blit(text_points, (self.width - lenght * 25, (self.height - 70)))
         self.win.blit(text_combo, (10, (self.height - 70)))
 
     def HealthBar(self):
-        font = pygame.font.SysFont("comicsansms", 12)
-        bar_text = font.render('HEALTH', True, (255, 255, 255))
-        self.win.blit(bar_text, (self.width/10, 0))
         self.health -= 0.15
 
         if self.health > 100:
             self.health = 100
 
-        size_bg = ((self.playfield[0] - self.width/10) * self.maxhealth/self.maxhealth, 30)
-        pos = (self.width/10, (self.height/10) - 50)
-        bar_bg = pygame.draw.rect(self.win, (128, 128, 128), (pos, size_bg))
+        size_bg = (self.width - (2 * self.width/10), 30)
+        pos = (self.width/10, 0)
+        bar_bg = pygame.draw.rect(self.win, color.gray, (pos, size_bg))
 
         if self.health >= 0:
-            size = ((self.playfield[0] - self.width/10) * self.health/self.maxhealth, 30)
-            bar = pygame.draw.rect(self.win, (0, 255, 0), (pos, size))
+            if self.health <= self.maxhealth/5:
+                c = color.red
+            else:
+                c = color.green
+            size = ((self.playfield['bottomX'] - self.width/10) * self.health/self.maxhealth, 30)
+            bar = pygame.draw.rect(self.win, c, (pos, size))
 
     def Time(self):
         font = pygame.font.SysFont("comicsansms", 24)
         time = round((self.time/1000), 2)
-        text = font.render('Time: ' + str(time) + 's', True, (255, 255, 255))
-        pos = (self.width/10, (self.height/10) - 50)
+        text = font.render('Time: ' + str(time) + 's', True, color.white)
+        pos = (self.width/10, 0)
 
         self.win.blit(text, pos)
 
     def Clicks(self):
         font = pygame.font.SysFont("comicsansms", 24)
         pos = ((self.width - (24*1.5)), (self.height/2))
-        text = font.render(str(self.click_count), True, (255, 255, 255))
+        text = font.render(str(self.click_count), True, color.white)
 
         self.win.blit(text, pos)
 

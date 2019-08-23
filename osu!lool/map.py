@@ -9,6 +9,10 @@ class Map():
 		DEBUG_MODE = mode
 
 	def Load_map(self, file):
+		"""
+		rtype: string
+		returns: array
+		"""
 		global DEBUG_MODE
 
 		if Map.is_loaded:

@@ -1,6 +1,8 @@
 import pygame
 import random
 import game
+from helper import *
+import math
 
 class Circle(object):
 
@@ -15,10 +17,12 @@ class Circle(object):
 		self.time = time
 		self.texture_count = Circle.texture_count
 
+		g = self.game
+
 		Circle.texture_count += 1
 
 		if not Circle.font_textures:
-			Circle.radius = int(round(150/game.CS))
+			Circle.radius = stats.getCS(g.CS)
 			
 			i = 0
 			while i < 10:
@@ -41,8 +45,8 @@ class Circle(object):
 	def Draw(self):
 		g = self.game
 
-		pygame.draw.circle(self.surface, (255,255,255), self.pos, Circle.radius, 2)
-		pygame.draw.circle(self.surface, (128,128,128), self.pos, (Circle.radius + 1), 1)
+		pygame.draw.circle(self.surface, color.white, self.pos, Circle.radius, 2)
+		pygame.draw.circle(self.surface, color.gray, self.pos, (Circle.radius + 1), 1)
 			
 		if Circle.texture_count > 9:
 			g.health += 10
@@ -52,6 +56,10 @@ class Circle(object):
 		self.surface.blit(self.font_textures[self.texture_count], font_position)
 		
 	def Collide(self):
+		"""
+		rtype: none
+		returns: bool
+		"""
 		g = self.game
 
 		if g.cursor_pos[0] > (self.pos[0] - Circle.radius) and g.cursor_pos[1] > (self.pos[1] - Circle.radius):
@@ -65,7 +73,9 @@ class Circle(object):
 		
 		g.combo += 1
 		g.points += (g.combo * 300)
-		g.combo_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+		g.combo_color = color.random()
+		if g.combo >= 5:
+			g.health += 3
 		
 
 	def Miss(self):

@@ -1,13 +1,22 @@
+def Check_response():
+    """
+    rtype: none
+    returns: bool
+    """
+    return True
+
 import os
 import sys
+from helper import ask
 
 ver = sys.version_info
 modules = sys.modules.keys()
 
-def Check_response():
-    return True
-
 def Check_module(module):
+    """
+    rtype: string
+    returns: bool
+    """
     if not module in modules:
         print('Cannot resolve ' + module)
         return False
@@ -15,34 +24,40 @@ def Check_module(module):
         return True
     
 def Download_module(module):
-    q = None
-    question = 'Do you want to download module ' + module + '? (Y/N): '
-    while not any([q == 'y', q == 'Y', q == 'n', q =='N']):
-        try: q = raw_input(question)
-        except NameError: q = input(question)
+    """
+    rtype: string
+    returns: bool
+    """
+    if ask('Do you want to download module ' + module + '?'):
+        print('Downloading ' + module + '...')
 
-        if q == 'Y' or q == 'y':
-            print('Downloading ' + module + '...')
+        os.system('py -m pip install ' + module)
 
-            os.system('py -m pip install ' + module)
+        if module in modules:
+            return True
+        else:
+            print('Cannot download/install ' + module)
+            return False
 
-            if module in modules:
-                return True
-            else:
-                print('Cannot download/install ' + module)
-                return False
-
-        elif q == 'N' or q == 'n':
-            print('Module ' + module + " hasn't been installed")
-            return
+    else:
+        print('Module ' + module + " hasn't been installed")
+        return True
 
 def Check_pip():
+    """
+    rtype: none
+    returns: bool
+    """
     path_main = sys.executable[:-11]
     path = os.path.join(path_main, 'Scripts', 'pip.exe')
     if os.path.exists(path):
         return True
 
 def main(args):
+    """
+    rtype: string
+    returns: none
+    """
     global ver
     if not ver[0] == 3 and not ver[1] >= 4 and not Check_pip():
         print("You don't have required python version")
