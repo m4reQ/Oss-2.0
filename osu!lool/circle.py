@@ -2,7 +2,6 @@ import pygame
 import random
 import game
 from helper import *
-import math
 
 class Circle(object):
 

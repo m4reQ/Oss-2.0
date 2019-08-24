@@ -9,7 +9,7 @@ except ImportError:
 try:
     ext_modules = ['requests', 'pygame']
     os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-    import repair, update, circle, map
+    import repair, update, circle, map, menu
     import requests
     import pygame
     import random
@@ -40,12 +40,12 @@ darken_percent = 0.50
 mouse_visible = False
 
 #circle approach rate
-AR = 10
+AR = 9
 
 #circle size
 MIN_CS = 1
 MAX_CS = 10
-CS = 5.5
+CS = 5
 
 #automatic circle generation
 auto_generate = True
@@ -164,8 +164,12 @@ class Game():
             return circles
 
     def Run(self):
+        self.menu = menu.Menu(g)
         global DEBUG_MODE
         global DEBUG_EXCEPTION
+
+        if not self.menu.start:
+            self.menu.Run()
         
         if not auto_generate:
             m = map.Map(DEBUG_MODE)
@@ -334,3 +338,4 @@ if __name__ == '__main__':
 #add miss animation (use image.alpha operations)
 #improve performance/make more Surfaces
 #move combo, health and whole interface to different class
+#edit random texture select from all textures in folder
