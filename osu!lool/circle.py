@@ -19,8 +19,6 @@ class Circle(object):
 
 		g = self.game
 
-		Circle.texture_count += 1
-
 		if not Circle.font_textures:
 			Circle.radius = stats.getCS(g.CS)
 			
@@ -37,6 +35,11 @@ class Circle(object):
 		else:
 			pass
 
+		if Circle.texture_count < 9:
+			Circle.texture_count += 1
+		else:
+			Circle.texture_count = 0
+
 	def __str__(self):
 		rep = "Circle at: " + str(self.pos[0]) + "," + str(self.pos[1]) + ". At time: " + str(self.time)
 
@@ -45,15 +48,15 @@ class Circle(object):
 	def Draw(self):
 		g = self.game
 
-		pygame.draw.circle(self.surface, color.white, self.pos, Circle.radius, 2)
-		pygame.draw.circle(self.surface, color.gray, self.pos, (Circle.radius + 1), 1)
-			
-		if Circle.texture_count > 9:
-			g.health += 10
-			Circle.texture_count = 0
+		if g.time == self.time:
+			pygame.draw.circle(self.surface, color.green, self.pos, Circle.radius, 2)
+			pygame.draw.circle(self.surface, color.gray, self.pos, (Circle.radius + 1), 1)
+		else:
+			pygame.draw.circle(self.surface, color.white, self.pos, Circle.radius, 2)
+			pygame.draw.circle(self.surface, color.gray, self.pos, (Circle.radius + 1), 1)
 
 		font_position = (self.pos[0] - Circle.radius, self.pos[1] - Circle.radius)
-		self.surface.blit(self.font_textures[self.texture_count], font_position)
+		self.surface.blit(Circle.font_textures[self.texture_count], font_position)
 		
 	def Collide(self):
 		"""

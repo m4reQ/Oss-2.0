@@ -40,15 +40,15 @@ darken_percent = 0.50
 mouse_visible = False
 
 #circle approach rate
-AR = 10
+AR = 9.5
 
 #circle size
 MIN_CS = 1
 MAX_CS = 10
-CS = 5.5
+CS = 4
 
 #automatic circle generation
-auto_generate = True
+auto_generate = False
 
 #error log file
 logf = open('log.txt', 'w+')
@@ -194,8 +194,10 @@ class Game():
             self.Time()
             self.Clicks()
 
-            if DEBUG_MODE and len(self.circles) < 5:
+            if DEBUG_MODE and len(self.circles) < 10:
                 print(self.circles)
+            if DEBUG_MODE:
+                print(len(self.circles))
 
             pygame.display.update()
             self.time = pygame.time.get_ticks()
@@ -252,7 +254,8 @@ class Game():
                     
             self.is_running = False
 
-        for event in events:                
+        for event in events: 
+            self.cursor_pos = pygame.mouse.get_pos()               
             if event.type == pygame.QUIT:
                 if DEBUG_MODE:
                     DEBUG_EXCEPTION = "User interruption by closing window"
@@ -264,8 +267,6 @@ class Game():
             self.is_running = False
 
     def Cursor(self):
-        self.cursor_pos = pygame.mouse.get_pos()
-        
         self.win.blit(self.cursor_texture, (self.cursor_pos[0] - self.cursor_texture.get_width()/2, self.cursor_pos[1] - self.cursor_texture.get_height()/2))
 
     def Combo(self):
@@ -324,9 +325,8 @@ if __name__ == '__main__':
         logf.write(traceback.format_exc())
         print(traceback.format_exc())
         logf.close()
-        if not DEBUG_MODE:
-            pygame.quit()
-            quit()
+        pygame.quit()
+        quit()
 
         os.system('pause >NUL')
     
