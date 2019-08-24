@@ -51,16 +51,13 @@ CS = 5.5
 auto_generate = True
 
 #error log file
-logf = open("log.txt", "w")
+logf = open('log.txt', 'w+')
 
 #debug mode
 DEBUG_MODE = True
-DEBUG_EXCEPTION = ""
+DEBUG_EXCEPTION = ''
 
 #####STATICS#####
-
-#window initialization
-win = None 
 
 #textures loading
 cursor_texture = None
@@ -72,8 +69,12 @@ bg_surf = None
 pg_surf = None
 dark = None
 
-def Initialize_window():
-    global win, cursor_texture, miss_texture, bg_texture, bg_surf, pg_surf, dark, mouse_visible
+def Initialize_window(width, height):
+    """
+    rtype: int, int
+    returns: pygame.Surface
+    """
+    global cursor_texture, miss_texture, bg_texture, bg_surf, pg_surf, dark, mouse_visible
     pygame.init()
 
     pygame.mouse.set_visible(mouse_visible)
@@ -100,21 +101,23 @@ def Initialize_window():
     dark = pygame.Surface(bg_texture.get_size()).convert_alpha()
     dark.fill((0, 0, 0, darken_percent*255))
 
+    return win
+
 class Game():
     def __init__(self, width, height):
         self.time = 0
         self.width = width
         self.height = height
-        self.win = win
+        self.win = Initialize_window(self.width, self.height)
         self.is_running = True
         self.click_count = 0
         self.circles = []
         self.cursor_pos = (0, 0)
         self.playfield = {
-        'topX': (self.width / 10),                      #top right X
-        'topY': (self.height / 10),                     #top right Y
-        'bottomX': (self.width - self.width / 10),      #bottom left X
-        'bottomY': (self.height - self.height / 10)}    #bottom left Y
+        'topX': (self.width / 10),                      #top X
+        'topY': (self.height / 10),                     #top Y
+        'bottomX': (self.width - self.width / 10),      #bottom X
+        'bottomY': (self.height - self.height / 10)}    #bottom Y
         self.points = 0
         self.combo = 0
         self.combo_color = color.white
@@ -311,8 +314,6 @@ class Game():
 if __name__ == '__main__':
     try:
         update.Check_version()
-
-        Initialize_window()
         
         g = Game(width, height)
         clock = pygame.time.Clock()
