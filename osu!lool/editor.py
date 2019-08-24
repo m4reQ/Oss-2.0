@@ -24,7 +24,7 @@ mouse_visible = False
 cursor_texture = None
 
 #register mode
-reg_mode = 't'
+reg_mode = 'p'
 
 #save files
 timef = open(os.path.join('maps', 'time.txt'), 'w+')
@@ -60,7 +60,7 @@ class Editor():
 		self.cursor_texture = cursor_texture
 		self.cursor_pos = (0, 0)
 		self.time = 0
-		self.last_reg = (0, 0)
+		self.last_regs = [(0, 0), (0, 0)]
 
 	def Run(self):
 		global i
@@ -69,12 +69,14 @@ class Editor():
 		i = 0
 		while self.is_running:
 			self.win.blit(dark, (0, 0))
-			self.Cursor()
 			self.Time()
-			self.Point()
+			self.Point(color.red, self.last_regs[0])
+			self.Point(color.green, self.last_regs[1])
+			self.Cursor()
 
 			events = pygame.event.get()
 			for event in events:
+				self.cursor_pos = pygame.mouse.get_pos()
 				if event.type == pygame.QUIT:
 					self.is_running = False
 				if event.type == pygame.KEYDOWN:
@@ -82,8 +84,6 @@ class Editor():
 						if self.cursor_pos[0] > self.playfield['topX'] and self.cursor_pos[0] < self.playfield['bottomX']:
 							if self.cursor_pos[1] > self.playfield['topY'] and self.cursor_pos[1] < self.playfield['bottomY']:
 								self.Click()
-
-			self.cursor_pos = pygame.mouse.get_pos()
 
 			pygame.display.update()
 			self.time = pygame.time.get_ticks()
@@ -101,10 +101,15 @@ class Editor():
 
 		if reg_mode == 't':
 			timef.write(str(i) + '. Object at time: ' + str(self.time) + '\n')
+
 			i += 1
 		elif reg_mode == 'p':
 			posf.write(str(i) + '. Object at position: ' + str(self.cursor_pos) + '\n')
-			self.last_reg = self.cursor_pos
+			last_reg = self.cursor_pos
+
+			self.last_regs[0] = self.last_regs[1]
+			self.last_regs[1] = last_reg
+
 			i += 1
 		else:
 			print('Wrong register mode! Changing register mode to "time".')
@@ -117,8 +122,8 @@ class Editor():
 
 		self.win.blit(text, pos)
 
-	def Point(self):
-		pygame.draw.circle(self.win, color.red, self.last_reg, 2)
+	def Point(self, color, pos):
+		pygame.draw.circle(self.win, color, pos, 2)
 
 if __name__ == '__main__':
 	e = Editor(width, height)
