@@ -20,20 +20,20 @@ class Map():
 
 			return DEBUG_EXCEPTION
 		
-		f = open('maps/' + file + '.txt', "r")
-		if not f.mode == 'r':
-			if DEBUG_MODE:
-				DEBUG_EXCEPTION = "File doesn't have assigned required usage mode."
+		with open('maps/' + file + '.txt', "r") as f:
+			if not f.mode == 'r':
+				if DEBUG_MODE:
+					DEBUG_EXCEPTION = "File doesn't have assigned required usage mode."
 
-			return DEBUG_EXCEPTION
+				return DEBUG_EXCEPTION
 			
-		data = []
-		for line in f.readlines():
-			if str(line) == '#':
-				f.close()
-				break
-			else:
-				data.append(line)
+			data = []
+			for line in f.readlines():
+				if str(line) == '#':
+					f.close()
+					break
+				else:
+					data.append(line)
 
 		try:
 			for element in data:

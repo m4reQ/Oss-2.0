@@ -8,6 +8,12 @@ class Circle(object):
 
 	texture_count = 0
 	font_textures = []
+	radius = 0
+
+	def Load_texture(texPath, texNumber=0):
+		texture = pygame.image.load(f'{texPath}\{texNumber}.png')
+		texture = pygame.transform.scale(texture, (Circle.radius*2, Circle.radius*2))
+		return texture
 	
 	def __init__(self, surf, X, Y, time, g):
 		self.surface = surf
@@ -21,11 +27,10 @@ class Circle(object):
 
 		if not Circle.font_textures:
 			Circle.radius = stats.getCS(g.CS)
-			
+
 			i = 0
 			while i < 10:
-				texture = pygame.image.load('textures/circles/' + str(i) + '.png')
-				texture = pygame.transform.scale(texture, (Circle.radius*2, Circle.radius*2))
+				texture = Circle.Load_texture('textures/circles', i)
 				Circle.font_textures.append(texture)
 				i += 1
 
@@ -85,12 +90,12 @@ class Circle(object):
 		g = self.game
 
 		g.combo = 0
-		g.health -= 10
+		g.health -= stats.getHP(g.HP) * 100
 
-		miss_pos = pygame.mouse.get_pos()
+		# miss_pos = pygame.mouse.get_pos()
 
-		#img = g.miss_texture
-		#self.surface.blit(img, (miss_pos[0]-self.radius, miss_pos[1]-self.radius))
+		# img = game.miss_texture
+		# self.surface.blit(img, (miss_pos[0]-self.radius, miss_pos[1]-self.radius))
 
 if __name__ == '__main__':
 	pygame.quit()
