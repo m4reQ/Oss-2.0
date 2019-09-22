@@ -11,7 +11,7 @@ class Circle(object):
 	radius = 0
 
 	def Load_texture(texPath, texNumber=0):
-		texture = pygame.image.load(f'{texPath}\{texNumber}.png')
+		texture = pygame.image.load(texPath + '/' + texNumber + '.png')
 		texture = pygame.transform.scale(texture, (Circle.radius*2, Circle.radius*2))
 		return texture
 	

@@ -55,11 +55,10 @@ def Check_pip():
 
 def main(args):
     """
-    rtype: string
+    rtype: array
     returns: none
     """
-    global ver
-    if not ver[0] == 3 and not ver[1] >= 4 and not Check_pip():
+    if not (ver[0], ver[1]) == (3, 4): # and not Check_pip():
         print("You don't have required python version")
         print("Go to a python official website to download latest versions. https://www.python.org/downloads")
         os.system('pause >NUL')

@@ -10,14 +10,14 @@ try:
     ext_modules = ['requests', 'pygame']
     os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
     import repair, update, circle, map
-    import requests
-    import pygame
+    from helper import *
     import time
     import random
     import traceback
     import concurrent.futures
     import math
-    from helper import *
+    import requests
+    import pygame
 except ImportError:
     print('Error! One of modules cannot be resolved. \nTry restarting your application or reinstalling it.')
     if repair.Check_response():
@@ -363,7 +363,7 @@ class Game():
 
     def FPSCounter(self):
         font = pygame.font.SysFont("comicsansms", 12)
-        string = f'Render time: {self.render_time}s | FPS: {self.fps}'
+        string = 'Render time: ' + str(self.render_time) + 's | FPS: ' + str(self.fps)
         text = font.render(string, True, color.white)
         pos = (self.playfield['topX'] + len(string) * 12, self.playfield['bottomY'] - 24)
 
