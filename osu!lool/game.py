@@ -18,6 +18,7 @@ try:
     import math
     import requests
     import pygame
+    import pygame.locals
 except ImportError:
     print('Error! One of modules cannot be resolved. \nTry restarting your application or reinstalling it.')
     if repair.Check_response():
@@ -38,7 +39,7 @@ resolution = resolutions['SD']
 full_screen = False
 
 #background dimming
-darken_percent = 0.50
+darken_percent = 0.9
 
 #mouse visibility
 mouse_visible = False
@@ -48,14 +49,12 @@ mouse_visible = False
 AR = 5
 
 #circle size
-MIN_CS = 1
-MAX_CS = 10
-CS = 4
+#min = 0, max = 10
+CS = 5
 
 #hp drop
-MIN_HP = 0
-MAX_HP = 10
-HP = 10
+#min = 0, max = 10
+HP = 5
 
 #automatic circle generation
 auto_generate = True
@@ -66,6 +65,11 @@ logf = open('log.txt', 'w+')
 #debug mode
 DEBUG_MODE = False
 DEBUG_EXCEPTION = ''
+
+#test mode
+#Enable if you want to test certain methods
+#instead of running whole program.
+TEST_MODE = False
 
 #####STATICS#####
 #clock
@@ -83,6 +87,7 @@ dark = None
 
 def Initialize_window(width, height):
     """
+    Initializes application window
     rtype: int, int
     returns: pygame.Surface
     """
@@ -90,16 +95,18 @@ def Initialize_window(width, height):
     pygame.init()
 
     pygame.mouse.set_visible(mouse_visible)
+
     if full_screen:
         try: 
-            win = pygame.display.set_mode((width, height), pygame.FULLSCREEN)
+            win = pygame.display.set_mode((width, height), pygame.FULLSCREEN|pygame.DOUBLEBUF|pygame.HWSURFACE)
         except Exception:
             print('Cannot set window, because resolution is too high.')
             logf.close()
             pygame.quit()
             quit()
+            
     else:
-        win = pygame.display.set_mode((width, height))
+        win = pygame.display.set_mode((width, height), pygame.DOUBLEBUF|pygame.HWSURFACE)
 
     
     cursor_texture = pygame.image.load('textures/cursor.png')
@@ -127,24 +134,29 @@ def Initialize_window(width, height):
 
     return win
 
+class RootException(BaseException):
+    def __init__(self):
+        print('Program stopped.')
+        pygame.quit()
+        quit()
+
 class Game():
     def __init__(self, res):
         self.time = 0
-        self.width = res[0]
-        self.height = res[1]
+        self.width, self.height = res
         self.win = Initialize_window(self.width, self.height)
         self.is_running = True
         self.click_count = 0
         self.circles = []
         self.cursor_pos = (0, 0)
         self.playfield = {
-        'topX': (self.width / 10),                      #top X
-        'topY': (self.height / 10),                     #top Y
-        'bottomX': (self.width - self.width / 10),      #bottom X
-        'bottomY': (self.height - self.height / 10)}    #bottom Y
+        'topX': (self.width / 10),                                                     #top X
+        'topY': (self.height / 10),                                                  #top Y
+        'bottomX': (self.width - self.width / 10),             #bottom X
+        'bottomY': (self.height - self.height / 10)}        #bottom Y
         self.points = 0
         self.combo = 0
-        self.combo_color = color.white
+        self.combo_color = color.random()
         self.cursor_texture = cursor_texture
         self.miss_texture = miss_texture
         self.maxhealth = 100
@@ -155,16 +167,17 @@ class Game():
         self.render_time = 0
         self.fps = 0
         self.events = pygame.event.get()
+        #self.cursorRect = None
 
-        if self.CS < MIN_CS:
-            self.CS = MIN_CS
-        elif self.CS > MAX_CS:
-            self.CS = MAX_CS
+        if self.CS < 1:
+            self.CS = 1
+        elif self.CS > 10:
+            self.CS = 10
 
-        if self.HP < MIN_HP:
-            self.HP = MIN_HP
-        elif self.HP > MAX_HP:
-            self.HP = MAX_HP
+        if self.HP < 0:
+            self.HP = 0
+        elif self.HP > 10:
+            self.HP = 10
 
     def Make_map(self, data):
         """
@@ -186,7 +199,7 @@ class Game():
 
                     ptr += 3
 
-                    obj = circle.Circle(self.win, posX, posY, time, g)
+                    obj = circle.Circle(posX, posY, time)
                     circles.append(obj)
                 except IndexError:
                     if DEBUG_MODE:
@@ -218,7 +231,7 @@ class Game():
         while self.is_running:
             if auto_generate:
                 if len(self.circles) <= 1:
-                    obj = circle.Circle(self.win, random.randint(int(self.playfield['topX'] + radius), int(self.playfield['bottomX'] - radius)), random.randint(int(self.playfield['topX'] + radius), int(self.playfield['bottomY'] - radius)), None , g)
+                    obj = circle.Circle(random.randint(int(self.playfield['topX'] + radius), int(self.playfield['bottomX'] - radius)), random.randint(int(self.playfield['topX'] + radius), int(self.playfield['bottomY'] - radius)), None)
                     self.circles.append(obj)
 
             start = time.perf_counter()
@@ -257,8 +270,7 @@ class Game():
                     DEBUG_EXCEPTION = "self.health reached " + str(self.health)
                 self.is_running = False
 
-            pygame.display.update()
-
+            pygame.display.flip()
             clock.tick()
             finish = time.perf_counter()
 
@@ -276,6 +288,23 @@ class Game():
         pygame.quit()
         quit()
 
+    def Hit(self):
+        self.combo += 1
+        self.points += (self.combo * 300)
+        self.combo_color = color.random()
+        if self.combo >= 5:
+            self.health += stats.getHP(self.HP) * 50
+
+    def Miss(self):
+        self.combo = 0
+        self.health -= stats.getHP(self.HP) * 100
+
+        miss_pos = self.cursor_pos
+
+        img = self.miss_texture
+        self.surface.blit(img, miss_pos)
+
+
     def Draw(self):
         global DEBUG_MODE
         global DEBUG_EXCEPTION
@@ -284,39 +313,39 @@ class Game():
         self.win.blit(dark, (0, 0))
 
         for circle in self.circles:
-                if not auto_generate:
-                    if self.time >= circle.time and self.time <= circle.time + stats.getAR(self.AR):
-                        circle.Draw()
-                        for event in self.events:
-                            if event.type == pygame.KEYDOWN:
-                                if event.key == pygame.K_z or event.key == pygame.K_x:
-                                    if circle.Collide():
-                                        circle.Hit()
-                                        self.circles.remove(circle)
-                                    if not circle.Collide():
-                                        self.circles.remove(circle)
-                                        circle.Miss()
-
-                                    self.click_count += 1
-                    elif self.time >= circle.time + stats.getAR(self.AR):
-                        self.circles.remove(circle)
-                        circle.Miss()
-                else:
-                    circle.Draw()
+            circle.Draw(self.win)
+            if not auto_generate:
+                if self.time >= circle.time and self.time <= circle.time + stats.getAR(self.AR):
                     for event in self.events:
                         if event.type == pygame.KEYDOWN:
                             if event.key == pygame.K_z or event.key == pygame.K_x:
-                                if circle.Collide():
-                                    circle.Hit()
+                                if circle.Collide(self.cursor_pos):
+                                    self.Hit()
                                     self.circles.remove(circle)
-                                if not circle.Collide():
+                                if not circle.Collide(self.cursor_pos):
+                                    self.Miss()
                                     self.circles.remove(circle)
-                                    circle.Miss()
 
                                 self.click_count += 1
+                elif self.time >= circle.time + stats.getAR(self.AR):
+                    self.circles.remove(circle)
+                    self.Miss()
+            else:
+                for event in self.events:
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_z or event.key == pygame.K_x:
+                            if circle.Collide(self.cursor_pos):
+                                self.Hit()
+                                self.circles.remove(circle)
+                            if not circle.Collide(self.cursor_pos):
+                                self.Miss()
+                                self.circles.remove(circle)
+
+                            self.click_count += 1
 
     def Cursor(self):
         self.win.blit(self.cursor_texture, (self.cursor_pos[0] - self.cursor_texture.get_width()/2, self.cursor_pos[1] - self.cursor_texture.get_height()/2))
+        #self.cursorRect = pygame.Rect((self.cursor_pos[0] - self.cursor_texture.get_width()/2, self.cursor_pos[1] - self.cursor_texture.get_height()/2), (self.cursor_texture.get_width(),  self.cursor_texture.get_height()))
 
     def Combo(self):
         font = pygame.font.SysFont("comicsansms", 48)
@@ -331,8 +360,8 @@ class Game():
     def HealthBar(self):
         self.health -= stats.getHP(self.HP)
 
-        if self.health > 100:
-            self.health = 100
+        if self.health > self.maxhealth:
+            self.health = self.maxhealth
 
         size_bg = (self.width - (2 * self.width/10), 30)
         pos = (self.width/10, 0)
@@ -369,46 +398,11 @@ class Game():
 
         self.win.blit(text, pos)
 
-class Interface():
-    time = None
-    clicks = None
-    fps = None
-    health = None
-    combo = None
-
-    font = None
-
-    def __init__(self, game):
-        self.g = game
-
-    def setFont(size):
-        """
-        rtype: int
-        returns: None
-        """
-        font = pygame.font.SysFont('comicsansms', size)
-        Interface.font = font
-
-    def setText(text, color):
-        """
-        rtype: str, tuple(3xE)
-        returns: None
-        """
-        return Interface.font.render(text, True, color)
-
-    def FPSCounter():
-        pass
-
-    def Draw(win, *args):
-        """
-        rtype: pygame.Surface, function
-        """
-        for e in args:
-            win.blit(e)
-
-
 if __name__ == '__main__':
     try:
+        if TEST_MODE:
+            raise RootException
+
         update.Check_version()
         
         g = Game(resolution)
