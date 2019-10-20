@@ -18,6 +18,7 @@ class color():
 
 	def random():
 		"""
+		generates random color
 		rtype: none
 		returns: tuple
 		"""
@@ -36,6 +37,7 @@ resolutions = {
 
 def ask(question):
 	"""
+	creates a (Y/N) question with given question string
 	rtype:string
 	returns: bool
 	"""
@@ -50,11 +52,9 @@ def ask(question):
 			return False
 
 class stats():
-	def __init__(self):
-		pass
-
 	def getCS(CS):
 		"""
+		calculates circle size
 		rtype: float
 		returns: int
 		"""
