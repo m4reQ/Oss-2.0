@@ -258,9 +258,9 @@ class Game():
         self.win.blit(dark, (0, 0))
 
         for circle in self.circles:
-            circle.Draw(self.win)
-            if not auto_generate: #in case playing a map       
+            if not auto_generate: #in case playing a map
                 if self.time >= circle.time and self.time <= circle.time + stats.getAR(self.AR):
+                    circle.Draw(self.win)  
                     for event in self.events:
                         if event.type == pygame.KEYDOWN:
                             if event.key == pygame.K_z or event.key == pygame.K_x:
@@ -273,6 +273,7 @@ class Game():
                 elif self.time >= circle.time + stats.getAR(self.AR):
                     circle.Miss(self)
             else: #in case playing in auto generate mode
+                circle.Draw(self.win)  
                 for event in self.events:
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_z or event.key == pygame.K_x:
