@@ -2,6 +2,7 @@ import pygame
 import random
 import game
 from helper import *
+import math
 
 class Circle():
 
@@ -53,17 +54,13 @@ class Circle():
 		
 	def Collide(self, cursor_pos):
 		"""
+		checks if clicked point is inside a circle
 		rtype: tuple
 		returns: bool
 		"""
 
-		if cursor_pos[0] > (self.pos[0] - Circle.radius) and cursor_pos[1] > (self.pos[1] - Circle.radius):
-			if cursor_pos[0] < (self.pos[0] + Circle.radius) and cursor_pos[1] < (self.pos[1] + Circle.radius):
-				return True
-			else:
-				return False
-		else:
-			return False
+		dist = math.sqrt((self.pos[0] - cursor_pos[0])**2 + (self.pos[1] - cursor_pos[1])**2)
+		return dist <= self.radius
 
 if __name__ == '__main__':
 	pygame.quit()

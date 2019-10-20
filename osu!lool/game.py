@@ -314,7 +314,7 @@ class Game():
 
         for circle in self.circles:
             circle.Draw(self.win)
-            if not auto_generate:
+            if not auto_generate: #in case playing a map
                 if self.time >= circle.time and self.time <= circle.time + stats.getAR(self.AR):
                     for event in self.events:
                         if event.type == pygame.KEYDOWN:
@@ -328,9 +328,9 @@ class Game():
 
                                 self.click_count += 1
                 elif self.time >= circle.time + stats.getAR(self.AR):
-                    self.circles.remove(circle)
                     self.Miss()
-            else:
+                    self.circles.remove(circle)
+            else: #in case playing in auto generate mode
                 for event in self.events:
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_z or event.key == pygame.K_x:
