@@ -79,3 +79,30 @@ class stats():
 		"""
 		hp = (HP+5) * 0.01
 		return hp
+
+def Translate(data, res, mode):
+	"""
+	translates positions of point to unified coordinate system
+	max value in each direction is 1.0 and the min is 0.0
+	available modes are: 0-encode, 1-decode
+	rtype: tuple, tuple, int
+	returns: tuple
+	"""
+
+	x, y = data
+	resX, resY = res
+
+	#encode
+	if mode == 0:
+		uX = x / resX
+		uY = y / resY
+
+		return (uX, uY)
+	#decode
+	elif mode == 1:
+		tX = x * resX
+		tY = y * resY
+
+		return (int(tX), int(tY))
+	else:
+		raise Exception('Invalid translation mode.')

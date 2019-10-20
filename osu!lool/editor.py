@@ -3,20 +3,18 @@ try:
 	import os
 	import traceback
 	from game import resolution
-	from helper import color
+	from helper import *
 	import concurrent.futures
 except Exception:
 	logf = open('log.txt', 'w+')
 	logf.write(traceback.format_exc())
 	logf.close()
 
-	os.system('pause >NUL')
 	pygame.quit()
 	quit()
 
 #debug mode
 DEBUG_MODE = True
-DEBUG_EXCEPTION = ''
 
 #mouse visibility
 mouse_visible = False
@@ -51,15 +49,14 @@ def Initialize_window(width, height):
 
 class Editor():
 	def __init__(self, res):
-		self.width = res[0]
-		self.height = res[1]
+		self.width, self.height = res
 		self.win = Initialize_window(self.width, self.height)
 		self.is_running = True
 		self.playfield = {
-		'topX': (self.width / 10),                      #top X
-		'topY': (self.height / 10),                     #top Y
-		'bottomX': (self.width - self.width / 10),      #bottom X
-		'bottomY': (self.height - self.height / 10)}    #bottom Y
+		'topX': (self.width / 10),					#top X
+		'topY': (self.height / 10),					#top Y
+		'bottomX': (self.width - self.width / 10),		#bottom X
+		'bottomY': (self.height - self.height / 10)}	#bottom Y
 		self.cursor_texture = cursor_texture
 		self.cursor_pos = (0, 0)
 		self.time = 0
@@ -114,7 +111,8 @@ class Editor():
 
 			i += 1
 		elif reg_mode == 'p':
-			posf.write(str(i) + '. Object at position: ' + str(self.cursor_pos[0]) + ', ' + str(self.cursor_pos[1]) + '\n')
+			tpos = Translate(self.cursor_pos, (self.width, self.height), 0)
+			posf.write(str(i) + '. Object at position: ' + str(tpos[0]) + ', ' + str(tpos[1]) + '\n')
 			last_reg = self.cursor_pos
 
 			self.last_regs[0], self.last_regs[1] = self.last_regs[1], last_reg
@@ -144,8 +142,5 @@ if __name__ == '__main__':
 		logf.write(traceback.format_exc())
 		logf.close()
 
-		os.system('pause >NUL')
 		pygame.quit()
 		quit()
-
-#repair points display

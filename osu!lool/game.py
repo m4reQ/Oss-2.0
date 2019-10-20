@@ -176,11 +176,10 @@ class Game():
 
     def Run(self):
         global DEBUG_MODE
-        global DEBUG_EXCEPTION
         
         if not auto_generate:
             map_data = map.Load_map('test')
-            self.circles = map.Make_map(map_data)
+            self.circles = map.Make_map(map_data, (self.width, self.height))
             if type(self.circles).__name__ == 'str' or type(self.circles).__name__ == 'NoneType':
                 raise Exception('An error appeared during map loading.')
                 pygame.quit()
@@ -201,7 +200,7 @@ class Game():
             if not self.circles:
                 if DEBUG_MODE:
                     raise Exception('List depleted at: ' + str(self.time) + '.\nObjects list self.circles is empty.')
-                    self.is_running = False
+                self.is_running = False
 
             for event in self.events: 
                 self.cursor_pos = pygame.mouse.get_pos()               

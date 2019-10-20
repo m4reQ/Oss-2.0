@@ -1,5 +1,6 @@
 import pygame
 import circle
+from helper import Translate
 
 is_loaded = False
 
@@ -40,9 +41,9 @@ def Load_map(file):
 
 	return formatted_data
 
-def Make_map(data):
+def Make_map(data, targetRes):
 	"""
-	rtype: array
+	rtype: array, tuple
 	returns: array
 	"""
 	lenght = len(data)
@@ -52,13 +53,15 @@ def Make_map(data):
 	for element in data:
 		while ptr <= lenght-1:
 			try:
-				posX = int(data[ptr])
-				posY = int(data[ptr+1])
+				posX = float(data[ptr])
+				posY = float(data[ptr+1])
 				time = int(data[ptr+2])
 
 				ptr += 3
 
-				obj = circle.Circle(posX, posY, time)
+				tposX, tposY = Translate((posX, posY), targetRes, 1)
+
+				obj = circle.Circle(int(tposX), int(tposY), time)
 				circles.append(obj)
 			except IndexError:
 				raise Exception('Program stopped incorrectly. Cannot make object, invalid map format. \nCannot load map. Maybe map has outdated or invalid format.')
