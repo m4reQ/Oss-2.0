@@ -1,53 +1,66 @@
 import pygame
 import circle
 
-class Map():
-	is_loaded = False
+is_loaded = False
+
+def Load_map(file):
+	"""
+	rtype: string
+	returns: array
+	"""
+	global is_loaded
+	if is_loaded:
+		raise Exception('Map is already loaded.')
 	
-	def __init__(self, mode):
-		global DEBUG_MODE
-		DEBUG_MODE = mode
-
-	def Load_map(self, file):
-		"""
-		rtype: string
-		returns: array
-		"""
-		global DEBUG_MODE
-
-		if Map.is_loaded:
-			DEBUG_EXCEPTION = "Map is already loaded."
-
-			return DEBUG_EXCEPTION
+	with open('maps/' + file + '.txt', "r") as f:
+		if not f.mode == 'r':
+			raise Exception("File doesn't have assigned required usage mode.")
 		
-		with open('maps/' + file + '.txt', "r") as f:
-			if not f.mode == 'r':
-				if DEBUG_MODE:
-					DEBUG_EXCEPTION = "File doesn't have assigned required usage mode."
+		data = []
+		for line in f.readlines():
+			if str(line) == '#':
+				f.close()
+				break
+			else:
+				data.append(line)
 
-				return DEBUG_EXCEPTION
-			
-			data = []
-			for line in f.readlines():
-				if str(line) == '#':
-					f.close()
-					break
-				else:
-					data.append(line)
-
-		try:
-			for element in data:
-				data.remove('\n')
-		except ValueError:
-			pass
-
-		formatted_data = []
+	try:
 		for element in data:
-			new_element = element.split('\n')
-			e = new_element[0]
-			formatted_data.append(e)
+			data.remove('\n')
+	except ValueError:
+		pass
 
-		if DEBUG_MODE:
-			print("Raw circle data sheet: " + str(formatted_data))
+	formatted_data = []
+	for element in data:
+		new_element = element.split('\n')
+		e = new_element[0]
+		formatted_data.append(e)
 
-		return formatted_data
+	is_loaded =True
+
+	return formatted_data
+
+def Make_map(data):
+	"""
+	rtype: array
+	returns: array
+	"""
+	lenght = len(data)
+	ptr = 0
+
+	circles = []
+	for element in data:
+		while ptr <= lenght-1:
+			try:
+				posX = int(data[ptr])
+				posY = int(data[ptr+1])
+				time = int(data[ptr+2])
+
+				ptr += 3
+
+				obj = circle.Circle(posX, posY, time)
+				circles.append(obj)
+			except IndexError:
+				raise Exception('Program stopped incorrectly. Cannot make object, invalid map format. \nCannot load map. Maybe map has outdated or invalid format.')
+
+	return circles

@@ -36,7 +36,7 @@ resolutions = {
 
 def ask(question):
 	"""
-	rtype:string question 
+	rtype:string
 	returns: bool
 	"""
 	q = ''

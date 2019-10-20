@@ -57,14 +57,13 @@ CS = 5
 HP = 5
 
 #automatic circle generation
-auto_generate = True
+auto_generate = False
 
 #error log file
 logf = open('log.txt', 'w+')
 
 #debug mode
 DEBUG_MODE = False
-DEBUG_EXCEPTION = ''
 
 #test mode
 #Enable if you want to test certain methods
@@ -134,12 +133,6 @@ def Initialize_window(width, height):
 
     return win
 
-class RootException(BaseException):
-    def __init__(self):
-        print('Program stopped.')
-        pygame.quit()
-        quit()
-
 class Game():
     def __init__(self, res):
         self.time = 0
@@ -167,7 +160,7 @@ class Game():
         self.render_time = 0
         self.fps = 0
         self.events = pygame.event.get()
-        #self.cursorRect = None
+        self.draw_interface = True
 
         if self.CS < 1:
             self.CS = 1
@@ -179,48 +172,17 @@ class Game():
         elif self.HP > 10:
             self.HP = 10
 
-    def Make_map(self, data):
-        """
-        rtype: array
-        returns: array
-        """
-        global DEBUG_MODE
-        global DEBUG_EXCEPTION
-        lenght = len(data)
-        ptr = 0
-
-        circles = []
-        for element in data:
-            while ptr <= lenght-1:
-                try:
-                    posX = int(data[ptr])
-                    posY = int(data[ptr+1])
-                    time = int(data[ptr+2])
-
-                    ptr += 3
-
-                    obj = circle.Circle(posX, posY, time)
-                    circles.append(obj)
-                except IndexError:
-                    if DEBUG_MODE:
-                        DEBUG_EXCEPTION = "Program stopped incorrectly. Cannot make object, invalid map format."
-                    else:
-                        print("Cannot load map. Maybe map has outdated or invalid format.")
-                
-            return circles
+    
 
     def Run(self):
         global DEBUG_MODE
         global DEBUG_EXCEPTION
         
         if not auto_generate:
-            m = map.Map(DEBUG_MODE)
-            map_data = m.Load_map('test')
-            self.circles = self.Make_map(map_data)
+            map_data = map.Load_map('test')
+            self.circles = map.Make_map(map_data)
             if type(self.circles).__name__ == 'str' or type(self.circles).__name__ == 'NoneType':
-                DEBUG_EXCEPTION = self.circles
-                if DEBUG_MODE:
-                    print("Program stopped incorrectly. Stop cause: " + DEBUG_EXCEPTION)
+                raise Exception('An error appeared during map loading.')
                 pygame.quit()
                 quit()
         else:
@@ -230,45 +192,56 @@ class Game():
 
         while self.is_running:
             if auto_generate:
-                if len(self.circles) <= 1:
-                    obj = circle.Circle(random.randint(int(self.playfield['topX'] + radius), int(self.playfield['bottomX'] - radius)), random.randint(int(self.playfield['topX'] + radius), int(self.playfield['bottomY'] - radius)), None)
+                if len(self.circles) < 1:
+                    obj = circle.Circle(random.randint(int(self.playfield['topX'] + radius), int(self.playfield['bottomX'] - radius)), random.randint(int(self.playfield['topX'] + radius), int(self.playfield['bottomY'] - radius)))
                     self.circles.append(obj)
-
-            start = time.perf_counter()
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                executor.submit(self.Draw)
-                executor.submit(self.HealthBar)
-                executor.submit(self.Combo)
-                executor.submit(self.Cursor)
-                executor.submit(self.Time)
-                executor.submit(self.Clicks)
-                executor.submit(self.FPSCounter)
 
             self.events = pygame.event.get()
 
             if not self.circles:
                 if DEBUG_MODE:
-                    print("List depleted at: " + str(self.time))
-                    DEBUG_EXCEPTION = "Objects list self.circles is empty."
-                    
+                    raise Exception('List depleted at: ' + str(self.time) + '.\nObjects list self.circles is empty.')
                     self.is_running = False
 
             for event in self.events: 
                 self.cursor_pos = pygame.mouse.get_pos()               
                 if event.type == pygame.QUIT:
                     if DEBUG_MODE:
-                        DEBUG_EXCEPTION = "User interruption by closing window"
+                        raise Exception('User interruption by closing window')
                     self.is_running = False
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         if DEBUG_MODE:
-                            DEBUG_EXCEPTION = "User interruption by closing window"
+                            raise Exception('User interruption by closing window')
                         self.is_running = False
+                    if event.key == pygame.K_F10:
+                        self.draw_interface = not self.draw_interface
 
             if self.health <= 0:
                 if DEBUG_MODE:
-                    DEBUG_EXCEPTION = "self.health reached " + str(self.health)
+                    raise Exception('self.health reached ' + str(self.health))
                 self.is_running = False
+
+
+            self.health -= stats.getHP(self.HP)
+            
+            if self.health >= self.maxhealth:
+                self.health = self.maxhealth
+
+            if DEBUG_MODE and len(self.circles) < 10:
+                print(self.circles)
+            if DEBUG_MODE:
+                print(len(self.circles))
+
+            #drawing section
+            #note! don't put anything below this section
+            #it may cause glitches
+            start = time.perf_counter()
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                executor.submit(self.DrawPlayGround)
+                executor.submit(self.DrawCursor)
+                if self.draw_interface:
+                    executor.submit(self.DrawInterface)
 
             pygame.display.flip()
             clock.tick()
@@ -278,76 +251,45 @@ class Game():
             self.render_time = round(finish - start, 3)
             self.time = pygame.time.get_ticks()
 
-            if DEBUG_MODE and len(self.circles) < 10:
-                print(self.circles)
-            if DEBUG_MODE:
-                print(len(self.circles))
-
-        if DEBUG_MODE:
-            print("Program stopped correctly. Stop cause: " + DEBUG_EXCEPTION)
         pygame.quit()
         quit()
 
-    def Hit(self):
-        self.combo += 1
-        self.points += (self.combo * 300)
-        self.combo_color = color.random()
-        if self.combo >= 5:
-            self.health += stats.getHP(self.HP) * 50
-
-    def Miss(self):
-        self.combo = 0
-        self.health -= stats.getHP(self.HP) * 100
-
-        miss_pos = self.cursor_pos
-
-        img = self.miss_texture
-        self.surface.blit(img, miss_pos)
-
-
-    def Draw(self):
-        global DEBUG_MODE
-        global DEBUG_EXCEPTION
-
+    def DrawPlayGround(self):
         self.win.blit(bg_texture, (0, 0))
         self.win.blit(dark, (0, 0))
 
         for circle in self.circles:
-            circle.Draw(self.win)
-            if not auto_generate: #in case playing a map
+            if not auto_generate: #in case playing a map       
                 if self.time >= circle.time and self.time <= circle.time + stats.getAR(self.AR):
+                    circle.Draw(self.win)
                     for event in self.events:
                         if event.type == pygame.KEYDOWN:
                             if event.key == pygame.K_z or event.key == pygame.K_x:
                                 if circle.Collide(self.cursor_pos):
-                                    self.Hit()
-                                    self.circles.remove(circle)
-                                if not circle.Collide(self.cursor_pos):
-                                    self.Miss()
-                                    self.circles.remove(circle)
+                                    circle.Hit(self)
+                                else:
+                                    circle.Miss(self)
 
                                 self.click_count += 1
                 elif self.time >= circle.time + stats.getAR(self.AR):
-                    self.Miss()
-                    self.circles.remove(circle)
+                    circle.Miss(self)
             else: #in case playing in auto generate mode
                 for event in self.events:
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_z or event.key == pygame.K_x:
                             if circle.Collide(self.cursor_pos):
-                                self.Hit()
-                                self.circles.remove(circle)
-                            if not circle.Collide(self.cursor_pos):
-                                self.Miss()
-                                self.circles.remove(circle)
+                                circle.Hit(self)
+                            else:
+                                circle.Miss(self)
 
                             self.click_count += 1
 
-    def Cursor(self):
+    def DrawCursor(self):
         self.win.blit(self.cursor_texture, (self.cursor_pos[0] - self.cursor_texture.get_width()/2, self.cursor_pos[1] - self.cursor_texture.get_height()/2))
-        #self.cursorRect = pygame.Rect((self.cursor_pos[0] - self.cursor_texture.get_width()/2, self.cursor_pos[1] - self.cursor_texture.get_height()/2), (self.cursor_texture.get_width(),  self.cursor_texture.get_height()))
+        # rect = pygame.Rect((self.cursor_pos[0] - self.cursor_texture.get_width()/2, self.cursor_pos[1] - self.cursor_texture.get_height()/2), (self.cursor_texture.get_width(),  self.cursor_texture.get_height()))
 
-    def Combo(self):
+    def DrawInterface(self):
+        #combo
         font = pygame.font.SysFont("comicsansms", 48)
         text = 'points: ' + str(self.points)
         text_points = font.render(text, True, self.combo_color)
@@ -357,12 +299,7 @@ class Game():
         self.win.blit(text_points, (self.width - lenght * 25, (self.height - 70)))
         self.win.blit(text_combo, (10, (self.height - 70)))
 
-    def HealthBar(self):
-        self.health -= stats.getHP(self.HP)
-
-        if self.health > self.maxhealth:
-            self.health = self.maxhealth
-
+        #health
         size_bg = (self.width - (2 * self.width/10), 30)
         pos = (self.width/10, 0)
         bar_bg = pygame.draw.rect(self.win, color.gray, (pos, size_bg))
@@ -375,7 +312,7 @@ class Game():
             size = ((self.playfield['bottomX'] - self.width/10) * self.health/self.maxhealth, 30)
             bar = pygame.draw.rect(self.win, c, (pos, size))
 
-    def Time(self):
+        #time
         font = pygame.font.SysFont("comicsansms", 24)
         time = round((self.time/1000), 2)
         text = font.render('Time: ' + str(time) + 's', True, color.white)
@@ -383,14 +320,14 @@ class Game():
 
         self.win.blit(text, pos)
 
-    def Clicks(self):
+        #clicks counter
         font = pygame.font.SysFont("comicsansms", 24)
         pos = ((self.width - (24*1.5)), (self.height/2))
         text = font.render(str(self.click_count), True, color.white)
 
         self.win.blit(text, pos)
 
-    def FPSCounter(self):
+        #fps counter
         font = pygame.font.SysFont("comicsansms", 12)
         string = 'Render time: ' + str(self.render_time) + 's | FPS: ' + str(self.fps)
         text = font.render(string, True, color.white)
@@ -401,7 +338,7 @@ class Game():
 if __name__ == '__main__':
     try:
         if TEST_MODE:
-            raise RootException
+            raise Exception('Test mode enabled.')
 
         update.Check_version()
         
