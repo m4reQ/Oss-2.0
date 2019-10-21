@@ -240,7 +240,11 @@ class Game():
                 executor.submit(self.DrawPlayGround)
                 executor.submit(self.DrawCursor)
                 if self.draw_interface:
-                    executor.submit(self.DrawInterface)
+                    executor.submit(self.DrawHealthBar)
+                    executor.submit(self.DrawCursor)
+                    executor.submit(self.DrawCombo)
+                    executor.submit(self.DrawTime)
+                    executor.submit(self.DrawFPSCounter)
 
             pygame.display.flip()
             clock.tick()
@@ -258,7 +262,7 @@ class Game():
         self.win.blit(dark, (0, 0))
 
         for circle in self.circles:
-            if not auto_generate: #in case playing a map
+            if not auto_generate: #in case of playing a map
                 if self.time >= circle.time and self.time <= circle.time + stats.getAR(self.AR):
                     circle.Draw(self.win)  
                     for event in self.events:
@@ -272,7 +276,7 @@ class Game():
                                 self.click_count += 1
                 elif self.time >= circle.time + stats.getAR(self.AR):
                     circle.Miss(self)
-            else: #in case playing in auto generate mode
+            else: #in case of playing in auto generate mode
                 circle.Draw(self.win)  
                 for event in self.events:
                     if event.type == pygame.KEYDOWN:
@@ -288,8 +292,7 @@ class Game():
         self.win.blit(self.cursor_texture, (self.cursor_pos[0] - self.cursor_texture.get_width()/2, self.cursor_pos[1] - self.cursor_texture.get_height()/2))
         # rect = pygame.Rect((self.cursor_pos[0] - self.cursor_texture.get_width()/2, self.cursor_pos[1] - self.cursor_texture.get_height()/2), (self.cursor_texture.get_width(),  self.cursor_texture.get_height()))
 
-    def DrawInterface(self):
-        #combo
+    def DrawCombo(self):
         font = pygame.font.SysFont("comicsansms", 48)
         text = 'points: ' + str(self.points)
         text_points = font.render(text, True, self.combo_color)
@@ -299,7 +302,7 @@ class Game():
         self.win.blit(text_points, (self.width - lenght * 25, (self.height - 70)))
         self.win.blit(text_combo, (10, (self.height - 70)))
 
-        #health
+    def DrawHealthBar(self):
         size_bg = (self.width - (2 * self.width/10), 30)
         pos = (self.width/10, 0)
         bar_bg = pygame.draw.rect(self.win, color.gray, (pos, size_bg))
@@ -312,7 +315,7 @@ class Game():
             size = ((self.playfield['bottomX'] - self.width/10) * self.health/self.maxhealth, 30)
             bar = pygame.draw.rect(self.win, c, (pos, size))
 
-        #time
+    def DrawTime(self):
         font = pygame.font.SysFont("comicsansms", 24)
         time = round((self.time/1000), 2)
         text = font.render('Time: ' + str(time) + 's', True, color.white)
@@ -320,14 +323,14 @@ class Game():
 
         self.win.blit(text, pos)
 
-        #clicks counter
+    def DrawClicksCounter(self):
         font = pygame.font.SysFont("comicsansms", 24)
         pos = ((self.width - (24*1.5)), (self.height/2))
         text = font.render(str(self.click_count), True, color.white)
 
         self.win.blit(text, pos)
 
-        #fps counter
+    def DrawFPSCounter(self):
         font = pygame.font.SysFont("comicsansms", 12)
         string = 'Render time: ' + str(self.render_time) + 's | FPS: ' + str(self.fps)
         text = font.render(string, True, color.white)
@@ -351,10 +354,7 @@ if __name__ == '__main__':
             print(traceback.format_exc())
         pygame.quit()
         quit()
-
-        os.system('pause >NUL')
     
 #finish making clicks display and make background for it
 #add miss animation (use image.alpha operations)
 #improve performance/make more Surfaces
-#move combo, health and whole interface to different class

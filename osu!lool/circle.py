@@ -37,6 +37,11 @@ class Circle():
 
 	@staticmethod
 	def Load_texture(texPath, texNumber=0):
+		"""
+		loads texture to pygame image objects
+		rtype: string, int
+		returns: pygame.Image
+		"""
 		texture = pygame.image.load(texPath + '/' + str(texNumber) + '.png')
 		texture = pygame.transform.scale(texture, (Circle.radius*2, Circle.radius*2))
 		return texture
@@ -71,10 +76,6 @@ class Circle():
 		game.health -= stats.getHP(game.HP) * 100
 
 		game.circles.remove(self)
-
-	def getRect(self):
-		rect = pygame.Rect(((self.pos[0] - self.radius),(self.pos[1] - self.radius)), (self.radius*2,self.radius*2))
-		return rect
 
 if __name__ == '__main__':
 	pygame.quit()

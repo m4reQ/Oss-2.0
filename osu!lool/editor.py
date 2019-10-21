@@ -33,9 +33,10 @@ clock = pygame.time.Clock()
 
 def Initialize_window(width, height):
 	"""
-    rtype: int, int
-    returns: pygame.Surface
-    """
+	Initializes application window
+	rtype: int, int
+	returns: pygame.Surface
+	"""
 	global cursor_texture
 	pygame.init()
 
@@ -64,11 +65,11 @@ class Editor():
 		self.events = []
 
 	def Run(self):
-		global i
-		dark = pygame.Surface((self.width, self.height))
-		dark.fill((0, 0, 0))
-
+		global i 
 		i = 0
+		dark = pygame.Surface((self.width, self.height))
+		dark.fill(color.black)
+
 		while self.is_running:
 			self.win.blit(dark, (0, 0))
 
@@ -103,6 +104,7 @@ class Editor():
 
 	def Click(self):
 		global reg_mode, i
+
 		if DEBUG_MODE:
 			print('Last registered: ' + str(self.time) + ', ' + str(self.cursor_pos))
 
@@ -130,7 +132,7 @@ class Editor():
 		self.win.blit(text, pos)
 
 	def Point(self, win, color, pos):
-		pygame.draw.circle(win, color, pos, 2)
+		pygame.draw.circle(win, color, pos, 3)
 
 if __name__ == '__main__':
 	try:

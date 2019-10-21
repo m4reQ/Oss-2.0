@@ -3,9 +3,6 @@ import random
 import ctypes
 
 class color():
-	def __init__(self):
-		pass
-
 	red = (255,0,0)
 	green = (0,255,0)
 	blue = (0,0,255)
@@ -66,6 +63,7 @@ class stats():
 
 	def getAR(AR):
 		"""
+		calculates circle approach speed
 		rtype: float
 		returns: int
 		"""
@@ -74,6 +72,7 @@ class stats():
 
 	def getHP(HP):
 		"""
+		calculates hp units
 		rtype: float
 		returns: float
 		"""
@@ -82,7 +81,7 @@ class stats():
 
 def Translate(data, res, mode):
 	"""
-	translates positions of point to unified coordinate system
+	translates position of point to unified coordinate system
 	max value in each direction is 1.0 and the min is 0.0
 	available modes are: 0-encode, 1-decode
 	rtype: tuple, tuple, int
@@ -106,3 +105,12 @@ def Translate(data, res, mode):
 		return (int(tX), int(tY))
 	else:
 		raise Exception('Invalid translation mode.')
+
+def getRect(self):
+	"""
+	returns rectangle area of a drawable
+	rtype: none
+	returns: pygame.Rect
+	"""
+	rect = pygame.Rect(((self.pos[0] - self.radius),(self.pos[1] - self.radius)), (self.radius*2,self.radius*2))
+	return rect
