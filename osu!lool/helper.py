@@ -1,10 +1,8 @@
 import math
 import random
+import ctypes
 
 class color():
-	def __init__(self):
-		pass
-
 	red = (255,0,0)
 	green = (0,255,0)
 	blue = (0,0,255)
@@ -17,15 +15,27 @@ class color():
 
 	def random():
 		"""
+		generates random color
 		rtype: none
 		returns: tuple
 		"""
 		color = (random.randint(0,225), random.randint(0,225), random.randint(0,225))
 		return color
 
+user32 = ctypes.windll.user32
+
+resolutions = {
+	'SD': (640, 480),
+	'HD': (1360, 768),
+	'FHD': (1920, 1080),
+	'4K': (3840, 2160),
+	'native': (user32.GetSystemMetrics(0), user32.GetSystemMetrics(1))
+}
+
 def ask(question):
 	"""
-	rtype:string question 
+	creates a (Y/N) question with given question string
+	rtype:string
 	returns: bool
 	"""
 	q = ''
@@ -39,11 +49,9 @@ def ask(question):
 			return False
 
 class stats():
-	def __init__(self):
-		pass
-
 	def getCS(CS):
 		"""
+		calculates circle size
 		rtype: float
 		returns: int
 		"""
@@ -55,9 +63,54 @@ class stats():
 
 	def getAR(AR):
 		"""
+		calculates circle approach speed
 		rtype: float
 		returns: int
 		"""
 		ar = int(2000/(AR/3))
 		return ar
 
+	def getHP(HP):
+		"""
+		calculates hp units
+		rtype: float
+		returns: float
+		"""
+		hp = (HP+5) * 0.01
+		return hp
+
+def Translate(data, res, mode):
+	"""
+	translates position of point to unified coordinate system
+	max value in each direction is 1.0 and the min is 0.0
+	available modes are: 0-encode, 1-decode
+	rtype: tuple, tuple, int
+	returns: tuple
+	"""
+
+	x, y = data
+	resX, resY = res
+
+	#encode
+	if mode == 0:
+		uX = x / resX
+		uY = y / resY
+
+		return (uX, uY)
+	#decode
+	elif mode == 1:
+		tX = x * resX
+		tY = y * resY
+
+		return (int(tX), int(tY))
+	else:
+		raise Exception('Invalid translation mode.')
+
+def getRect(self):
+	"""
+	returns rectangle area of a drawable
+	rtype: none
+	returns: pygame.Rect
+	"""
+	rect = pygame.Rect(((self.pos[0] - self.radius),(self.pos[1] - self.radius)), (self.radius*2,self.radius*2))
+	return rect

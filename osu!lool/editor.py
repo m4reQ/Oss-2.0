@@ -2,20 +2,19 @@ try:
 	import pygame
 	import os
 	import traceback
-	from game import width, height
-	from helper import color
+	from game import resolution
+	from helper import *
+	import concurrent.futures
 except Exception:
 	logf = open('log.txt', 'w+')
 	logf.write(traceback.format_exc())
 	logf.close()
 
-	os.system('pause >NUL')
 	pygame.quit()
 	quit()
 
 #debug mode
 DEBUG_MODE = True
-DEBUG_EXCEPTION = ''
 
 #mouse visibility
 mouse_visible = False
@@ -30,52 +29,59 @@ reg_mode = 'p'
 timef = open(os.path.join('maps', 'time.txt'), 'w+')
 posf = open(os.path.join('maps','position.txt'), 'w+')
 
+clock = pygame.time.Clock()
+
 def Initialize_window(width, height):
 	"""
-    rtype: int, int
-    returns: pygame.Surface
-    """
+	Initializes application window
+	rtype: int, int
+	returns: pygame.Surface
+	"""
 	global cursor_texture
 	pygame.init()
 
 	pygame.mouse.set_visible(mouse_visible)
 
-	win = pygame.display.set_mode((width, height))
+	win = pygame.display.set_mode((width, height), pygame.HWSURFACE|pygame.DOUBLEBUF)
 	cursor_texture = pygame.image.load('textures/cursor.png')
 	cursor_texture = pygame.transform.scale(cursor_texture, (16, 16))
 
 	return win
 
 class Editor():
-	def __init__(self, width, height):
-		self.width = width
-		self.height = height
+	def __init__(self, res):
+		self.width, self.height = res
 		self.win = Initialize_window(self.width, self.height)
 		self.is_running = True
 		self.playfield = {
-		'topX': (self.width / 10),                      #top X
-		'topY': (self.height / 10),                     #top Y
-		'bottomX': (self.width - self.width / 10),      #bottom X
-		'bottomY': (self.height - self.height / 10)}    #bottom Y
+		'topX': (self.width / 10),					#top X
+		'topY': (self.height / 10),					#top Y
+		'bottomX': (self.width - self.width / 10),		#bottom X
+		'bottomY': (self.height - self.height / 10)}	#bottom Y
 		self.cursor_texture = cursor_texture
 		self.cursor_pos = (0, 0)
 		self.time = 0
 		self.last_regs = [(0, 0), (0, 0)]
+		self.events = []
 
 	def Run(self):
-		global i
-		dark = pygame.Surface((width, height))
-		dark.fill((0, 0, 0))
+		global i 
 		i = 0
+		dark = pygame.Surface((self.width, self.height))
+		dark.fill(color.black)
+
 		while self.is_running:
 			self.win.blit(dark, (0, 0))
-			self.Time()
-			self.Point(color.red, self.last_regs[0])
-			self.Point(color.green, self.last_regs[1])
-			self.Cursor()
 
-			events = pygame.event.get()
-			for event in events:
+			with concurrent.futures.ThreadPoolExecutor() as executor:
+				executor.submit(self.win.blit, [dark, (0, 0)])
+				executor.submit(self.Time)
+				executor.submit(self.Point, self.win, color.red, self.last_regs[0])
+				executor.submit(self.Point, self.win, color.green, self.last_regs[1])
+				executor.submit(self.Cursor)
+
+			self.events = pygame.event.get()
+			for event in self.events:
 				self.cursor_pos = pygame.mouse.get_pos()
 				if event.type == pygame.QUIT:
 					self.is_running = False
@@ -85,7 +91,9 @@ class Editor():
 							if self.cursor_pos[1] > self.playfield['topY'] and self.cursor_pos[1] < self.playfield['bottomY']:
 								self.Click()
 
-			pygame.display.update()
+			
+			pygame.display.flip()
+			clock.tick()
 			self.time = pygame.time.get_ticks()
 
 		pygame.quit()
@@ -96,6 +104,7 @@ class Editor():
 
 	def Click(self):
 		global reg_mode, i
+
 		if DEBUG_MODE:
 			print('Last registered: ' + str(self.time) + ', ' + str(self.cursor_pos))
 
@@ -104,11 +113,11 @@ class Editor():
 
 			i += 1
 		elif reg_mode == 'p':
-			posf.write(str(i) + '. Object at position: ' + str(self.cursor_pos) + '\n')
+			tpos = Translate(self.cursor_pos, (self.width, self.height), 0)
+			posf.write(str(i) + '. Object at position: ' + str(tpos[0]) + ', ' + str(tpos[1]) + '\n')
 			last_reg = self.cursor_pos
 
-			self.last_regs[0] = self.last_regs[1]
-			self.last_regs[1] = last_reg
+			self.last_regs[0], self.last_regs[1] = self.last_regs[1], last_reg
 
 			i += 1
 		else:
@@ -122,13 +131,18 @@ class Editor():
 
 		self.win.blit(text, pos)
 
-	def Point(self, color, pos):
-		pygame.draw.circle(self.win, color, pos, 2)
+	def Point(self, win, color, pos):
+		pygame.draw.circle(win, color, pos, 3)
 
 if __name__ == '__main__':
-	e = Editor(width, height)
+	try:
+		e = Editor(resolution)
 
-	clock = pygame.time.Clock()
-	clock.tick(1000)
+		e.Run()
+	except Exception :
+		logf = open('log.txt', 'w+')
+		logf.write(traceback.format_exc())
+		logf.close()
 
-	e.Run()
+		pygame.quit()
+		quit()

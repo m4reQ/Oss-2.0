@@ -105,3 +105,9 @@ venv.bak/
 
 #image thumbnails
 Thumbs.db
+
+#PyCharm
+.idea
+
+#maps folder
+maps/
