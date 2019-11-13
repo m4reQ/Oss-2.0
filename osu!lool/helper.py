@@ -1,36 +1,23 @@
 import math
 import random
 import ctypes
-
-class color():
-	red = (255,0,0)
-	green = (0,255,0)
-	blue = (0,0,255)
-	yellow = (128,128,0)
-	purple = (128,0,128)
-	cyan = (0,128,128)
-	white = (255,255,255)
-	black = (0,0,0)
-	gray = (128, 128, 128)
-
-	def random():
-		"""
-		generates random color
-		rtype: none
-		returns: tuple
-		"""
-		color = (random.randint(0,225), random.randint(0,225), random.randint(0,225))
-		return color
+import os
 
 user32 = ctypes.windll.user32
 
-resolutions = {
-	'SD': (640, 480),
-	'HD': (1360, 768),
-	'FHD': (1920, 1080),
-	'4K': (3840, 2160),
-	'native': (user32.GetSystemMetrics(0), user32.GetSystemMetrics(1))
-}
+class Resolutions:
+	SD = (640, 480)
+	HD = (1360, 768)
+	FHD = (1920, 1080)
+	#4K = (3840, 2160) for now doesn't work
+	native = (user32.GetSystemMetrics(0), user32.GetSystemMetrics(1))
+
+	def user(width=0, height=0):
+		return (width, height)
+
+def SetDisplaySettings():
+	os.environ['SDL_VIDEODRIVER'] = "windib"
+	os.environ['SDL_VIDEO_WINDOW_POS'] = "0,0"
 
 def ask(question):
 	"""
@@ -48,7 +35,7 @@ def ask(question):
 		elif q.upper() == 'N':
 			return False
 
-class stats():
+class stats:
 	def getCS(CS):
 		"""
 		calculates circle size
@@ -104,13 +91,24 @@ def Translate(data, res, mode):
 
 		return (int(tX), int(tY))
 	else:
-		raise Exception('Invalid translation mode.')
+		raise Exception('[ERROR] Invalid translation mode.')
 
-def getRect(self):
-	"""
-	returns rectangle area of a drawable
-	rtype: none
-	returns: pygame.Rect
-	"""
-	rect = pygame.Rect(((self.pos[0] - self.radius),(self.pos[1] - self.radius)), (self.radius*2,self.radius*2))
-	return rect
+class color:
+	red = (255,0,0)
+	green = (0,255,0)
+	blue = (0,0,255)
+	yellow = (128,128,0)
+	purple = (128,0,128)
+	cyan = (0,128,128)
+	white = (255,255,255)
+	black = (0,0,0)
+	gray = (128, 128, 128)
+
+	def random():
+		"""
+		generates random color
+		rtype: none
+		returns: tuple
+		"""
+		color = (random.randint(0,225), random.randint(0,225), random.randint(0,225))
+		return color

@@ -58,7 +58,7 @@ def main(args):
     rtype: array
     returns: none
     """
-    if not (ver[0], ver[1]) == (3, 4): # and not Check_pip():
+    if not (ver[0] == 3) and (ver[1] >= 4): # and not Check_pip():
         print("You don't have required python version")
         print("Go to a python official website to download latest versions. https://www.python.org/downloads")
         os.system('pause >NUL')
@@ -70,5 +70,6 @@ def main(args):
         if Check_module(arg):
             print('Module ' + arg + ' installed and available.')
         else:
-            if not Download_module(arg):
+            Download_module(arg)
+            if not Check_module(arg):
                 print('An error appeared during module check. Error caused by module: ' + arg)

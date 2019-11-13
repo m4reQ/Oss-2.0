@@ -10,12 +10,13 @@ def Load_map(file):
 	returns: array
 	"""
 	global is_loaded
+
 	if is_loaded:
-		raise Exception('Map is already loaded.')
+		raise Exception('[ERROR] Map is already loaded.')
 	
 	with open('maps/' + file + '.txt', "r") as f:
 		if not f.mode == 'r':
-			raise Exception("File doesn't have assigned required usage mode.")
+			raise Exception("[ERROR] File doesn't have assigned required usage mode.")
 		
 		data = []
 		for line in f.readlines():
@@ -64,6 +65,6 @@ def Make_map(data, targetRes):
 				obj = circle.Circle(int(tposX), int(tposY), time)
 				circles.append(obj)
 			except IndexError:
-				raise Exception('Program stopped incorrectly. Cannot make object, invalid map format. \nCannot load map. Maybe map has outdated or invalid format.')
+				raise Exception('[ERROR] Program stopped incorrectly. Cannot make object' + str(obj) + '. \nCannot load map. Maybe map has outdated or invalid format.')
 
 	return circles
