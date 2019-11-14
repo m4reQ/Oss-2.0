@@ -34,6 +34,11 @@ except ImportError:
             print(traceback.format_exc())
     quit()
 
+#disable python warnings
+if not sys.warnoptions:
+    import warnings
+    warnings.simplefilter("ignore")
+
 #####overall settings#####
 sets = LoadSettings('settings.txt')
 sets = itertools.cycle(sets)
