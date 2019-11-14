@@ -5,15 +5,35 @@ import os
 
 user32 = ctypes.windll.user32
 
-class Resolutions:
-	SD = (640, 480)
-	HD = (1360, 768)
-	FHD = (1920, 1080)
-	#4K = (3840, 2160) for now doesn't work
-	native = (user32.GetSystemMetrics(0), user32.GetSystemMetrics(1))
+def LoadSettings(filepath):
+	"""
+	loads settings from specified file
+	rtype: string
+	returns:list
+	"""
+	values = []
+	with open(filepath, mode='r') as f:
+		for line in f.readlines():
+			if str(line)[0] == '#' or str(line) == '' or str(line) == '\n':
+				pass
+			else:
+				key = str(line.partition("=")[0])
+				value = str(line.partition("=")[2])
+				value = value.split('\n')[0]
 
-	def user(width=0, height=0):
-		return (width, height)
+				key = key.replace(' ', '')
+				value = value.replace(' ', '')
+
+				if value.lower() == 'true':
+					value = True
+				elif value.lower() == 'false':
+					value = False
+				else:
+					raise Exception('[ERROR] Error appeared during settings loading. Wrong value type.')
+
+				values.append(value)
+
+	return values
 
 def SetDisplaySettings():
 	os.environ['SDL_VIDEODRIVER'] = "windib"
@@ -34,37 +54,6 @@ def ask(question):
 			return True
 		elif q.upper() == 'N':
 			return False
-
-class stats:
-	def getCS(CS):
-		"""
-		calculates circle size
-		rtype: float
-		returns: int
-		"""
-		if CS > 5:
-			cs = int(round(150/(math.sqrt(CS)*2)))
-		else:
-			cs = int(round(150/(math.sqrt(CS)*2.5)))
-		return cs
-
-	def getAR(AR):
-		"""
-		calculates circle approach speed
-		rtype: float
-		returns: int
-		"""
-		ar = int(2000/(AR/3))
-		return ar
-
-	def getHP(HP):
-		"""
-		calculates hp units
-		rtype: float
-		returns: float
-		"""
-		hp = (HP+5) * 0.01
-		return hp
 
 def Translate(data, res, mode):
 	"""
@@ -112,3 +101,44 @@ class color:
 		"""
 		color = (random.randint(0,225), random.randint(0,225), random.randint(0,225))
 		return color
+
+class Resolutions:
+	SD = (640, 480)
+	HD = (1360, 768)
+	FHD = (1920, 1080)
+	#4K = (3840, 2160) for now doesn't work
+	native = (user32.GetSystemMetrics(0), user32.GetSystemMetrics(1))
+
+	def user(width=0, height=0):
+		return (width, height)
+
+class stats:
+	def getCS(CS):
+		"""
+		calculates circle size
+		rtype: float
+		returns: int
+		"""
+		if CS > 5:
+			cs = int(round(150/(math.sqrt(CS)*2)))
+		else:
+			cs = int(round(150/(math.sqrt(CS)*2.5)))
+		return cs
+
+	def getAR(AR):
+		"""
+		calculates circle approach speed
+		rtype: float
+		returns: int
+		"""
+		ar = int(2000/(AR/3))
+		return ar
+
+	def getHP(HP):
+		"""
+		calculates hp units
+		rtype: float
+		returns: float
+		"""
+		hp = (HP+5) * 0.01
+		return hp

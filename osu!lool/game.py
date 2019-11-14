@@ -19,6 +19,7 @@ try:
     import requests
     import pygame
     import pygame.locals
+    import itertools
 except ImportError:
     print('Error! One of modules cannot be resolved. \nTry restarting your application or reinstalling it.')
     if repair.Check_response():
@@ -34,30 +35,31 @@ except ImportError:
     quit()
 
 #####overall settings#####
-#resolution
+sets = LoadSettings('settings.txt')
+sets = itertools.cycle(sets)
+
 resolution = Resolutions.SD
+full_screen = next(sets)
+borderless = next(sets)
+defaultset = next(sets)
+mouse_visible = next(sets)
+auto_generate = next(sets)
 
 #scale
 #used to change size of objects depending on used resolution
 #temporary set to 1 until making better method of calculating it
 scale = 1
 
-#fullscreen
-full_screen = False
-
-#borderless
-borderless = False
-
-#display with default settings
-#changes i.e. driver used to render graphics
-#set to true if you want to use default pygame settings
-defaultset = True
-
 #background dimming
 darken_percent = 0.9
 
-#mouse visibility
-mouse_visible = False
+#####developer settings#####
+#NOTE!
+#All developer settings are variables 
+#in capital letters
+DEBUG_MODE = next(sets)
+TEST_MODE = next(sets)
+UPDATE_MODE = next(sets)
 
 #####GAME STATS#####
 #circle approach rate
@@ -71,25 +73,8 @@ CS = 5
 #min = 0, max = 10
 HP = 5
 
-#automatic circle generation
-auto_generate = True
-
 #error log file
 logf = open('log.txt', 'w+')
-
-#debug mode
-DEBUG_MODE = False
-
-#test mode
-#Enable if you want to test certain methods
-#instead of running whole program.
-TEST_MODE = False
-
-#update method
-#temporary, allows to switch between updating whole screen
-#and a rects dictionary
-#will be removed when dictionary update is done
-update_mode = 'screen'
 
 #####STATICS#####
 #clock
@@ -135,8 +120,8 @@ def Initialize_window(width, height):
     else:
         if borderless:
             win = pygame.display.set_mode((width, height), pygame.DOUBLEBUF|pygame.NOFRAME, 16)
-
-        win = pygame.display.set_mode((width, height), pygame.DOUBLEBUF|pygame.NOFRAME)
+        if not borderless:
+            win = pygame.display.set_mode((width, height), pygame.DOUBLEBUF)
     
     cursor_texture = pygame.image.load('textures/cursor.png')
     cursor_texture = pygame.transform.scale(cursor_texture, (int(16 * scale), int(16 * scale)))
@@ -268,7 +253,8 @@ class Game():
                 print('[INFO] Circle list Minimized. contains: ' + str(len(self.circles))+ ' circles')
 
             #drawing section
-            #note! don't put anything below this section
+            #NOTE!
+            #Don't put anything below this section
             #it may cause glitches
             start = time.perf_counter()
             with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -284,16 +270,15 @@ class Game():
                         executor.submit(self.DrawFPSCounter)
 
             #####implement rects dictionary update here #####
-            if update_mode == 'dictionary':
+            if UPDATE_MODE:
                 pygame.display.update(self.toUpdate)
                 print('[INFO] Updating: ' + str(self.toUpdate))
 
                 self.toUpdate.clear()
             #####end of implementation##### 
-            elif update_mode == 'screen':
+            if not UPDATE_MODE:
                 pygame.display.flip()
-            else:
-                raise Exception('[ERROR] Wrong update mode.')
+
             clock.tick()
             finish = time.perf_counter()
 
@@ -350,7 +335,7 @@ class Game():
         self.win.blit(text_points, (self.width - length * 24, self.height - 70))
         self.win.blit(text_combo, (10, (self.height - 70)))
 
-        rect = pygame.Rect((self.width - (length * 25 + 10), self.height - 10 - 48), (length * 48, 48))
+        rect = pygame.Rect((self.width - (length * 25 + 10), self.height - 58), (length * 48, self.height - (self.height - 58)))
 
         if not rect in self.toUpdate:
             self.toUpdate.append(rect)
@@ -406,7 +391,8 @@ if __name__ == '__main__':
         if TEST_MODE:
             raise Exception('[INFO] Test mode enabled.')
 
-        update.Check_version()
+        if not DEBUG_MODE:
+            update.Check_version()
         
         g = Game(resolution)
 

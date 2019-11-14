@@ -56,10 +56,8 @@ def Check_version():
 	if not late_ver:
 		print("Couldn't update game.")
 		return
-	if version == str(late_ver):
-		return
-	else:
-		print("Your version of the game is outdated.\nCurrent version: " + version + ".\nLatest version: " + late_ver)
+	if not float(version) == float(late_ver):
+		print("Your version of the game is outdated.\nCurrent version: " + version + ".\nLatest version: " + late_ver + '.')
 		if ask("Do you want to download the latest version?"):
 			Update(directory)
 		else:
