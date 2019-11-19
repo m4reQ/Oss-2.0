@@ -10,10 +10,10 @@ try:
     ext_modules = ['requests', 'pygame']
     os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
     from helper import *
+    import traceback
     import repair, update, circle, map
     import time
     import random
-    import traceback
     import concurrent.futures
     import math
     import requests
@@ -21,6 +21,8 @@ try:
     import pygame.locals
     import itertools
 except ImportError:
+    with open('log.txt', 'w+') as logf:
+            logf.write(traceback.format_exc())
     print('Error! One of modules cannot be resolved. \nTry restarting your application or reinstalling it.')
     if repair.Check_response():
         if ask("Do you want to launch the repair module?"):
@@ -255,7 +257,7 @@ class Game():
             if DEBUG_MODE and len(self.circles) < 5:
                 print('[INFO] ' + str(self.circles))
             if DEBUG_MODE and len(self.circles) >= 5:
-                print('[INFO] Circle list Minimized. contains: ' + str(len(self.circles))+ ' circles')
+                print('[INFO] Circle list Minimized. Contains: ' + str(len(self.circles))+ ' circles')
 
             #drawing section
             #NOTE!
@@ -269,6 +271,7 @@ class Game():
                     executor.submit(self.DrawHealthBar)
                     executor.submit(self.DrawCursor)
                     executor.submit(self.DrawCombo)
+                    executor.submit(self.DrawPoints)
                     executor.submit(self.DrawTime)
                     executor.submit(self.DrawClicksCounter)
                     if DEBUG_MODE:
@@ -332,18 +335,22 @@ class Game():
 
     def DrawCombo(self):
         font = pygame.font.SysFont("comicsansms", 48)
-        text = 'points: ' + str(self.points)
-        text_points = font.render(text, True, self.combo_color)
-        text_combo = font.render('combo: ' + str(self.combo), True, color.white)
-        length = len(text)
-
-        self.win.blit(text_points, (self.width - length * 24, self.height - 70))
-        self.win.blit(text_combo, (10, (self.height - 70)))
+        text = font.render('combo: ' + str(self.combo), True, color.white)
+        
+        self.win.blit(text, (10, self.height - 70))
 
         rect = pygame.Rect((self.width - (length * 25 + 10), self.height - 58), (length * 48, self.height - (self.height - 58)))
 
         if not rect in self.toUpdate:
             self.toUpdate.append(rect)
+
+    def DrawPoints(self):
+        font = pygame.font.SysFont("comicsansms", 48)
+        text = 'points: ' + str(self.points)
+        r_text = font.render(text, True, self.combo_color)
+        length = len(text)
+
+        self.win.blit(r_text, (self.width - length * 24 - 5, self.height - 70))
 
     def DrawHealthBar(self):
         size_bg = (self.width - (2 * self.width/10), 30)
