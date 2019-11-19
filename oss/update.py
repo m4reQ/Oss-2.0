@@ -18,7 +18,7 @@ version = str(version[0])
 f.close()
 
 url_repo = "https://github.com/m4reQ/Oss-2.0/"
-url_main = "https://github.com/m4reQ/Oss-2.0/master/osu!lool"
+url_main = "https://github.com/m4reQ/Oss-2.0/master/oss"
 url_master = "https://github.com/m4reQ/Oss-2.0/master"
 
 def Get_version():

@@ -35,9 +35,9 @@ def LoadSettings(filepath):
 
 	return values
 
-def SetDisplaySettings():
-	os.environ['SDL_VIDEODRIVER'] = "windib"
-	os.environ['SDL_VIDEO_WINDOW_POS'] = "0,0"
+def SetDisplaySettings(sdl_driver, sdl_windowpos):
+	os.environ['SDL_VIDEODRIVER'] = sdl_driver
+	os.environ['SDL_VIDEO_WINDOW_POS'] = sdl_windowpos
 
 def ask(question):
 	"""

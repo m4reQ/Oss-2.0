@@ -106,7 +106,7 @@ def Initialize_window(width, height):
     global cursor_texture, miss_texture, bg_texture, bg_surf, pg_surf, dark, mouse_visible, scale
 
     if not defaultset:
-        SetDisplaySettings()
+        SetDisplaySettings(sdl_driver="windib", sdl_windowpos="0,0")
 
     pygame.init()
 
@@ -114,7 +114,7 @@ def Initialize_window(width, height):
 
     if full_screen:
         try: 
-            win = pygame.display.set_mode((width, height), pygame.FULLSCREEN|pygame.DOUBLEBUF|pygame.HWSURFACE, 16)
+            win = pygame.display.set_mode((width, height), pygame.FULLSCREEN|pygame.DOUBLEBUF|pygame.HWSURFACE)
         except Exception as e:
             print('[ERROR] Cannot set window, because resolution is too high.')
             with open('log.txt', 'w+') as logf:
@@ -126,7 +126,7 @@ def Initialize_window(width, height):
             
     else:
         if borderless:
-            win = pygame.display.set_mode((width, height), pygame.DOUBLEBUF|pygame.NOFRAME, 16)
+            win = pygame.display.set_mode((width, height), pygame.DOUBLEBUF|pygame.NOFRAME)
         if not borderless:
             win = pygame.display.set_mode((width, height), pygame.DOUBLEBUF)
     
@@ -407,7 +407,7 @@ if __name__ == '__main__':
             update.Check_version()
         
         g = Game(resolution)
-
+        
         g.Run()
 
         pygame.quit()
@@ -429,3 +429,4 @@ if __name__ == '__main__':
 #add miss animation (use image.alpha operations)
 #improve performance/make more Surfaces
 #change game behaviour to be used by menu as only a single game
+#let various display settings to be read from settings file
