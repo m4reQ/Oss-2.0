@@ -2,6 +2,7 @@ import math
 import random
 import ctypes
 import os
+from functools import wraps
 
 user32 = ctypes.windll.user32
 
@@ -142,3 +143,18 @@ class stats:
 		"""
 		hp = (HP+5) * 0.01
 		return hp
+
+def run_once(f):
+	"""
+	allows function to run only once in a loop
+	can be used as a decorator
+	rtype: function
+	returns: function call or None
+	"""
+	@wraps(f)
+	def wrapper(*args, **kwargs):
+		if not wrapper.has_run:
+			wrapper.has_run = True
+			return  f(*args, **kwargs)
+	wrapper.has_run = False
+	return wrapper

@@ -1,5 +1,4 @@
 import pygame
-import random
 from game import scale as scale
 import game
 from helper import *
@@ -27,7 +26,7 @@ class Circle():
 				texture = Circle.LoadFontTexture('textures/circles', i)
 				Circle.font_textures.append(texture)
 			#load background textures
-			for i in range(4):
+			for i in range(5):
 				texture = Circle.LoadBackgroundTexture('textures/circles', i)
 				Circle.background_textures.append(texture)
 
@@ -44,7 +43,7 @@ class Circle():
 			Circle.texture_count = 0
 
 		if Circle.count % 4 == 0:
-			if Circle.background_count < 3:
+			if Circle.background_count < 4:
 				Circle.background_count += 1
 			else:
 				Circle.background_count = 0
