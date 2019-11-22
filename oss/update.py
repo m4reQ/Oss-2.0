@@ -4,6 +4,17 @@ import requests
 
 directory = os.getcwd()
 
+def Update(dir):
+	path = os.path.join(dir, 'tmp')
+	
+	files = os.listdir(path)
+	for f in files:
+		os.remove(os.path.join(path, f))
+
+	url = url_repo + "/archive/master.zip"
+
+	os.system("start \"\"" + " " + url)
+
 try:
 	f = open('version.txt', 'r')
 except IOError:
@@ -39,17 +50,6 @@ def Get_version():
 	latest_version = latest_version[:11]
 
 	return latest_version
-
-def Update(dir):
-	path = os.path.join(dir, 'tmp')
-	
-	files = os.listdir(path)
-	for f in files:
-		os.remove(os.path.join(path, f))
-
-	url = url_repo + "/archive/master.zip"
-
-	os.system("start \"\"" + " " + url)
 
 def Check_version():
 	late_ver = Get_version()
