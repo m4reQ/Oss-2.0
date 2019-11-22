@@ -131,7 +131,7 @@ def Initialize_window(width, height):
             win = pygame.display.set_mode((width, height), pygame.DOUBLEBUF|pygame.HWSURFACE|pygame.HWACCEL)
 
     if DEBUG_MODE:
-        print('Current display driver: ' + pygame.display.get_driver())
+        print('Current display driver: {}'.format(pygame.display.get_driver()))
     
     cursor_texture = pygame.image.load('textures/cursor.png')
     cursor_texture = pygame.transform.scale(cursor_texture, (int(16 * scale), int(16 * scale)))

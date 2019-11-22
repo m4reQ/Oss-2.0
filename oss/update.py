@@ -40,7 +40,7 @@ def Get_version():
 
 	return latest_version
 
-def Update():
+def Update(dir):
 	path = os.path.join(dir, 'tmp')
 	
 	files = os.listdir(path)
