@@ -111,3 +111,6 @@ Thumbs.db
 
 #maps folder
 maps/
+
+#VS code
+.vscode

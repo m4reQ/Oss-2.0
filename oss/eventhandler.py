@@ -31,4 +31,6 @@ class EventHandler:
 			if debug_mode:
 				raise Exception('[INFO] User interruption by closing window')
 
-
+if __name__ == '__main__':
+	pygame.quit()
+	quit()

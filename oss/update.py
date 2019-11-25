@@ -1,6 +1,7 @@
 import os
-from helper import ask
+from helper import ask, logError
 import requests
+import traceback
 
 directory = os.getcwd()
 
@@ -17,9 +18,11 @@ def Update(dir):
 
 try:
 	f = open('version.txt', 'r')
-except IOError:
-	print("Unable to load file version.txt. Probably file is corrupted or doesn't exist.")
-	if ask("Do you want to download the latest version? (Y/N): "):
+except IOError as e:
+	print("[ERROR] Unable to load file version.txt. Probably file is corrupted or doesn't exist.")
+	logError(e)
+	
+	if ask("Do you want to download the latest version?"):
 		Update(directory)
 	else:
 		quit()
@@ -43,7 +46,7 @@ def Get_version():
 	try:
 		latest_version = requests.get(url)
 	except requests.exceptions.ConnectionError:
-		print('Cannot download latest version. Check your internet connection.')
+		print('[ERROR] Cannot download latest version. Check your internet connection.')
 		return False
 
 	latest_version = str(latest_version.text)
@@ -55,10 +58,11 @@ def Check_version():
 	late_ver = Get_version()
 	if not late_ver:
 		print("Couldn't update game.")
-		return
 	if not float(version) == float(late_ver):
 		print("Your version of the game is outdated.\nCurrent version: " + version + ".\nLatest version: " + late_ver + '.')
 		if ask("Do you want to download the latest version?"):
 			Update(directory)
-		else:
-			pass
+
+if __name__ == '__main__':
+	pygame.quit()
+	quit()

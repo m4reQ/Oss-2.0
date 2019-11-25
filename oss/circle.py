@@ -1,6 +1,5 @@
 import pygame
-from game import scale as scale
-import game
+from game import scale, CS, HP, DEBUG_MODE
 from helper import *
 import math
 
@@ -10,7 +9,7 @@ class Circle():
 	count = 0
 	font_textures = []
 	background_textures = []
-	radius = int(stats.getCS(game.CS) * scale)
+	radius = int(stats.getCS(CS) * scale)
 
 	def __init__(self, X, Y, time=0):
 		self.pos = (X, Y)
@@ -30,8 +29,8 @@ class Circle():
 				texture = Circle.LoadBackgroundTexture('textures/circles', i)
 				Circle.background_textures.append(texture)
 
-			if game.DEBUG_MODE:
-				print("Initialized textures. Texture arrays: ")
+			if DEBUG_MODE:
+				print("[INFO] Initialized textures. Texture arrays: ")
 				print(Circle.font_textures)
 				print(Circle.background_textures)
 		else:
@@ -96,15 +95,15 @@ class Circle():
 	def Hit(self, game):
 		game.combo += 1
 		game.points += (game.combo * 300)
-		game.combo_color = color.random()
+		game.points_text.textColor = color.random()
 		if game.combo >= 5:
-			game.health += stats.getHP(game.HP) * 50
+			game.health += stats.getHP(HP) * 50
 
 		game.circles.remove(self)
 		
 	def Miss(self, game):
 		game.combo = 0
-		game.health -= stats.getHP(game.HP) * 100
+		game.health -= stats.getHP(HP) * 100
 
 		game.circles.remove(self)
 

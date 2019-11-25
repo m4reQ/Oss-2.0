@@ -73,3 +73,7 @@ def main(args):
             Download_module(arg)
             if not Check_module(arg):
                 print('An error appeared during module check. Error caused by module: ' + arg)
+
+if __name__ == '__main__':
+    pygame.quit()
+    quit()

@@ -65,6 +65,10 @@ def Make_map(data, targetRes):
 				obj = circle.Circle(int(tposX), int(tposY), time)
 				circles.append(obj)
 			except IndexError:
-				raise Exception('[ERROR] Program stopped incorrectly. Cannot make object' + str(obj) + '. \nCannot load map. Maybe map has outdated or invalid format.')
+				raise Exception('[ERROR] Cannot make object' + str(obj) + '. \nCannot load map. Maybe map has outdated or invalid format.')
 
 	return circles
+
+if __name__ == '__main__':
+	pygame.quit()
+	quit()

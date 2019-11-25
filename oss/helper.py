@@ -2,11 +2,11 @@ import math
 import random
 import ctypes
 import os
-from functools import wraps
+import traceback
 
 user32 = ctypes.windll.user32
 
-def LoadSettings(filepath):
+def loadSettings(filepath):
 	"""
 	loads settings from specified file
 	rtype: string
@@ -17,12 +17,10 @@ def LoadSettings(filepath):
 		for line in f.readlines():
 			if str(line)[0] == '#' or str(line) == '' or str(line) == '\n':
 				pass
-			else:
-				key = str(line.partition("=")[0])
+			elif not str(line)[0] == '/':
 				value = str(line.partition("=")[2])
 				value = value.split('\n')[0]
 
-				key = key.replace(' ', '')
 				value = value.replace(' ', '')
 
 				if value.lower() == 'true':
@@ -34,11 +32,28 @@ def LoadSettings(filepath):
 
 				values.append(value)
 
+		if not values[-1]:
+			with open(filepath, mode='r') as f:
+				for line in f.readlines():
+					if str(line)[0] == '/':
+						key = str(line.partition("=")[0])
+						value = str(line.partition("=")[2])
+						value = value.split('\n')[0]
+
+						key = key.replace(' ', '')
+						value = value.replace(' ', '')
+
+						setDisplaySetting(key, value)
+
 	return values
 
-def SetDisplaySettings(sdl_driver, sdl_windowpos):
-	os.environ['SDL_VIDEODRIVER'] = sdl_driver
-	os.environ['SDL_VIDEO_WINDOW_POS'] = sdl_windowpos
+def setDisplaySetting(setting, value):
+	os.environ[setting] = value
+
+def logError(exception):
+	if not str(exception)[:6] == '[INFO]':
+		with open('log.txt', 'w+') as logf:
+			logf.write(traceback.format_exc())
 
 def ask(question):
 	"""
@@ -141,7 +156,7 @@ class stats:
 		rtype: float
 		returns: float
 		"""
-		hp = (HP+5) * 0.01
+		hp = (HP+5) * 0.014
 		return hp
 
 def run_once(f):
@@ -151,10 +166,29 @@ def run_once(f):
 	rtype: function
 	returns: function call or None
 	"""
-	@wraps(f)
 	def wrapper(*args, **kwargs):
 		if not wrapper.has_run:
 			wrapper.has_run = True
 			return  f(*args, **kwargs)
 	wrapper.has_run = False
 	return wrapper
+
+def run_interval(f, interval):
+	"""
+	runs function once per given loop
+	executions
+	rtype: function
+	returns: function call or None
+	"""
+	def wrapper(*args, **kwargs):
+		if wrapper.count == interval:
+			wrapper.count = 0
+			return f(*args, **kwargs)
+		else:
+			wrapper.count += 1
+	wrapper.count = 0
+	return wrapper
+
+if __name__ == '__main__':
+	pygame.quit()
+	quit()

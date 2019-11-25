@@ -8,10 +8,10 @@ except ImportError:
 
 try:
     ext_modules = ['pygame', 'itertools']
-    os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
     from helper import *
+    from helper import logError
     import traceback
-    import repair, update, circle, map
+    import repair, update
     from eventhandler import *
     import time
     import random
@@ -19,19 +19,14 @@ try:
     import pygame
     import pygame.locals
     import itertools
-except ImportError:
-    with open('log.txt', 'w+') as logf:
-            logf.write(traceback.format_exc())
+except ImportError as e:
+    logError(e)
     print('Error! One of modules cannot be resolved. \nTry restarting your application or reinstalling it.')
     if repair.Check_response():
         if ask("Do you want to launch the repair module?"):
             repair.main(ext_modules)
-        else:
-            pass
 
     print('Module checking done.')
-
-    print(traceback.format_exc())
 
     os.system('pause >NUL')
     quit()
@@ -46,13 +41,21 @@ with open('log.txt', 'w+') as logf:
     logf.write('')
 
 #####overall settings#####
-sets = LoadSettings('settings.txt')
+try:
+    sets = loadSettings('settings.txt')
+except Exception as e:
+    logError(e)
+    print(e)
+
+    pygame.quit()
+    os.system("pause >NUL")
+    quit()
+
 sets = itertools.cycle(sets)
 
 resolution = Resolutions.SD
 full_screen = next(sets)
 borderless = next(sets)
-defaultset = next(sets)
 mouse_visible = next(sets)
 auto_generate = next(sets)
 
@@ -70,7 +73,15 @@ darken_percent = 0.2
 #in capital letters
 DEBUG_MODE = next(sets)
 TEST_MODE = next(sets)
-UPDATE_MODE = next(sets)
+
+#dictionary update mode
+DICT_UPDATE_MODE = next(sets)
+
+#use timed updates
+timed_updates_enable = next(sets)
+
+#use default display settings
+defaultset = next(sets)
 
 #####GAME STATS#####
 #circle approach rate
@@ -103,10 +114,7 @@ def Initialize_window(width, height):
     rtype: int, int
     returns: pygame.Surface
     """
-    global cursor_texture, miss_texture, bg_texture, bg_surf, dark, mouse_visible, scale
-
-    if not defaultset:
-        SetDisplaySettings(sdl_driver="windib", sdl_windowpos="0,0")
+    global cursor_texture, miss_texture, bg_texture, bg_surf, dark, mouse_visible
 
     pygame.init()
 
@@ -117,8 +125,7 @@ def Initialize_window(width, height):
             win = pygame.display.set_mode((width, height), pygame.FULLSCREEN|pygame.DOUBLEBUF|pygame.HWSURFACE|pygame.HWACCEL)
         except Exception as e:
             print('[ERROR] Cannot set window, because resolution is too high.')
-            with open('log.txt', 'w+') as logf:
-                logf.write(traceback.format_exc())
+            logError(e)
 
             pygame.quit()
             os.system("pause >NUL")
@@ -131,7 +138,7 @@ def Initialize_window(width, height):
             win = pygame.display.set_mode((width, height), pygame.DOUBLEBUF|pygame.HWSURFACE|pygame.HWACCEL)
 
     if DEBUG_MODE:
-        print('Current display driver: {}'.format(pygame.display.get_driver()))
+        print('[INFO] Current display driver: ' + pygame.display.get_driver())
     
     cursor_texture = pygame.image.load('textures/cursor.png')
     cursor_texture = pygame.transform.scale(cursor_texture, (int(16 * scale), int(16 * scale)))
@@ -162,6 +169,16 @@ def Initialize_window(width, height):
 def pre_update_display():
     pygame.display.update()
 
+def timed_update_display():
+    if DEBUG_MODE:
+        print('[INFO] Updating screen.')
+    pygame.display.update()
+
+timed_update_display = run_interval(timed_update_display, 10)
+
+#import internal modules
+import circle, map, interface
+
 class Game():
     def __init__(self, res):
         self.time = 0
@@ -172,13 +189,12 @@ class Game():
         self.cursor_pos = (0, 0)
         self.circles = []
         self.playfield = {
-        'topX': (self.width / 10 + int(stats.getCS(1) / 2)),                                                     #top X
-        'topY': (self.height / 10 + int(stats.getCS(1) / 2)),                                                  #top Y
-        'bottomX': (self.width - self.width / 10 - int(stats.getCS(1) / 2)),             #bottom X
-        'bottomY': (self.height - self.height / 10 - int(stats.getCS(1) / 2))}        #bottom Y
+        'topX': (self.width / 10 + int(stats.getCS(1) / 2)),
+        'topY': (self.height / 10 + int(stats.getCS(1) / 2)),
+        'bottomX': (self.width - self.width / 10 - int(stats.getCS(1) / 2)),
+        'bottomY': (self.height - self.height / 10 - int(stats.getCS(1) / 2))}
         self.points = 0
         self.combo = 0
-        self.combo_color = color.random()
         self.maxhealth = 100
         self.health = self.maxhealth
         self.AR = AR
@@ -189,6 +205,13 @@ class Game():
         self.events = pygame.event.get()
         self.draw_interface = True
         self.toUpdate = []
+
+        interface.setDebugMode()
+        interface.changeFont('comicsansms', 48)
+
+        self.cursor = interface.InterfaceElement(cursor_texture.get_width(), cursor_texture.get_height(), drawable=cursor_texture)
+        self.combo_text = interface.InterfaceElement(0, 55, position=(10, self.height - 70), textColor=color.white)
+        self.points_text = interface.InterfaceElement(0, 55, position=(0, self.height - 70), textColor=color.random())
 
         if self.CS < 1:
             self.CS = 1
@@ -206,12 +229,13 @@ class Game():
         if not auto_generate:
             map_data = map.Load_map('test')
             self.circles = map.Make_map(map_data, (self.width, self.height))
+
             if type(self.circles).__name__ == 'str' or type(self.circles).__name__ == 'NoneType':
                 raise Exception('[ERROR] An error appeared during map loading.')
+
                 pygame.quit()
+                os.system("pause >NUL")
                 quit()
-        else:
-            pass
         
         radius = stats.getCS(1)
 
@@ -260,7 +284,6 @@ class Game():
             start = time.perf_counter()
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 executor.submit(self.DrawPlayGround)
-                executor.submit(self.DrawCursor)
                 if self.draw_interface:
                     executor.submit(self.DrawHealthBar)
                     executor.submit(self.DrawCursor)
@@ -270,17 +293,21 @@ class Game():
                     executor.submit(self.DrawClicksCounter)
                     if DEBUG_MODE:
                         executor.submit(self.DrawFPSCounter)
+                executor.submit(self.DrawCursor)
 
             #####implement rects dictionary update here #####
             pre_update_display()
 
-            if UPDATE_MODE:
+            if DICT_UPDATE_MODE:
                 pygame.display.update(self.toUpdate)
                 print('[INFO] Updating: ' + str(self.toUpdate))
 
                 self.toUpdate.clear()
+
+                if timed_updates_enable:
+                    timed_update_display()
             #####end of implementation##### 
-            if not UPDATE_MODE:
+            if not DICT_UPDATE_MODE:
                 pygame.display.flip()
 
             clock.tick(60)
@@ -320,27 +347,41 @@ class Game():
                                 circle.Miss(self)
 
     def DrawCursor(self):
-        self.win.blit(cursor_texture, (self.cursor_pos[0] - cursor_texture.get_width()/2, self.cursor_pos[1] - cursor_texture.get_height()/2))
+        self.cursor.positionX = self.cursor_pos[0] - self.cursor.width/2
+        self.cursor.positionY = self.cursor_pos[1] - self.cursor.height/2
 
-        rect = pygame.Rect((self.cursor_pos[0] - cursor_texture.get_width()/2, self.cursor_pos[1] - cursor_texture.get_height()/2), (cursor_texture.get_width(),  cursor_texture.get_height()))
+        self.cursor.render(self.win)
+
+        rect = self.cursor.getRect()
 
         if not rect in self.toUpdate:
             self.toUpdate.append(rect)
 
     def DrawCombo(self):
-        font = pygame.font.SysFont("comicsansms", 48)
-        text = font.render('combo: ' + str(self.combo), True, color.white)
-        
-        self.win.blit(text, (10, self.height - 70))
+        interface.changeFont('comicsansms', 48)
+
+        text = 'combo: ' + str(self.combo)
+
+        self.combo_text.text = text
+        self.combo_text.width = len(text) * 25
+
+        self.combo_text.render(self.win)
+
+        rect = self.cursor.getRect()
+
+        if not rect in self.toUpdate:
+            self.toUpdate.append(rect)
 
     def DrawPoints(self):
-        font = pygame.font.SysFont("comicsansms", 48)
         text = 'points: ' + str(self.points)
-        r_text = font.render(text, True, self.combo_color)
+        
+        self.points_text.text = text
+        self.points_text.width = len(text) * 24 - 5
+        self.points_text.textPositionX = (self.width - len(text) * 24)
 
-        self.win.blit(r_text, (self.width - len(text) * 24 - 5, self.height - 70))
+        self.points_text.render(self.win)
 
-        rect = pygame.Rect((self.width - (len(text) * 25 + 10), self.height - 58), (len(text) * 48, self.height - (self.height - 58)))
+        rect = self.points_text.getRect()
 
         if not rect in self.toUpdate:
             self.toUpdate.append(rect)
@@ -383,11 +424,11 @@ class Game():
 
     def DrawFPSCounter(self):
         font = pygame.font.SysFont("comicsansms", 12)
-        string = 'Render time: ' + str(self.render_time) + 's | FPS: ' + str(self.fps)
-        text = font.render(string, True, color.white)
-        pos = (self.width - len(string) * 7, self.height - 80)
+        text = 'Render time: ' + str(self.render_time) + 's | FPS: ' + str(self.fps)
+        r_text = font.render(text, True, color.white)
+        pos = (self.width - len(text) * 7, self.height - 80)
 
-        max_length = (len(string)+2)
+        max_length = (len(text)+2)
 
         self.win.blit(text, pos)
 
@@ -397,32 +438,9 @@ class Game():
             self.toUpdate.append(rect)
 
 if __name__ == '__main__':
-    try:
-        if TEST_MODE:
-            raise Exception('[INFO] Test mode enabled.')
+    pygame.quit()
+    quit()
 
-        if not DEBUG_MODE:
-            update.Check_version()
-        
-        g = Game(resolution)
-        
-        g.Run()
-
-        pygame.quit()
-        os.system("pause >NUL")
-        quit()
-
-    except Exception as e:
-        if not str(e)[:6] == '[INFO]':
-            with open('log.txt', 'w+') as logf:
-                logf.write(traceback.format_exc())
-
-        print(e)
-
-        pygame.quit()
-        os.system("pause >NUL")
-        quit()
-    
 #finish making clicks display and make background for it
 #add miss animation (use image.alpha operations)
 #change game behaviour to be used by menu as only a single game

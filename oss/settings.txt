@@ -6,11 +6,6 @@ full_screen = False
 #borderless
 borderless = True
 
-#display with default settings
-#changes i.e. driver used to render graphics
-#set to true if you want to use default pygame settings
-defaultset = True
-
 #mouse visibility
 mouse_visible = False
 
@@ -32,4 +27,18 @@ TEST_MODE = False
 #will be removed when dictionary update is done
 #NOTE! Dict update method isn't done yet and it's
 #recommended to leave it False.
-UPDATE_MODE = False
+DICT_UPDATE_MODE = False
+
+#timed screen updates
+timed_update_enable = False
+
+#display with default settings
+#changes i.e. driver used to render graphics
+#set to true if you want to use default pygame settings
+defaultset = True
+
+#various display settings
+#add driver settings here
+#each line starts with '/'
+/SDL_VIDEODRIVER = windib
+/SDL_VIDEO_WINDOW_POS = 0,0
