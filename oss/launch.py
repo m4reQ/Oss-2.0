@@ -28,6 +28,18 @@ except ImportError as e:
 	os.system('pause >NUL')
 	quit()
 
+if not os.path.exists('./Resources/maps'):
+	try:
+		print('Directory maps is missing. Creating directory.')
+		os.mkdir('./Resources/maps')
+	except Exception as e:
+		logError(e)
+		print('Error! Cannot create directory.')
+
+		os.system('pause >NUL')
+		pygame.quit()
+		quit()
+
 if __name__ == '__main__':
 	try:
 		if game.TEST_MODE:

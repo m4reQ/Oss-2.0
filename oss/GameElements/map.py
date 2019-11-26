@@ -1,6 +1,6 @@
 import pygame
 import GameElements.circle
-from helper import Translate
+from helper import Translate, logError
 from game import maps_path
 
 is_loaded = False
@@ -14,24 +14,28 @@ def Load_map(file):
 
 	if is_loaded:
 		raise Exception('[ERROR] Map is already loaded.')
-	
-	with open(maps_path + file + '.txt', "r") as f:
-		if not f.mode == 'r':
-			raise Exception("[ERROR] File doesn't have assigned required usage mode.")
-		
-		data = []
-		for line in f.readlines():
-			if str(line) == '#':
-				f.close()
-				break
-			else:
-				data.append(line)
 
 	try:
-		for element in data:
-			data.remove('\n')
-	except ValueError:
-		pass
+		with open(maps_path + file + '.txt', "r") as f:
+			if not f.mode == 'r':
+				raise Exception("[ERROR] File doesn't have assigned required usage mode.")
+			
+			data = []
+			for line in f.readlines():
+				if str(line) == '#':
+					f.close()
+					break
+				else:
+					data.append(line)
+
+		try:
+			for element in data:
+				data.remove('\n')
+		except ValueError:
+			pass
+	except Exception as e:
+		logError(e)
+		raise Exception('[ERROR] Cannot open file "' + file + '".')
 
 	formatted_data = []
 	for element in data:
