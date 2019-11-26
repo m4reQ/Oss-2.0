@@ -43,7 +43,7 @@ def Initialize_window(width, height):
 	pygame.mouse.set_visible(mouse_visible)
 
 	win = pygame.display.set_mode((width, height), pygame.HWSURFACE|pygame.DOUBLEBUF)
-	cursor_texture = pygame.image.load('textures/cursor.png')
+	cursor_texture = pygame.image.load('Resources/textures/cursor.png')
 	cursor_texture = pygame.transform.scale(cursor_texture, (16, 16))
 
 	return win

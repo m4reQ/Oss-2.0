@@ -1,6 +1,7 @@
 import pygame
-import circle
+import GameElements.circle
 from helper import Translate
+from game import maps_path
 
 is_loaded = False
 
@@ -14,7 +15,7 @@ def Load_map(file):
 	if is_loaded:
 		raise Exception('[ERROR] Map is already loaded.')
 	
-	with open('maps/' + file + '.txt', "r") as f:
+	with open(maps_path + file + '.txt', "r") as f:
 		if not f.mode == 'r':
 			raise Exception("[ERROR] File doesn't have assigned required usage mode.")
 		

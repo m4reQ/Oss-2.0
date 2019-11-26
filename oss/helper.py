@@ -25,12 +25,12 @@ def loadSettings(filepath):
 
 				if value.lower() == 'true':
 					value = True
+					values.append(value)
 				elif value.lower() == 'false':
 					value = False
+					values.append(value)
 				else:
 					raise Exception('[ERROR] Error appeared during settings loading. Wrong value type.')
-
-				values.append(value)
 
 		if not values[-1]:
 			with open(filepath, mode='r') as f:
@@ -41,6 +41,7 @@ def loadSettings(filepath):
 						value = value.split('\n')[0]
 
 						key = key.replace(' ', '')
+						key = key.replace('/', '')
 						value = value.replace(' ', '')
 
 						setDisplaySetting(key, value)

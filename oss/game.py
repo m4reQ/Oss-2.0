@@ -65,7 +65,7 @@ auto_generate = next(sets)
 scale = 1
 
 #background dimming
-darken_percent = 0.2
+darken_percent = 0.5
 
 #####developer settings#####
 #NOTE!
@@ -96,6 +96,12 @@ CS = 5
 HP = 5
 
 #####STATICS#####
+#textures folder path
+tex_path = 'Resources/textures/'
+
+#maps folder path
+maps_path = 'Resources/maps/'
+
 #clock
 clock = pygame.time.Clock()
 
@@ -140,10 +146,10 @@ def Initialize_window(width, height):
     if DEBUG_MODE:
         print('[INFO] Current display driver: ' + pygame.display.get_driver())
     
-    cursor_texture = pygame.image.load('textures/cursor.png')
+    cursor_texture = pygame.image.load(tex_path + 'cursor.png')
     cursor_texture = pygame.transform.scale(cursor_texture, (int(16 * scale), int(16 * scale)))
 
-    miss_texture = pygame.image.load('textures/miss.png')
+    miss_texture = pygame.image.load(tex_path + 'miss.png')
     miss_texture = pygame.transform.scale(cursor_texture, (int(16 * scale), int(16 * scale)))
 
     bg_textures = []
@@ -154,7 +160,7 @@ def Initialize_window(width, height):
         i += 1
 
     texture_no = bg_textures[random.randint(0, len(bg_textures)-1)]
-    bg_texture = pygame.image.load('textures/backgrounds/' + texture_no + '.jpg')
+    bg_texture = pygame.image.load(tex_path + 'backgrounds/' + texture_no + '.jpg')
     bg_texture = pygame.transform.scale(bg_texture, (width, height))
 
     bg_surf = pygame.Surface((width, height), pygame.HWSURFACE|pygame.SRCALPHA|pygame.HWACCEL).convert_alpha()
@@ -167,6 +173,8 @@ def Initialize_window(width, height):
 #called once to update window background
 @run_once
 def pre_update_display():
+    if DEBUG_MODE:
+        print('[INFO] Updating screen.')
     pygame.display.update()
 
 def timed_update_display():
@@ -177,7 +185,9 @@ def timed_update_display():
 timed_update_display = run_interval(timed_update_display, 10)
 
 #import internal modules
-import circle, map, interface
+import GameElements.circle as circle
+import GameElements.map as map
+import GameElements.interface as interface
 
 class Game():
     def __init__(self, res):
@@ -206,7 +216,6 @@ class Game():
         self.draw_interface = True
         self.toUpdate = []
 
-        interface.setDebugMode()
         interface.changeFont('comicsansms', 48)
 
         self.cursor = interface.InterfaceElement(cursor_texture.get_width(), cursor_texture.get_height(), drawable=cursor_texture)
@@ -311,10 +320,8 @@ class Game():
                 pygame.display.flip()
 
             clock.tick(60)
-            finish = time.perf_counter()
-
             self.fps = int(clock.get_fps())
-            self.render_time = round(finish - start, 3)
+            self.render_time = round(time.perf_counter() - start, 3)
             self.time = pygame.time.get_ticks()
 
     
@@ -424,13 +431,13 @@ class Game():
 
     def DrawFPSCounter(self):
         font = pygame.font.SysFont("comicsansms", 12)
-        text = 'Render time: ' + str(self.render_time) + 's | FPS: ' + str(self.fps)
+        text = 'Render time: ' + str(self.render_time*1000) + 'ms | FPS: ' + str(self.fps)
         r_text = font.render(text, True, color.white)
         pos = (self.width - len(text) * 7, self.height - 80)
 
-        max_length = (len(text)+2)
+        max_length = (len(text)+3)
 
-        self.win.blit(text, pos)
+        self.win.blit(r_text, pos)
 
         rect = pygame.Rect((pos[0], pos[1]), (max_length * 7, 18))
 
@@ -444,4 +451,3 @@ if __name__ == '__main__':
 #finish making clicks display and make background for it
 #add miss animation (use image.alpha operations)
 #change game behaviour to be used by menu as only a single game
-#let various display settings to be read from settings file

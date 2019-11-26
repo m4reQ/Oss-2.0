@@ -1,5 +1,6 @@
 import pygame
-from game import scale, CS, HP, DEBUG_MODE
+import pygame.locals
+from game import scale, CS, HP, DEBUG_MODE, tex_path
 from helper import *
 import math
 
@@ -22,17 +23,15 @@ class Circle():
 		if not Circle.font_textures and not Circle.background_textures:
 			#load font textures
 			for i in range(10):
-				texture = Circle.LoadFontTexture('textures/circles', i)
+				texture = Circle.LoadFontTexture(tex_path + 'circles', i)
 				Circle.font_textures.append(texture)
 			#load background textures
 			for i in range(5):
-				texture = Circle.LoadBackgroundTexture('textures/circles', i)
+				texture = Circle.LoadBackgroundTexture(tex_path + 'circles', i)
 				Circle.background_textures.append(texture)
 
 			if DEBUG_MODE:
-				print("[INFO] Initialized textures. Texture arrays: ")
-				print(Circle.font_textures)
-				print(Circle.background_textures)
+				print('[INFO]<' + str(__name__) + '.' + str(__class__.__name__) + "> Initialized textures. Texture arrays: " + str(Circle.font_textures + Circle.background_textures))
 		else:
 			pass
 

@@ -9,10 +9,9 @@ except ImportError:
 try:
 	ext_modules = ['pygame', 'itertools']
 	os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+	from helper import ask, logError
 	import repair
 	import game
-	from game import TEST_MODE, DEBUG_MODE
-	from helper import ask, logError
 	import update
 	import pygame
 	import pygame.locals
@@ -31,11 +30,13 @@ except ImportError as e:
 
 if __name__ == '__main__':
 	try:
-		if TEST_MODE:
+		if game.TEST_MODE:
 			raise Exception('[INFO] Test mode enabled.')
 
-		if not DEBUG_MODE:
+		if not game.DEBUG_MODE:
 			update.Check_version()
+
+		print('Welcome to Oss!')
 	
 		g = game.Game(game.resolution)
 

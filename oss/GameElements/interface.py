@@ -1,8 +1,7 @@
 from helper import color, run_once
+from game import DEBUG_MODE
 import pygame
 import pygame.locals
-
-DEBUG_MODE = None
 
 class InterfaceElement:
 	font = None
@@ -10,11 +9,11 @@ class InterfaceElement:
 	def __init__(self, width, height, position=(0,0), drawable=None, text=None, textColor=None, textPosition=None):
 		if DEBUG_MODE:
 			if not InterfaceElement.font:
-				print('[WARNING] <' + str(self)[11:] + ' Font not defined.')
+				print('[WARNING]' + str(self) + ' Font not defined.')
 			if text and not textColor:
-				print('[WARNING] <' + str(self)[11:] + ' Text color not defined.')
+				print('[WARNING]' + str(self) + ' Text color not defined.')
 			if not drawable and not text:
-				print("[WARNING] <" + str(self)[11:] + " Didn't define any object to draw.")
+				print("[WARNING]" + str(self) + " Didn't define any object to draw.")
 
 		self.positionX, positionY = position
 		self.width = width
@@ -52,12 +51,6 @@ class InterfaceElement:
 
 def changeFont(fontName, size):
 	InterfaceElement.font = pygame.font.SysFont(fontName, int(size))
-
-@run_once
-def setDebugMode():
-	from game import DEBUG_MODE as dm
-	global DEBUG_MODE
-	DEBUG_MODE = dm
 
 if __name__ == '__main__':
 	pygame.quit()
