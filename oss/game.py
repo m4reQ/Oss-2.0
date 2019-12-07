@@ -73,8 +73,6 @@ def Initialize_window(width, height):
 	"""
 	global cursor_texture, miss_texture, bg_texture, bg_surf, dark, mouse_visible
 
-	pygame.init()
-
 	pygame.mouse.set_visible(mouse_visible)
 
 	if full_screen:

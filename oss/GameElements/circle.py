@@ -2,6 +2,7 @@ import pygame
 from game import DEBUG_MODE
 from helper import *
 from launcher import circleTextures as TextureContainer
+from launcher import hitsounds as SoundContainer
 from launcher import CS, HP
 from launcher import scale
 import math
@@ -28,7 +29,7 @@ class Circle(object):
 		else:
 			Circle.texture_count = 0
 
-		if Circle.count % 4 == 0:
+		if Circle.count % 4 == 0 and Circle.count != 0:
 			if Circle.background_count < 4:
 				Circle.background_count += 1
 			else:
@@ -58,15 +59,23 @@ class Circle(object):
 		return dist <= self.radius
 
 	def Hit(self, game):
+		if game.combo % 5 == 0 and game.combo != 0:
+			SoundContainer.GetSound('hit2').play()
+		else:
+			SoundContainer.GetSound('hit1').play()
+
 		game.combo += 1
 		game.points += (game.combo * 300)
 		game.points_text.textColor = color.random()
+
 		if game.combo >= 5:
 			game.health += stats.getHP(HP) * 50
 
 		game.circles.remove(self)
 		
 	def Miss(self, game):
+		SoundContainer.GetSound('miss').play()
+
 		game.combo = 0
 		game.health -= stats.getHP(HP) * 100
 

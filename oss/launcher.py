@@ -75,6 +75,9 @@ tex_path = 'Resources/textures/'
 #maps folder path
 maps_path = 'Resources/maps/'
 
+#sounds folder path
+sounds_path = 'Resources/sounds/'
+
 #settings container
 sets = Settings()
 
@@ -92,6 +95,9 @@ except Exception as e:
 circleTextures = None
 backgroundTextures = None
 interfaceTextures = None
+
+#sound containers
+hitsounds = None
 
 #key bind table
 keybind = {
@@ -126,6 +132,12 @@ def InitializeTextureContainers():
 
 	return containers
 
+def InitializeSoundContainers():
+	from soundcontainer import SoundContainer
+	containers = (SoundContainer(name='hitsounds'))
+
+	return containers
+
 def LoadTextures():
 	from texturecontainer import GenTexture
 	#circle radius
@@ -147,6 +159,16 @@ def LoadTextures():
 		if sets.DEBUG_MODE:
 			print('[INFO]<', str(__name__), "> Initialized circle textures. Texture dictionary: ", str(circleTextures.textures))
 
+def LoadSounds():
+	from soundcontainer import GenSound
+
+	hitsounds.AddSound(GenSound(sounds_path + 'hit1.wav'), 'hit1')
+	hitsounds.AddSound(GenSound(sounds_path + 'hit2.wav'), 'hit2')
+	hitsounds.AddSound(GenSound(sounds_path + 'miss.wav'), 'miss')
+
+	for s in hitsounds.sounds.values():
+		s.set_volume(0.4)
+
 def SetKeyBindings():
 	global keybind
 
@@ -154,6 +176,11 @@ def SetKeyBindings():
 	keybind['kr'] = pygame.K_x
 
 def Start():
+	#initialize pygame
+	pygame.mixer.pre_init(22050, -16, 2, 512)
+	pygame.mixer.init()
+	pygame.init()
+
 	#set game stats (AR, CS, HP)
 	SetGameStats(5, 5, 5)
 
@@ -161,6 +188,11 @@ def Start():
 	global circleTextures, backgroundTextures, interfaceTextures
 	circleTextures, backgroundTextures, interfaceTextures = InitializeTextureContainers()
 	LoadTextures()
+
+	#initialize sounds
+	global hitsounds
+	hitsounds = InitializeSoundContainers()
+	LoadSounds()
 
 	#load key bindings
 	SetKeyBindings()
@@ -185,6 +217,7 @@ def Start():
 		logError(e)
 		print(e)
 
+	pygame.mixer.quit()
 	pygame.quit()
 	os.system("pause >NUL")
 	quit()
