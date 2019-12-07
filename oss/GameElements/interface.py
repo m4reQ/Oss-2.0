@@ -1,7 +1,6 @@
 from helper import color, run_once
 from game import DEBUG_MODE
 import pygame
-import pygame.locals
 
 class InterfaceElement:
 	font = None
@@ -9,11 +8,11 @@ class InterfaceElement:
 	def __init__(self, width, height, position=(0,0), drawable=None, text=None, textColor=None, textPosition=None):
 		if DEBUG_MODE:
 			if not InterfaceElement.font:
-				print('[WARNING]' + str(self) + ' Font not defined.')
+				print('[WARNING]', str(self), ' Font not defined.')
 			if text and not textColor:
-				print('[WARNING]' + str(self) + ' Text color not defined.')
+				print('[WARNING]', str(self), ' Text color not defined.')
 			if not drawable and not text:
-				print("[WARNING]" + str(self) + " Didn't define any object to draw.")
+				print("[WARNING]", str(self), " Didn't define any object to draw.")
 
 		self.positionX, positionY = position
 		self.width = width
@@ -39,7 +38,7 @@ class InterfaceElement:
 		if self.drawable:
 			surface.blit(self.drawable, (self.positionX, self.positionY))
 		else:
-			raise Exception('[ERROR] No object to draw.')
+			raise Exception('[ERROR]'+ str(self)+ ' No object to draw.')
 
 	def getRect(self):
 		if self.text and not self.drawable:

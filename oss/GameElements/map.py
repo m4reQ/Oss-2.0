@@ -1,7 +1,7 @@
 import pygame
 import GameElements.circle
 from helper import Translate, logError
-from game import maps_path
+from launcher import maps_path
 
 is_loaded = False
 

@@ -6,50 +6,53 @@ import traceback
 
 user32 = ctypes.windll.user32
 
-def loadSettings(filepath):
+def run_once(f):
 	"""
-	loads settings from specified file
-	rtype: string
-	returns:list
+	allows function to run only once in a loop
+	can be used as a decorator
+	rtype: function
+	returns: function call or None
 	"""
-	values = []
-	with open(filepath, mode='r') as f:
-		for line in f.readlines():
-			if str(line)[0] == '#' or str(line) == '' or str(line) == '\n':
-				pass
-			elif not str(line)[0] == '/':
-				value = str(line.partition("=")[2])
-				value = value.split('\n')[0]
+	def wrapper(*args, **kwargs):
+		if not wrapper.has_run:
+			wrapper.has_run = True
+			return  f(*args, **kwargs)
+	wrapper.has_run = False
+	return wrapper
 
-				value = value.replace(' ', '')
+def run_interval(interval):
+	"""
+	runs function once per given loop
+	executions
+	can be used as a decorator
+	rtype: function
+	returns: function call or None
+	"""
+	def decorator(f):
+		def wrapper(*args, **kwargs):
+			if wrapper.count == interval:
+				wrapper.count = 0
+				return f(*args, **kwargs)
+			else:
+				wrapper.count += 1
+		wrapper.count = 0
+		return wrapper
+	return decorator
 
-				if value.lower() == 'true':
-					value = True
-					values.append(value)
-				elif value.lower() == 'false':
-					value = False
-					values.append(value)
-				else:
-					raise Exception('[ERROR] Error appeared during settings loading. Wrong value type.')
-
-		if not values[-1]:
-			with open(filepath, mode='r') as f:
-				for line in f.readlines():
-					if str(line)[0] == '/':
-						key = str(line.partition("=")[0])
-						value = str(line.partition("=")[2])
-						value = value.split('\n')[0]
-
-						key = key.replace(' ', '')
-						key = key.replace('/', '')
-						value = value.replace(' ', '')
-
-						setDisplaySetting(key, value)
-
-	return values
-
-def setDisplaySetting(setting, value):
-	os.environ[setting] = value
+def deprecated(newMethod):
+	"""
+	indicates that the method is deprecated
+	by a new one
+	can be used as a decorator
+	rtype: function, string
+	returns: function call
+	"""
+	def decorator(f):
+		def wrapper(*args, **kwargs):
+			print('[WARNING] Method ' + f.__name__ + ' is deprecated and will be removed soon. Instead use: ' + newMethod)
+			return f(*args, **kwargs)
+		return wrapper
+	return decorator
 
 def logError(exception):
 	if not str(exception)[:6] == '[INFO]':
@@ -99,7 +102,7 @@ def Translate(data, res, mode):
 	else:
 		raise Exception('[ERROR] Invalid translation mode.')
 
-class color:
+class color(object):
 	red = (255,0,0)
 	green = (0,255,0)
 	blue = (0,0,255)
@@ -116,15 +119,16 @@ class color:
 		rtype: none
 		returns: tuple
 		"""
-		color = (random.randint(0,225), random.randint(0,225), random.randint(0,225))
-		return color
+		return (random.randint(0,225), random.randint(0,225), random.randint(0,225))
 
-class Resolutions:
+class Resolutions(object):
 	SD = (640, 480)
 	HD = (1360, 768)
 	FHD = (1920, 1080)
 	#4K = (3840, 2160) for now doesn't work
-	native = (user32.GetSystemMetrics(0), user32.GetSystemMetrics(1))
+
+	def native():
+		return (user32.GetSystemMetrics(0), user32.GetSystemMetrics(1))
 
 	def user(width=0, height=0):
 		return (width, height)
@@ -159,36 +163,6 @@ class stats:
 		"""
 		hp = (HP+5) * 0.014
 		return hp
-
-def run_once(f):
-	"""
-	allows function to run only once in a loop
-	can be used as a decorator
-	rtype: function
-	returns: function call or None
-	"""
-	def wrapper(*args, **kwargs):
-		if not wrapper.has_run:
-			wrapper.has_run = True
-			return  f(*args, **kwargs)
-	wrapper.has_run = False
-	return wrapper
-
-def run_interval(f, interval):
-	"""
-	runs function once per given loop
-	executions
-	rtype: function
-	returns: function call or None
-	"""
-	def wrapper(*args, **kwargs):
-		if wrapper.count == interval:
-			wrapper.count = 0
-			return f(*args, **kwargs)
-		else:
-			wrapper.count += 1
-	wrapper.count = 0
-	return wrapper
 
 if __name__ == '__main__':
 	pygame.quit()

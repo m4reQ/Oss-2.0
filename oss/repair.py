@@ -58,7 +58,7 @@ def main(args):
     rtype: array
     returns: none
     """
-    if not (ver[0] >= 3) and (ver[1] >= 0): # and not Check_pip():
+    if not (ver[0] >= 3) and not (ver[1] >= 0): # and not Check_pip():
         print("You don't have required python version")
         print("Go to a python official website to download latest versions. https://www.python.org/downloads")
         os.system('pause >NUL')
