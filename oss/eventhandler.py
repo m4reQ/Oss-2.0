@@ -3,7 +3,6 @@ from launcher import keybind
 from launcher import sets
 
 class EventHandler:
-	@staticmethod
 	def HandleKeys(game, event):
 		if event.key == pygame.K_ESCAPE:
 			game.is_running = False
@@ -24,8 +23,6 @@ class EventHandler:
 		if event.key == keybind['kr']:
 			game.click_count[1] += 1
 
-
-	@staticmethod
 	def HandleEvents(game, event):
 		if event.type == pygame.QUIT:
 			game.is_running = False

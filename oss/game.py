@@ -139,7 +139,7 @@ import GameElements.circle as circle
 import GameElements.map as map
 import GameElements.interface as interface
 
-from eventhandler import *
+from eventhandler import EventHandler
 
 class Game():
 	def __init__(self, res):
@@ -282,6 +282,16 @@ class Game():
 									circle.Hit(self)
 								else:
 									circle.Miss(self)
+						if event.type == pygame.MOUSEBUTTONDOWN:
+							if event.button == 1:
+								self.click_count[0] += 1
+							elif event.button == 3:
+								self.click_count[1] += 1
+
+							if circle.Collide(self.cursor_pos):
+								circle.Hit(self)
+							else:
+								circle.Miss(self)
 
 				elif self.time >= circle.time + stats.getAR(self.AR):
 					circle.Miss(self)
@@ -289,11 +299,22 @@ class Game():
 				circle.Draw(self.win)  
 				for event in self.events:
 					if event.type == pygame.KEYDOWN:
-						if event.key == pygame.K_z or event.key == pygame.K_x:
+						if event.key == pygame.K_z or pygame.K_x:
 							if circle.Collide(self.cursor_pos):
 								circle.Hit(self)
 							else:
 								circle.Miss(self)
+					if event.type == pygame.MOUSEBUTTONDOWN:
+						if event.button == 1:
+							self.click_count[0] += 1
+						elif event.button == 3:
+							self.click_count[1] += 1
+
+						if circle.Collide(self.cursor_pos):
+							circle.Hit(self)
+						else:
+							circle.Miss(self)
+							
 
 	def DrawCursor(self):
 		self.cursor.positionX = self.cursor_pos[0] - self.cursor.width/2
