@@ -9,24 +9,21 @@ try:
 	import pygame
 	from launcher import sets
 	from launcher import AR, CS, HP
-	from launcher import scale
-	from launcher import darken_percent
-	from launcher import tex_path
-	import repair, update
+	from launcher import backgroundTextures
+	from launcher import interfaceTextures
+	from launcher import background, dim
+	from launcher import targetFPS
+	from launcher import resolution
 	import time
 	import random
 	import concurrent.futures
-	import itertools
 except ImportError as e:
 	print(e)
 	logError(e)
 	
-	os.system('pause >NUL')
-	quit()
+	exitAll()
 
 #####overall settings#####
-resolution = Resolutions.SD
-
 full_screen = sets.full_screen
 borderless = sets.borderless
 mouse_visible = sets.mouse_visible
@@ -57,79 +54,25 @@ right_key = pygame.K_x
 clock = pygame.time.Clock()
 
 #textures loading
-cursor_texture = None
-miss_texture = None
-bg_texture = None
+cursor_texture = interfaceTextures.GetTexture('cursor')
+miss_texture = interfaceTextures.GetTexture('miss')
+bg_texture = backgroundTextures.GetTexture('bg_' + str(random.randint(0, backgroundTextures.count - 1)))
 
 #surfaces initialization
-bg_surf = None
-dark = None
-
-def Initialize_window(width, height):
-	"""
-	Initializes application window
-	rtype: int, int
-	returns: pygame.Surface
-	"""
-	global cursor_texture, miss_texture, bg_texture, bg_surf, dark, mouse_visible
-
-	pygame.mouse.set_visible(mouse_visible)
-
-	if full_screen:
-		try: 
-			win = pygame.display.set_mode((width, height), pygame.FULLSCREEN|pygame.DOUBLEBUF|pygame.HWSURFACE|pygame.HWACCEL)
-		except Exception as e:
-			print('[ERROR] Cannot set window, because resolution is too high.')
-			logError(e)
-
-			pygame.quit()
-			os.system("pause >NUL")
-			quit()
-			
-	else:
-		if borderless:
-			win = pygame.display.set_mode((width, height), pygame.DOUBLEBUF|pygame.NOFRAME|pygame.HWSURFACE|pygame.HWACCEL)
-		if not borderless:
-			win = pygame.display.set_mode((width, height), pygame.DOUBLEBUF|pygame.HWSURFACE|pygame.HWACCEL)
-
-	if DEBUG_MODE:
-		print('[INFO] Current display driver: ', pygame.display.get_driver())
-	
-	cursor_texture = pygame.image.load(tex_path + 'cursor.png')
-	cursor_texture = pygame.transform.scale(cursor_texture, (int(16 * scale), int(16 * scale)))
-
-	miss_texture = pygame.image.load(tex_path + 'miss.png')
-	miss_texture = pygame.transform.scale(cursor_texture, (int(16 * scale), int(16 * scale)))
-
-	bg_textures = []
-	i = 1
-	while i <= 9:
-		string = 'bg' + str(i)
-		bg_textures.append(string)
-		i += 1
-
-	texture_no = bg_textures[random.randint(0, len(bg_textures)-1)]
-	bg_texture = pygame.image.load(tex_path + 'backgrounds/' + texture_no + '.jpg')
-	bg_texture = pygame.transform.scale(bg_texture, (width, height))
-
-	bg_surf = pygame.Surface((width, height), pygame.HWSURFACE|pygame.SRCALPHA|pygame.HWACCEL).convert_alpha()
-	
-	dark = pygame.Surface(bg_texture.get_size(), pygame.HWSURFACE|pygame.SRCALPHA|pygame.HWACCEL).convert_alpha()
-	dark.fill((0, 0, 0, darken_percent*255))
-
-	return win
+bg_surf = background
+dark = dim
 
 #called once to update window background
 @run_once
 def pre_update_display():
 	if DEBUG_MODE:
-		print('[INFO] Updating screen.')
+		print('[INFO]<', str(__name__), '> Updating screen.')
 	pygame.display.update()
 
 @run_interval(interval=10)
 def timed_update_display():
 	if DEBUG_MODE:
-		print('[INFO] Updating screen.')
+		print('[INFO]<', str(__name__), '> Updating screen.')
 	pygame.display.update()
 
 #import game elements
@@ -140,10 +83,11 @@ import GameElements.interface as interface
 from eventhandler import EventHandler
 
 class Game():
-	def __init__(self, res):
+	def __init__(self, win):
 		self.time = 0
-		self.width, self.height = res
-		self.win = Initialize_window(self.width, self.height)
+		self.win = win
+		self.width = win.get_width()
+		self.height = win.get_height()
 		self.is_running = True
 		self.click_count = [0, 0] #[0] stands for left key, [1] for right
 		self.cursor_pos = (0, 0)
@@ -198,7 +142,7 @@ class Game():
 
 			if not self.circles:
 				if DEBUG_MODE:
-					raise Exception('[INFO] List depleted at time: ' + str(self.time) + 'ms.' + '\n[INFO] Objects list self.circles is empty.')
+					raise Exception('[INFO]<', str(__name__), '> List depleted at time: ' + str(self.time) + 'ms.' + '\n[INFO] Objects list self.circles is empty.')
 				self.is_running = False
 
 			#event handling
@@ -212,7 +156,7 @@ class Game():
 
 			if self.health <= 0:
 				if DEBUG_MODE:
-					raise Exception('[INFO] self.health reached ' + str(self.health))
+					print('[INFO]<', str(__name__), '> self.health reached ' + str(self.health))
 				self.is_running = False
 
 
@@ -222,9 +166,9 @@ class Game():
 				self.health = self.maxhealth
 
 			if DEBUG_MODE and len(self.circles) < 5:
-				print('[INFO] ', str(self.circles))
+				print('[INFO]<', str(__name__), '> ', str(self.circles))
 			if DEBUG_MODE and len(self.circles) >= 5:
-				print('[INFO] Circle list Minimized. Contains: ', str(len(self.circles)), ' circles')
+				print('[INFO]<', str(__name__), '> Circle list Minimized. Contains: ', str(len(self.circles)), ' circles')
 
 			#drawing section
 			#NOTE!
@@ -249,7 +193,7 @@ class Game():
 
 			if DICT_UPDATE_MODE:
 				pygame.display.update(self.toUpdate)
-				print('[INFO] Updating: ', str(self.toUpdate))
+				print('[INFO]<', str(__name__), '> Updating: ', str(self.toUpdate))
 
 				self.toUpdate.clear()
 
@@ -259,7 +203,10 @@ class Game():
 			if not DICT_UPDATE_MODE:
 				pygame.display.flip()
 
-			clock.tick(60)
+			if targetFPS == 0:
+				clock.tick()
+			else:
+				clock.tick(targetFPS)
 			self.fps = int(clock.get_fps())
 			self.render_time = round(time.perf_counter() - start, 3)
 			self.time = pygame.time.get_ticks()
@@ -275,7 +222,7 @@ class Game():
 					circle.Draw(self.win)  
 					for event in self.events:
 						if event.type == pygame.KEYDOWN:
-							if event.key == pygame.K_z or pygame.K_x:
+							if event.key == pygame.K_z or event.key == pygame.K_x:
 								if circle.Collide(self.cursor_pos):
 									circle.Hit(self)
 								else:
@@ -297,7 +244,7 @@ class Game():
 				circle.Draw(self.win)  
 				for event in self.events:
 					if event.type == pygame.KEYDOWN:
-						if event.key == pygame.K_z or pygame.K_x:
+						if event.key == pygame.K_z or event.key == pygame.K_x:
 							if circle.Collide(self.cursor_pos):
 								circle.Hit(self)
 							else:
@@ -408,7 +355,3 @@ class Game():
 if __name__ == '__main__':
 	pygame.quit()
 	quit()
-
-#finish making clicks display and make background for it
-#add miss animation (use image.alpha operations)
-#change game behaviour to be used by menu as only a single game

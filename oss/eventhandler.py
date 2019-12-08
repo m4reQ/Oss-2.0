@@ -7,7 +7,7 @@ class EventHandler:
 		if event.key == pygame.K_ESCAPE:
 			game.is_running = False
 			if sets.DEBUG_MODE:
-				raise Exception('[INFO] User interruption by closing window')
+				print('[INFO]<', str(__name__), '> User interruption by closing window')
 				
 		if event.key == pygame.K_F10:
 			game.draw_interface = not game.draw_interface
@@ -15,7 +15,7 @@ class EventHandler:
 		#force screen update (ONLY IN DEBUG MODE)
 		if sets.DEBUG_MODE:
 			if event.key == pygame.K_BACKQUOTE:
-				print('[INFO] Preformed window update.')
+				print('[INFO]<', str(__name__), '> Preformed window update.')
 				pygame.display.update()
 
 		if event.key == keybind['kl']:
@@ -27,7 +27,7 @@ class EventHandler:
 		if event.type == pygame.QUIT:
 			game.is_running = False
 			if sets.DEBUG_MODE:
-				raise Exception('[INFO] User interruption by closing window')
+				print('[INFO]<', str(__name__), '> User interruption by closing window')
 
 if __name__ == '__main__':
 	pygame.quit()

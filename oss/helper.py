@@ -3,6 +3,7 @@ import random
 import ctypes
 import os
 import traceback
+import pygame
 
 user32 = ctypes.windll.user32
 
@@ -55,9 +56,17 @@ def deprecated(newMethod):
 	return decorator
 
 def logError(exception):
-	if not str(exception)[:6] == '[INFO]':
-		with open('log.txt', 'w+') as logf:
-			logf.write(traceback.format_exc())
+	with open('log.txt', 'w+') as logf:
+		logf.write(traceback.format_exc())
+
+def exitAll():
+	try:
+		pygame.mixer.quit()
+		pygame.quit()
+		os.system("pause >NUL")
+		quit()
+	except Exception:
+		pass
 
 def ask(question):
 	"""

@@ -25,7 +25,7 @@ class SoundContainer(object):
 
 		SoundContainer.containerID += 1
 		if sets.DEBUG_MODE:
-			print('[INFO]<' + str(__name__) + '.' + str(self.__class__.__name__) + "> Sound container: '" + str(self.name) + "' initialized.")
+			print('[INFO]<', str(__name__), "> Sound container: '", str(self.name), "' initialized.")
 
 	def AddSound(self, sound, soundName):
 		if not type(sound).__name__ == 'Sound':

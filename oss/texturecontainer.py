@@ -29,7 +29,7 @@ class TextureContainer(object):
 
 		TextureContainer.containerID += 1
 		if sets.DEBUG_MODE:
-			print('[INFO]<' + str(__name__) + '.' + str(self.__class__.__name__) + "> Texture container: '" + str(self.name) + "' initialized.")
+			print('[INFO]<', str(__name__), "> Texture container: '", str(self.name), "' initialized.")
 
 	def AddTexture(self, texture, texName):
 		if not type(texture).__name__ == 'Surface':
@@ -73,3 +73,7 @@ class TextureContainer(object):
 		returns: bool
 		"""
 		return self.__textures == {}
+
+	@property
+	def count(self):
+		return len(self.__textures)
