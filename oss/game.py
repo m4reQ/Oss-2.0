@@ -174,7 +174,6 @@ class Game():
 			#NOTE!
 			#Don't put anything below this section
 			#it may cause glitches
-			start = time.perf_counter()
 			with concurrent.futures.ThreadPoolExecutor() as executor:
 				executor.submit(self.DrawPlayGround)
 				if self.draw_interface:
@@ -208,7 +207,7 @@ class Game():
 			else:
 				clock.tick(targetFPS)
 			self.fps = int(clock.get_fps())
-			self.render_time = round(time.perf_counter() - start, 3)
+			self.render_time = round(clock.get_rawtime(), 3) / 1000
 			self.time = pygame.time.get_ticks()
 
 	

@@ -1,0 +1,4 @@
+##### requirements.txt for oss#####
+#
+pygame
+requests

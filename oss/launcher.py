@@ -6,27 +6,25 @@ except ImportError:
 	exit()
 
 try:
-	ext_modules = ['pygame', 'requests']
+	from helper import ask, logError, stats, Resolutions, exitAll
 	import time
 	import repair
-	from helper import ask, logError, stats, Resolutions, exitAll
+	import matplotlib
 	import pygame
 	from settings import Settings
 	import update
 except ImportError as e:
 	logError(e)
-	print('Error! One of modules cannot be resolved. \nTry restarting your application or reinstalling it.')
+	print('Error! One of modules cannot be resolved.')
 
 	if repair.Check_response():
 		if ask("Do you want to launch the repair module?"):
-			repair.main(ext_modules)
+			repair.main()
 	else:
 		print('Error! Cannot use repair module.')
-
 		exitAll()
 
 	print('Module checking done. Please restart application.')
-
 	exitAll()
 
 #clear log file
