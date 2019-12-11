@@ -9,7 +9,6 @@ try:
 	from helper import ask, logError, stats, Resolutions, exitAll
 	import time
 	import repair
-	import matplotlib
 	import pygame
 	from settings import Settings
 	import update
