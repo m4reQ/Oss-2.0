@@ -6,9 +6,17 @@ except ImportError:
 	exit()
 
 try:
-	from helper import ask, logError, stats, Resolutions, exitAll
-	import time
+	from helper import ask, logError, exitAll
 	import repair
+	from utils import resolutions, stats, ConvertImage, DimImage
+	from Containers.texturecontainer import GenTexture, TextureContainer
+	from Containers.soundcontainer import GenSound, SoundContainer
+	from Containers.texturecontainer import SetDebugging as tcSetDebugging
+	from Containers.soundcontainer import SetDebugging as scSetDebugging
+	from GameElements.interface import SetDebugging as iSetDebugging
+	from eventhandler import SetDebugging as ehSetDebugging
+	import concurrent.futures
+	import time
 	import pygame
 	from settings import Settings
 	import update
@@ -20,10 +28,8 @@ except ImportError as e:
 		if ask("Do you want to launch the repair module?"):
 			repair.main()
 	else:
-		print('Error! Cannot use repair module.')
-		exitAll()
+		raise Exception('Error! Cannot use repair module.')
 
-	print('Module checking done. Please restart application.')
 	exitAll()
 
 #clear log file
@@ -52,7 +58,7 @@ if not sys.warnoptions:
 scale = 1
 
 #resolution
-resolution = Resolutions.SD
+resolution = resolutions.SD
 
 #target frame rate
 #set 0 for unlimited
@@ -94,8 +100,10 @@ interfaceTextures = None
 hitsounds = None
 
 #display surfaces
-background = None
-dim = None
+background_surf = None
+
+#game window
+mainWindow = None
 
 #key bind table
 keybind = {
@@ -112,26 +120,16 @@ def LoadSettings():
 		if sets.DEBUG_MODE:
 			print('[ERROR] ', str(e))
 		exitAll()
+	
+	if sets.DEBUG_MODE:
+		tcSetDebugging(True)
+		scSetDebugging(True)
+		iSetDebugging(True)
+		ehSetDebugging(True)
 
 def SetGameStats(ar, cs, hp):
 	try:
-		global AR, CS, HP
-
-		if cs < 1:
-			CS = 1
-		elif cs > 10:
-			CS = 10
-		else:
-			CS = cs
-
-		if hp < 0:
-			HP = 0
-		elif hp > 10:
-			HP = 10
-		else:
-			HP = hp
-
-		AR = ar
+		return (stats.clamp(ar), stats.clamp(cs), stats.clamp(hp))
 	except Exception as e:
 		logError(e)
 		print('An error appeared during setting game stats.')
@@ -141,7 +139,6 @@ def SetGameStats(ar, cs, hp):
 
 def InitializeTextureContainers():
 	try:
-		from texturecontainer import TextureContainer
 		containers = (
 			TextureContainer(name='circle'),
 			TextureContainer(name='backgrounds'),
@@ -157,7 +154,6 @@ def InitializeTextureContainers():
 
 def InitializeSoundContainers():
 	try:
-		from soundcontainer import SoundContainer
 		containers = (SoundContainer(name='hitsounds'))
 
 		return containers
@@ -170,8 +166,9 @@ def InitializeSoundContainers():
 
 def InitializeSurfaces():
 	try:
-		bg = pygame.Surface(resolution, pygame.HWSURFACE|pygame.SRCALPHA|pygame.HWACCEL).convert_alpha()
-		dark = pygame.Surface(resolution, pygame.HWSURFACE|pygame.SRCALPHA|pygame.HWACCEL).convert_alpha()
+		bg = pygame.Surface(resolution, pygame.HWSURFACE|pygame.SRCALPHA|pygame.HWACCEL)#.convert_alpha()
+		bg = bg.fill((0, 0, 0, int(darkenPercent*255)))
+		dark = pygame.Surface(resolution, pygame.HWSURFACE|pygame.SRCALPHA|pygame.HWACCEL)#.convert_alpha()
 		dark.fill((0, 0, 0, darkenPercent*255))
 
 		return (bg, dark)
@@ -181,37 +178,76 @@ def InitializeSurfaces():
 		if sets.DEBUG_MODE:
 			print('[ERROR] ', str(e))
 		exitAll()
+
+def LoadCircleTextures():
+	#circle radius
+	radius = int(stats.getCS(CS) * scale)
+
+	#circle textures
+	#check if textures was previously loaded
+	if circleTextures.is_empty:
+		#load font textures
+		for i in range(10):
+			tex = GenTexture(tex_path + 'circles/' + str(i) + '.png', (radius*2, radius*2))
+			circleTextures.AddTexture(tex, str('font_' + str(i)))
+		#load background textures
+		for i in range(5):
+			tex = GenTexture(tex_path + 'circles/circlebg_' + str(i) + '.png', (radius*2, radius*2))
+			circleTextures.AddTexture(tex, str('bg_' + str(i)))
+
+def LoadInterfaceTextures():
+	#interface textures
+	#check if textures was previously loaded
+	if interfaceTextures.is_empty:
+		interfaceTextures.AddTexture(GenTexture(tex_path + 'cursor.png', (16 * scale, 16 * scale)), 'cursor')
+		interfaceTextures.AddTexture(GenTexture(tex_path + 'miss.png', (16 * scale, 16 * scale)), 'miss')
+
+def LoadBackgroundTextures():
+	#load backgrounds
+	#check if textures was previously loaded
+	if backgroundTextures.is_empty:
+		#get names and number of files in backgrounds directory
+		filenames = [name for name in os.listdir(os.path.join(tex_path, 'backgrounds')) if os.path.isfile(os.path.join(tex_path, 'backgrounds', name))]
+		filenames.remove('Thumbs.db')
+		jpgs = [os.path.join(tex_path, 'backgrounds', name) for name in filenames if name[-4:] != '.png']
+		pngs = [os.path.join(tex_path, 'backgrounds', name) for name in filenames if name[-4:] != '.jpg']
+
+		jpgNames = [name[:-4] for name in jpgs]
+		pngNames = [name[:-4] for name in pngs]
+
+		count_jpg = len(jpgs)
+
+		#convert jpg images to png
+		if sets.DEBUG_MODE:
+			print('[INFO]<', str(__name__), '> Processing background images...')
+
+		with concurrent.futures.ThreadPoolExecutor() as executor:
+			for idx, tex in enumerate(jpgNames):
+				if not tex in pngNames:
+						executor.submit(ConvertImage, jpgs[idx])
+
+		if sets.DEBUG_MODE:
+			print('[INFO]<', str(__name__), '> Background images processing done.')
+
+		#load backgrounds to backgroundTextures container
+		for i in range(count_jpg-1):
+			tex = GenTexture(tex_path + 'backgrounds/bg' + str(i) + '.png', resolution)
+			backgroundTextures.AddTexture(tex, 'bg_' + str(i))
+
+		#convert background textures to support alpha blending
+		#and dim all of them
+		for key in backgroundTextures.textures:
+			tex = DimImage(backgroundTextures.textures[key], darkenPercent)
+			backgroundTextures.textures[key] = tex
+
+		backgroundTextures.AddTexture(GenTexture(tex_path + 'backgrounds/menu_background.png', resolution), 'menu_background')
+
 def LoadTextures():
 	try:
-		from texturecontainer import GenTexture
-
-		#circle radius
-		radius = int(stats.getCS(CS) * scale)
-
-		#circle textures
-		#check if textures was previously loaded
-		if circleTextures.is_empty:
-			#load font textures
-			for i in range(10):
-				tex = GenTexture(tex_path + 'circles/' + str(i) + '.png', (radius*2, radius*2))
-				circleTextures.AddTexture(tex, str('font_' + str(i)))
-			#load background textures
-			for i in range(5):
-				tex = GenTexture(tex_path + 'circles/circlebg_' + str(i) + '.png', (radius*2, radius*2))
-				circleTextures.AddTexture(tex, str('bg_' + str(i)))
-
-		#interface textures
-		#check if textures was previously loaded
-		if interfaceTextures.is_empty:
-			interfaceTextures.AddTexture(GenTexture(tex_path + 'cursor.png', (16 * scale, 16 * scale)), 'cursor')
-			interfaceTextures.AddTexture(GenTexture(tex_path + 'miss.png', (16 * scale, 16 * scale)), 'miss')
-
-			#load backgrounds
-			#get number of files in backgrounds directory
-			filesCount = len([name for name in os.listdir(os.path.join(tex_path, 'backgrounds')) if os.path.isfile(os.path.join(tex_path, 'backgrounds', name))])
-			for i in range(filesCount - 1):
-				tex = GenTexture(tex_path + 'backgrounds/bg' + str(i) + '.jpg', resolution)
-				backgroundTextures.AddTexture(tex, 'bg_' + str(i-1))
+		with concurrent.futures.ThreadPoolExecutor() as executor:
+			executor.submit(LoadBackgroundTextures)
+			executor.submit(LoadCircleTextures)
+			executor.submit(LoadInterfaceTextures)
 
 		if not all([circleTextures.is_empty, interfaceTextures.is_empty, backgroundTextures.is_empty]):
 			if sets.DEBUG_MODE:
@@ -226,7 +262,6 @@ def LoadTextures():
 
 def LoadSounds():
 	try:
-		from soundcontainer import GenSound
 		global mVolume
 
 		if hitsounds.is_empty:
@@ -309,28 +344,29 @@ def Start():
 	SetKeyBindings()
 
 	#set game stats (AR, CS, HP)
-	SetGameStats(5, 5, 5)
-
-	#initialize textures
-	global circleTextures, backgroundTextures, interfaceTextures
-	circleTextures, backgroundTextures, interfaceTextures = InitializeTextureContainers()
-	LoadTextures()
+	global AR, CS, HP
+	AR, CS, HP = SetGameStats(5, 5, 5)
 
 	#initialize sounds
 	global hitsounds
 	hitsounds = InitializeSoundContainers()
 	LoadSounds()
 
-	#initialize window
-	global resolution
-	mainWindow = InitializeWindow(resolution[0], resolution[1])
-
 	#initialize surfaces
 	global background, dim
 	background, dim = InitializeSurfaces()
 
-	#import game module here to avoid cyclic import
-	import game
+	#initialize window
+	global resolution, mainWindow
+	mainWindow = InitializeWindow(resolution[0], resolution[1])
+
+	#initialize textures
+	global circleTextures, backgroundTextures, interfaceTextures
+	circleTextures, backgroundTextures, interfaceTextures = InitializeTextureContainers()
+	LoadTextures()
+
+	#import menu module here to avoid cyclic import
+	import menu
 
 	try:
 		if sets.TEST_MODE:
@@ -339,18 +375,17 @@ def Start():
 		if not sets.DEBUG_MODE:
 			update.Check_version()
 
-		print('Welcome to Oss!')
-	
-		g = game.Game(mainWindow)
-
 		if sets.DEBUG_MODE:
 			print('[INFO]<', str(__name__), '> Program loaded in ', str(time.perf_counter() - start), ' seconds.')
 
-		g.Run()
+		print('Welcome to Oss!')
+	
+		m = menu.Menu(mainWindow)
+		m.Run()
 
 	except Exception as e:
 		logError(e)
-		print(e)
+		print('An error appeared. ', e)
 
 	exitAll()
 	

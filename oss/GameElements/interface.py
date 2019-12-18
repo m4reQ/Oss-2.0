@@ -1,50 +1,98 @@
-from helper import color, run_once
-from game import DEBUG_MODE
+from utils import run_once
+import utils
+import helper
 import pygame
+
+debugging = False
+
+def SetDebugging(val):
+	"""
+	sets debugging mode to given value
+	rtype: bool
+	returns: None
+	"""
+	global debugging
+	debugging = val
+
+class Rect(object):
+	def __init__(self, position, width, height, color=None, text=None, textPosition=None):
+		if not textPosition and text:
+			self.textPosition = position
+		else:
+			self.textPosition = textPosition
+
+		if not color:
+			self.color = utils.color.black
+		else:
+			self.color = color
+
+		self.width = width
+		self.height = height
+		self.posX, self.posY = position
+	
+	def Return(self):
+		return 
 
 class InterfaceElement:
 	font = None
 
-	def __init__(self, width, height, position=(0,0), drawable=None, text=None, textColor=None, textPosition=None):
-		if DEBUG_MODE:
+	def __init__(self, width, height, position, image=None, rect=None, text=None, color=None, textColor=None, textPosition=None):
+		if debugging:
 			if not InterfaceElement.font:
 				print('[WARNING]', str(self), ' Font not defined.')
 			if text and not textColor:
 				print('[WARNING]', str(self), ' Text color not defined.')
-			if not drawable and not text:
-				print("[WARNING]", str(self), " Didn't define any object to draw.")
 
-		self.positionX, positionY = position
+		self.positionX, self.positionY = position
 		self.width = width
 		self.height = height
-		self.drawable = drawable
 
+		self.image = image
+		self.rect = rect
 		self.text = text
+
 		self.font = InterfaceElement.font
-		self.textColor = textColor
+
+		if not color:
+			self.color = utils.color.black
+		else:
+			self.color = color
+
+		if not textColor:
+			self.textColor = self.color
+		else:
+			self.textColor = textColor
 
 		if not textPosition:
 			self.textPositionX, self.textPositionY = position
 		else:
 			self.textPositionX, self.textPositionY = textPosition
 
-	def render(self, surface):
+	def Render(self, surface):
+		#render text
 		if self.text:
-			r_text = self.font.render(self.text, True, self.textColor)
+			rText = self.font.render(self.text, True, self.textColor)
 
-			if self.drawable:
-				surface.blit(self.drawable, (self.positionX, self.positionY))
-			surface.blit(r_text, (self.textPositionX, self.textPositionY))
-		if self.drawable:
-			surface.blit(self.drawable, (self.positionX, self.positionY))
+		#check what elements are available
+		if self.image and not self.text and not self.rect:
+			surface.blit(self.image, (self.positionX, self.positionY))
+		elif self.image and self.text and not self.rect:
+			surface.blit(self.image, (self.positionX, self.positionY))
+			surface.blit(rText, (self.textPositionX, self.textPositionY))
+		elif not self.image and self.text and not self.rect:
+			surface.blit(rText, (self.textPositionX, self.textPositionY))
+		elif not self.image and not self.text and self.rect:
+			pygame.draw.rect(surface, self.color, self.rect)
+		elif not self.image and self.text and self.rect:
+			pygame.draw.rect(surface, self.color, self.rect)
+			surface.blit(rText, (self.textPositionX, self.textPositionY))
 		else:
-			raise Exception('[ERROR]'+ str(self)+ ' No object to draw.')
+			if debugging:
+				print('[WARNING]', str(self), ' No drawable set matches conditions. Skipping render.')
+			pass
 
 	def getRect(self):
-		if self.text and not self.drawable:
-			rect = pygame.Rect((self.textPositionX, self.textPositionY), (self.width, self.height))
-		else:
-			rect = pygame.Rect((self.positionX, self.positionY), (self.width, self.height))
+		rect = pygame.Rect(self.positionX, self.positionY, self.width, self.height)
 
 		return rect
 

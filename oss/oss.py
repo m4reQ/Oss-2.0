@@ -2,7 +2,7 @@ import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
 import pygame
-from helper import logError
+from helper import logError, exitAll
 import launcher
 
 try:
@@ -14,6 +14,4 @@ except Exception as e:
 	logError(e)
 	print(e)
 
-	pygame.quit()
-	os.system("pause >NUL")
-	quit()
+	exitAll()

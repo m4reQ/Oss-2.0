@@ -1,5 +1,15 @@
 import pygame
-from launcher import sets
+
+debugging = False
+
+def SetDebugging(val):
+	"""
+	sets debugging mode to given value
+	rtype: bool
+	returns: None
+	"""
+	global debugging
+	debugging = val
 
 def GenTexture(texPath, scale=None):
 	"""
@@ -12,7 +22,7 @@ def GenTexture(texPath, scale=None):
 	if scale:
 		texture = pygame.transform.scale(texture, scale)
 	else:
-		if sets.DEBUG_MODE:
+		if debugging:
 			print('[WARNING] Cannot scale texture because scaling is not enabled.')
 	return texture
 
@@ -28,7 +38,7 @@ class TextureContainer(object):
 		self.__textures = {}
 
 		TextureContainer.containerID += 1
-		if sets.DEBUG_MODE:
+		if debugging:
 			print('[INFO]<', str(__name__), "> Texture container: '", str(self.name), "' initialized.")
 
 	def AddTexture(self, texture, texName):

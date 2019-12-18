@@ -1,6 +1,7 @@
 import pygame
-import GameElements.circle
-from helper import Translate, logError
+from .circle import Circle
+from helper import logError
+from utils import translate
 from launcher import maps_path
 
 is_loaded = False
@@ -17,9 +18,6 @@ def Load_map(file):
 
 	try:
 		with open(maps_path + file + '.txt', "r") as f:
-			if not f.mode == 'r':
-				raise Exception("[ERROR] File doesn't have assigned required usage mode.")
-			
 			data = []
 			for line in f.readlines():
 				if str(line) == '#':
@@ -43,6 +41,8 @@ def Load_map(file):
 		e = new_element[0]
 		formatted_data.append(e)
 
+	print('[INFO]<', str(__name__), "> Map '", file, "' loaded.")
+
 	is_loaded =True
 
 	return formatted_data
@@ -52,12 +52,11 @@ def Make_map(data, targetRes):
 	rtype: array, tuple
 	returns: array
 	"""
-	lenght = len(data)
 	ptr = 0
 
 	circles = []
 	for element in data:
-		while ptr <= lenght-1:
+		while ptr <= len(data)-1:
 			try:
 				posX = float(data[ptr])
 				posY = float(data[ptr+1])
@@ -65,9 +64,9 @@ def Make_map(data, targetRes):
 
 				ptr += 3
 
-				tposX, tposY = Translate((posX, posY), targetRes, 1)
+				tposX, tposY = translate((posX, posY), targetRes, 1)
 
-				obj = circle.Circle(int(tposX), int(tposY), time)
+				obj = Circle(int(tposX), int(tposY), time)
 				circles.append(obj)
 			except IndexError:
 				raise Exception('[ERROR] Cannot make object' + str(obj) + '. \nCannot load map. Maybe map has outdated or invalid format.')

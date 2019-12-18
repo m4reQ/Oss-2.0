@@ -1,5 +1,15 @@
 import pygame
-from launcher import sets
+
+debugging = False
+
+def SetDebugging(val):
+	"""
+	sets debugging mode to given value
+	rtype: bool
+	returns: None
+	"""
+	global debugging
+	debugging = val
 
 def GenSound(soundPath):
 	"""
@@ -24,7 +34,7 @@ class SoundContainer(object):
 		self.__sounds = {}
 
 		SoundContainer.containerID += 1
-		if sets.DEBUG_MODE:
+		if debugging:
 			print('[INFO]<', str(__name__), "> Sound container: '", str(self.name), "' initialized.")
 
 	def AddSound(self, sound, soundName):

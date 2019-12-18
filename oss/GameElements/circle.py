@@ -1,10 +1,9 @@
 import pygame
-from game import DEBUG_MODE
 from helper import *
+from utils import stats, color
 from launcher import circleTextures as TextureContainer
 from launcher import hitsounds as SoundContainer
-from launcher import CS, HP
-from launcher import scale
+from launcher import CS, HP, scale
 import math
 
 class Circle(object):
@@ -65,7 +64,8 @@ class Circle(object):
 			SoundContainer.GetSound('hit1').play()
 
 		game.combo += 1
-		game.points += (game.combo * 300)
+		#game.points += int(game.combo * 300) old scoring system
+		game.points += stats.getScoredPoints(game.combo)
 		game.points_text.textColor = color.random()
 
 		if game.combo >= 5:
@@ -78,6 +78,7 @@ class Circle(object):
 
 		game.combo = 0
 		game.health -= stats.getHP(HP) * 100
+		game.points_text.textColor = color.random()
 
 		game.circles.remove(self)
 

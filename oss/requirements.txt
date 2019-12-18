@@ -2,3 +2,4 @@
 #
 pygame
 requests
+Pillow
