@@ -1,6 +1,5 @@
 import os
 import random
-from helper import exitAll
 import ctypes
 from PIL import Image
 import pygame
@@ -37,7 +36,7 @@ def DimImage(image, dimPercent):
 
 	return img_d
 
-class color(object):
+class color():
 	red = (255,0,0)
 	green = (0,255,0)
 	blue = (0,0,255)
@@ -57,7 +56,7 @@ class color(object):
 		"""
 		return (random.randint(0,225), random.randint(0,225), random.randint(0,225))
 
-class resolutions(object):
+class resolutions():
 	SD = (640, 480)
 	HD = (1360, 768)
 	FHD = (1920, 1080)
@@ -189,9 +188,11 @@ def deprecated(newMethod):
 	"""
 	def decorator(f):
 		def wrapper(*args, **kwargs):
-			print('[WARNING] Method ' + f.__name__ + ' is deprecated and will be removed soon. Instead use: ' + newMethod)
+			print('[WARNING] Method {} is deprecated and will be removed soon. Instead use: {}.'.format(f.__name__, newMethod))
 			return f(*args, **kwargs)
 		return wrapper
 	return decorator
+	
 if __name__ == "__main__":
-    exitAll()
+    pygame.quit()
+    quit()

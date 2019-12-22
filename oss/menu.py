@@ -2,17 +2,21 @@ try:
 	from helper import exitAll, logError
 	from utils import color, translate
 	from launcher import backgroundTextures, interfaceTextures
+	from launcher import LauncherInfo
 	from launcher import sets, targetFPS
 	from game import Game
 	import pygame
 	from launcher import sets
-	import concurrent.futures
 	from eventhandler import EventHandler
 	import GameElements.interface as interface
 except Exception as e:
 	print(e)
 	logError(e)
 	exitAll()
+
+#import concurrent module ONLY if it's available
+if LauncherInfo.concurrencyAvailable:
+	import concurrent.futures
 
 #textures
 bg_texture = backgroundTextures.GetTexture('menu_background')
@@ -33,10 +37,19 @@ class Menu():
 		interface.changeFont('comicsansms', 24)
 
 		self.cursor = interface.InterfaceElement(cursor_texture.get_width(), cursor_texture.get_height(), self.cursor_pos, image=cursor_texture)
-		startButtonPos = translate((0.615625, 0.879167), (self.width, self.height), 1)
+		startButtonPos = translate((0.62, 0.88), (self.width, self.height), 1)
 		self.startButton = interface.InterfaceElement(180, 30, startButtonPos, rect=pygame.Rect(startButtonPos, (180, 30)), text='Start new game', textPosition=(startButtonPos[0]+2, startButtonPos[1]-6), textColor=color.white, color=color.green)
-		exitButtonPos = translate((0.025 ,0.879167), (self.width, self.height), 1)
+		exitButtonPos = translate((0.025 ,0.88), (self.width, self.height), 1)
 		self.exitButton = interface.InterfaceElement(180, 30, exitButtonPos, rect=pygame.Rect(exitButtonPos, (180, 30)), text='Exit.', textPosition=(exitButtonPos[0] + 60, exitButtonPos[1]-6), color=color.green, textColor=color.white)
+
+	def Render(self):
+		self.DrawMenu()
+		self.DrawCursor()
+
+	def RenderConcurrently(self):
+		with concurrent.futures.ThreadPoolExecutor() as executor:
+			executor.submit(self.DrawMenu)
+			executor.submit(self.DrawCursor)
 
 	def Run(self):
 		while self.is_running:
@@ -59,9 +72,8 @@ class Menu():
 							self.is_running = False
 
 			#render
-			with concurrent.futures.ThreadPoolExecutor() as executor:
-				executor.submit(self.DrawMenu)
-				executor.submit(self.DrawCursor)
+			if LauncherInfo.concurrencyAvailable: self.RenderConcurrently()
+			else: self.Render()
 
 			#update
 			pygame.display.flip()
@@ -78,7 +90,7 @@ class Menu():
 	def Close(self):
 		print('Goodbye!')
 		if sets.DEBUG_MODE:
-			print('[INFO]<', str(__name__), '> Program exited after: ', self.time, ' seconds.')
+			print('[INFO]<{}> Program exited after: {} seconds.'.format(__name__, self.time))
 		exitAll()
 
 	def DrawCursor(self):

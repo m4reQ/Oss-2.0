@@ -12,20 +12,24 @@ from helper import ask, exitAll
 ver = sys.version_info
 
 def main():
-	if not (ver[0] >= 3) and not (ver[1] >= 0):
-		print("You don't have required python version")
-		print("Go to a python official website to download latest versions. https://www.python.org/downloads")
-		os.system('pause >NUL')
-		quit()
-	else:
-		try:
+	if ver[0] >= 3:
+		try: #try to use newest python's py launcher
 			os.system('py -m pip install -r requirements.txt')
+		except Exception as e: #if it's not there use the old method
+			os.system('python -m pip install -r requirements.txt')
+		finally: #if all methods fail then it's nothing to do with it
+			print('Cannot install packages. {}'.format(e))
+			exitAll()
+	elif ver[0] < 3:
+		try:
+			os.system('python -m pip install -r requirements.txt')
 		except Exception as e:
-			print('Cannot install packages. ', e)
+			print('Cannot install packages. {}'.format(e))
 			exitAll()
 
-		print('Modules installed.')
-		exitAll()
+	print('Modules installed. Please restart application.')
+	os.system('pause >NUL')
+	exitAll()
 
 if __name__ == '__main__':
 	pygame.quit()

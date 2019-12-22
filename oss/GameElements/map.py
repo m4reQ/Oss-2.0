@@ -1,6 +1,5 @@
-import pygame
 from .circle import Circle
-from helper import logError
+from helper import logError, exitAll
 from utils import translate
 from launcher import maps_path
 
@@ -33,7 +32,7 @@ def Load_map(file):
 			pass
 	except Exception as e:
 		logError(e)
-		raise Exception('[ERROR] Cannot open file "' + file + '".')
+		raise Exception('[ERROR] Cannot open file "{}".'.format(file))
 
 	formatted_data = []
 	for element in data:
@@ -41,9 +40,9 @@ def Load_map(file):
 		e = new_element[0]
 		formatted_data.append(e)
 
-	print('[INFO]<', str(__name__), "> Map '", file, "' loaded.")
+	print('[INFO]<{}> Map "{}" loaded.'.format(__name__, file))
 
-	is_loaded =True
+	is_loaded = True
 
 	return formatted_data
 
@@ -69,10 +68,9 @@ def Make_map(data, targetRes):
 				obj = Circle(int(tposX), int(tposY), time)
 				circles.append(obj)
 			except IndexError:
-				raise Exception('[ERROR] Cannot make object' + str(obj) + '. \nCannot load map. Maybe map has outdated or invalid format.')
+				raise Exception('[ERROR] Cannot make object {}.\nCannot load map. Maybe map has outdated or invalid format.'.format(str(obj)))
 
 	return circles
 
 if __name__ == '__main__':
-	pygame.quit()
-	quit()
+	exitAll()

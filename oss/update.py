@@ -1,5 +1,5 @@
 import os
-from helper import ask, logError
+from helper import ask, logError, exitAll
 import requests
 import traceback
 
@@ -27,17 +27,19 @@ except IOError as e:
 	else:
 		quit()
 
+#get local version
 version = f.readlines()
 version = str(version[0])
 f.close()
 
+#urls
 url_repo = "https://github.com/m4reQ/Oss-2.0/"
 url_main = "https://github.com/m4reQ/Oss-2.0/master/oss"
 url_master = "https://github.com/m4reQ/Oss-2.0/master"
 
 def Get_version():
 	"""
-	rtype: none
+	gets newest version
 	returns: string or bool
 	"""
 	l, r = url_main[:8], url_main[8:]
@@ -59,10 +61,9 @@ def Check_version():
 	if not late_ver:
 		print("Couldn't update game.")
 	if not float(version) == float(late_ver):
-		print("Your version of the game is outdated.\nCurrent version: " + version + ".\nLatest version: " + late_ver + '.')
+		print('Your version of the game is outdated.\nCurrent version: {}.\nLatest version: {}.'.format(version, late_ver))
 		if ask("Do you want to download the latest version?"):
 			Update(directory)
 
 if __name__ == '__main__':
-	pygame.quit()
-	quit()
+	exitAll()

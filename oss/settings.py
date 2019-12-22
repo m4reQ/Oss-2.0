@@ -1,5 +1,5 @@
-import pygame
 import os
+from helper import exitAll
 
 class Settings():
 	def __init__(self):
@@ -21,7 +21,7 @@ class Settings():
 			elif value.lower() == 'false':
 				value = False
 			else:
-				raise Exception('[ERROR] Error appeared during loading setting ' + key + '. Wrong value type ' + value + '.')
+				raise Exception('[ERROR] Error appeared during loading setting {}. Wrong value type {}.'.format(key, value))
 
 			return key, value
 
@@ -60,10 +60,9 @@ class Settings():
 
 	def GetSetting(self, setName):
 		if not setName in self.__dict__.keys():
-			raise Exception('[ERROR] Attribute ' + setName + " doesn't exist.")
+			raise Exception("[ERROR] Attribute {} doesn't exist".format(setName))
 		else:
 			return getattr(self, setName)
 
 if __name__ == '__main__':
-	pygame.quit()
-	quit()
+	exitAll()

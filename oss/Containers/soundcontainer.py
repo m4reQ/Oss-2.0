@@ -35,11 +35,11 @@ class SoundContainer(object):
 
 		SoundContainer.containerID += 1
 		if debugging:
-			print('[INFO]<', str(__name__), "> Sound container: '", str(self.name), "' initialized.")
+			print('[INFO]<{}> Sound container: "{}" initialized.'.format(__name__, self.name))
 
 	def AddSound(self, sound, soundName):
 		if not type(sound).__name__ == 'Sound':
-			raise Exception('[ERROR] Cannot add object of type ' + str(type(sound).__name__) + '. TextureContainer can only contain pygame.Surface type objects.')
+			raise Exception('[ERROR] Cannot add object of type {}. TextureContainer can only contain pygame.Surface type objects.'.format(type(sound).__name__))
 
 		self.__sounds[soundName] = sound
 
@@ -79,3 +79,7 @@ class SoundContainer(object):
 		returns: bool
 		"""
 		return self.__sounds == {}
+
+if __name__ == '__main__':
+	pygame.quit()
+	quit()

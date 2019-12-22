@@ -13,11 +13,11 @@ try:
 	from launcher import background_surf
 	from launcher import targetFPS
 	from launcher import resolution
+	from launcher import LauncherInfo
 	from eventhandler import keyBindTable
 	from utils import *
 	import time
 	import random
-	import concurrent.futures
 	from eventhandler import EventHandler
 	import GameElements.circle as circle
 	import GameElements.map as map
@@ -26,7 +26,12 @@ except ImportError as e:
 	print(e)
 	logError(e)
 	
-	exitAll()
+	pygame.quit()
+	quit()
+
+#import cuncurrent.futures ONLY if it's available
+if LauncherInfo.concurrencyAvailable:
+	import concurrent.futures
 
 #####developer settings#####
 #NOTE!
@@ -39,11 +44,7 @@ TEST_MODE = sets.TEST_MODE
 DICT_UPDATE_MODE = sets.DICT_UPDATE_MODE
 
 #####STATICS#####
-#key binding
-left_key = keyBindTable['kl']
-right_key = keyBindTable['kr']
-
-#textures loading
+#textures
 cursor_texture = interfaceTextures.GetTexture('cursor')
 miss_texture = interfaceTextures.GetTexture('miss')
 bg_texture = backgroundTextures.GetTexture('bg_' + str(random.randint(0, backgroundTextures.count - 2)))
@@ -55,13 +56,13 @@ bg_surf = background_surf
 @run_once
 def pre_update_display():
 	if DEBUG_MODE:
-		print('[INFO]<', str(__name__), '> Updating screen.')
+		print('[INFO]<{}> Updating screen.'.format(__name__))
 	pygame.display.update()
 
 @run_interval(interval=10)
 def timed_update_display():
 	if DEBUG_MODE:
-		print('[INFO]<', str(__name__), '> Updating screen.')
+		print('[INFO]<{}> Updating screen.'.format(__name__))
 	pygame.display.update()
 
 class Game():
@@ -100,6 +101,30 @@ class Game():
 		self.combo_text = interface.InterfaceElement(0, 55, position=(10, self.height - 70), textColor=color.white)
 		self.points_text = interface.InterfaceElement(0, 55, position=(0, self.height - 70), textColor=color.random())
 
+	def Render(self):
+		self.DrawPlayGround()
+		if self.draw_interface:
+			self.DrawCombo()
+			self.DrawPoints()
+			self.DrawTime()
+			self.DrawClicksCounter()
+			if DEBUG_MODE:
+				self.DrawFPSCounter()
+		self.DrawCursor()
+
+	def RenderConcurrently(self):
+		with concurrent.futures.ThreadPoolExecutor() as executor:
+			executor.submit(self.DrawPlayGround)
+			if self.draw_interface:
+				executor.submit(self.DrawHealthBar)
+				executor.submit(self.DrawCombo)
+				executor.submit(self.DrawPoints)
+				executor.submit(self.DrawTime)
+				executor.submit(self.DrawClicksCounter)
+				if DEBUG_MODE:
+					executor.submit(self.DrawFPSCounter)
+			executor.submit(self.DrawCursor)
+
 	def Run(self):
 		global DEBUG_MODE
 		
@@ -134,41 +159,33 @@ class Game():
 			self.health -= stats.getHP(self.HP) * self.render_time   * 79.2 #constant to compensate FPS multiplication
 
 			if DEBUG_MODE and len(self.circles) < 5:
-				print('[INFO]<', str(__name__), '> ', str(self.circles))
+				print('[INFO]<{}> Circle list: {}.'.format(__name__, str(self.circles)))
 			if DEBUG_MODE and len(self.circles) >= 5:
-				print('[INFO]<', str(__name__), '> Circle list Minimized. Contains: ', str(len(self.circles)), ' circles')
+				print('[INFO]<{}> Circle list Minimized. Contains: {} circles.'.format(__name__, len(self.circles)))
 
 			#render
 			#drawing section
 			#NOTE!
 			#Don't put anything below this section
 			#it may cause glitches
-			with concurrent.futures.ThreadPoolExecutor() as executor:
-				executor.submit(self.DrawPlayGround)
-				if self.draw_interface:
-					executor.submit(self.DrawHealthBar)
-					executor.submit(self.DrawCursor)
-					executor.submit(self.DrawCombo)
-					executor.submit(self.DrawPoints)
-					executor.submit(self.DrawTime)
-					executor.submit(self.DrawClicksCounter)
-					if DEBUG_MODE:
-						executor.submit(self.DrawFPSCounter)
-				executor.submit(self.DrawCursor)
+			if LauncherInfo.concurrencyAvailable: self.RenderConcurrently()
+			else: self.Render()
 
 			#update
-			#####implement rects dictionary update here #####
+			#dictionary update
 			pre_update_display()
 
 			if DICT_UPDATE_MODE:
 				pygame.display.update(self.toUpdate)
-				print('[INFO]<', str(__name__), '> Updating: ', str(self.toUpdate))
+				if DEBUG_MODE:
+					print('[INFO]<{}> Updating: {}.'.format(__name__, str(self.toUpdate)))
 
 				self.toUpdate.clear()
 
 				if sets.timed_updates_enable:
 					timed_update_display()
-			#####end of implementation##### 
+
+			#standard update (window update)
 			if not DICT_UPDATE_MODE:
 				pygame.display.flip()
 
@@ -184,6 +201,7 @@ class Game():
 		self.Close()
 	
 	def Close(self):
+		pygame.mixer.quit()
 		self.menu.game = None
 
 	def DrawPlayGround(self):
@@ -195,7 +213,7 @@ class Game():
 					circle.Draw(self.win)  
 					for event in self.events:
 						if event.type == pygame.KEYDOWN:
-							if event.key == pygame.K_z or event.key == pygame.K_x:
+							if event.key == keyBindTable['kl'] or event.key == keyBindTable['kr']:
 								if circle.Collide(self.cursor_pos):
 									circle.Hit(self)
 								else:
@@ -217,7 +235,7 @@ class Game():
 				circle.Draw(self.win)  
 				for event in self.events:
 					if event.type == pygame.KEYDOWN:
-						if event.key == pygame.K_z or event.key == pygame.K_x:
+						if event.key == keyBindTable['kl'] or event.key == keyBindTable['kr']:
 							if circle.Collide(self.cursor_pos):
 								circle.Hit(self)
 							else:

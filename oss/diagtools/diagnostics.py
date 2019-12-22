@@ -9,7 +9,7 @@ except ImportError:
     dont_check_net = True
 
 dir = os.getcwd()
-path = os.path.join(dir[:-10], 'osu!lool')
+path = os.path.join(dir[:-10], 'oss')
 sys.path.append(path)
 
 log = {"System_ver": "",
@@ -47,7 +47,6 @@ def Get_path():
 
 def Gen_log():
     print('Generating log file...')
-    f = open('diaglog.txt', 'w+')
     
     log['System_ver'] = Get_sys_ver()
     log['Python_ver'] = Get_python_ver()
@@ -56,9 +55,11 @@ def Gen_log():
     log['CPU'] = Get_cpu_inf()  
 
     for key, val in log.items():
-        f.write(str(key + ": " + val + "\n"))
-    f.close()
+        with open('diaglog.txt', 'w+') as f:
+            f.write(str(key + ": " + val + "\n"))
 
 if __name__ == '__main__':
-    Gen_log()
+    #Gen_log()
+    #for now diaglog is not working so raise exception
+    raise Exception('Diaglog is not working in this build. It will be soon restored.')
     exit()

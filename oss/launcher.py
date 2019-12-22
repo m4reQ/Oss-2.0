@@ -5,6 +5,18 @@ except ImportError:
 	print('Critical error! Cannot load os or sys module.')
 	exit()
 
+#create launcher infos to allow backward compatibility
+#assume user uses python 3.x
+class LauncherInfo:
+	concurrencyAvailable = True
+	timeMeasurementAvailable = True
+
+#check if python supports concurrent execution
+try:
+	import concurrent.futures
+except ImportError:
+	LauncherInfo.concurrencyAvailable = False
+
 try:
 	from helper import ask, logError, exitAll
 	import repair
@@ -15,7 +27,6 @@ try:
 	from Containers.soundcontainer import SetDebugging as scSetDebugging
 	from GameElements.interface import SetDebugging as iSetDebugging
 	from eventhandler import SetDebugging as ehSetDebugging
-	import concurrent.futures
 	import time
 	import pygame
 	from settings import Settings
@@ -32,20 +43,25 @@ except ImportError as e:
 
 	exitAll()
 
+#check if time module has function perf_counter
+if not 'perf_counter' in dir(time):
+	LauncherInfo.timeMeasurementAvailable = False
+
 #clear log file
 with open('log.txt', 'w+') as logf:
 	logf.write('')
 
 #check maps folder
 if not os.path.exists('./Resources/maps'):
+	print('Directory maps is missing. Creating directory.')
 	try:
-		print('Directory maps is missing. Creating directory.')
 		os.mkdir('./Resources/maps')
 	except Exception as e:
 		logError(e)
 		print('Error! Cannot create directory.')
 
 		exitAll()
+	print('Directory created.')
 
 #disable python warnings
 if not sys.warnoptions:
@@ -79,16 +95,12 @@ darkenPercent = 0.5
 mVolume = 0.55
 
 #####STATICS#####
-#textures folder path
+#folder paths
 tex_path = 'Resources/textures/'
-
-#maps folder path
 maps_path = 'Resources/maps/'
-
-#sounds folder path
 sounds_path = 'Resources/sounds/'
 
-#settings container
+#main settings container
 sets = Settings()
 
 #texture containers
@@ -108,7 +120,8 @@ mainWindow = None
 #key bind table
 keybind = {
 'kl': None,
-'kr': None,}
+'kr': None,
+}
 
 def LoadSettings():
 	try:
@@ -118,7 +131,7 @@ def LoadSettings():
 		logError(e)
 		print('An error appeared during settings loading.')
 		if sets.DEBUG_MODE:
-			print('[ERROR] ', str(e))
+			print('[ERROR] {}'.format(str(e)))
 		exitAll()
 	
 	if sets.DEBUG_MODE:
@@ -134,7 +147,7 @@ def SetGameStats(ar, cs, hp):
 		logError(e)
 		print('An error appeared during setting game stats.')
 		if sets.DEBUG_MODE:
-			print('[ERROR] ', str(e))
+			print('[ERROR] {}'.format(str(e)))
 		exitAll()
 
 def InitializeTextureContainers():
@@ -149,7 +162,7 @@ def InitializeTextureContainers():
 		logError(e)
 		print('An error appeared during texture containers initialization. ')
 		if sets.DEBUG_MODE:
-			print('[ERROR] ', str(e))
+			print('[ERROR] {}'.format(str(e)))
 		exitAll()
 
 def InitializeSoundContainers():
@@ -161,7 +174,7 @@ def InitializeSoundContainers():
 		logError(e)
 		print('An error appeared during sound containers initialization. ')
 		if sets.DEBUG_MODE:
-			print('[ERROR] ', str(e))
+			print('[ERROR] {}'.format(str(e)))
 		exitAll()
 
 def InitializeSurfaces():
@@ -176,7 +189,7 @@ def InitializeSurfaces():
 		logError(e)
 		print('An error appeared during surfaces initialization. ')
 		if sets.DEBUG_MODE:
-			print('[ERROR] ', str(e))
+			print('[ERROR] {}'.format(str(e)))
 		exitAll()
 
 def LoadCircleTextures():
@@ -208,10 +221,16 @@ def LoadBackgroundTextures():
 	if backgroundTextures.is_empty:
 		#get names and number of files in backgrounds directory
 		filenames = [name for name in os.listdir(os.path.join(tex_path, 'backgrounds')) if os.path.isfile(os.path.join(tex_path, 'backgrounds', name))]
-		filenames.remove('Thumbs.db')
+		
+		#remove Thumbs.db from filename list if it's present
+		try: filenames.remove('Thumbs.db')
+		except ValueError: pass
+
+		#get all images
 		jpgs = [os.path.join(tex_path, 'backgrounds', name) for name in filenames if name[-4:] != '.png']
 		pngs = [os.path.join(tex_path, 'backgrounds', name) for name in filenames if name[-4:] != '.jpg']
 
+		#get all names without .jpg or .png
 		jpgNames = [name[:-4] for name in jpgs]
 		pngNames = [name[:-4] for name in pngs]
 
@@ -219,15 +238,20 @@ def LoadBackgroundTextures():
 
 		#convert jpg images to png
 		if sets.DEBUG_MODE:
-			print('[INFO]<', str(__name__), '> Processing background images...')
+			print('[INFO]<{}> Processing background images...'.format(__name__))
 
-		with concurrent.futures.ThreadPoolExecutor() as executor:
+		if LauncherInfo.concurrencyAvailable:
+			with concurrent.futures.ThreadPoolExecutor() as executor:
+				for idx, tex in enumerate(jpgNames):
+					if not tex in pngNames:
+							executor.submit(ConvertImage, jpgs[idx])
+		else:
 			for idx, tex in enumerate(jpgNames):
 				if not tex in pngNames:
-						executor.submit(ConvertImage, jpgs[idx])
+					ConvertImage(jpgs[idx])
 
 		if sets.DEBUG_MODE:
-			print('[INFO]<', str(__name__), '> Background images processing done.')
+			print('[INFO]<{}> Background images processing done.'.format(__name__))
 
 		#load backgrounds to backgroundTextures container
 		for i in range(count_jpg-1):
@@ -242,7 +266,7 @@ def LoadBackgroundTextures():
 
 		backgroundTextures.AddTexture(GenTexture(tex_path + 'backgrounds/menu_background.png', resolution), 'menu_background')
 
-def LoadTextures():
+def LoadTexturesConcurrently():
 	try:
 		with concurrent.futures.ThreadPoolExecutor() as executor:
 			executor.submit(LoadBackgroundTextures)
@@ -251,14 +275,31 @@ def LoadTextures():
 
 		if not all([circleTextures.is_empty, interfaceTextures.is_empty, backgroundTextures.is_empty]):
 			if sets.DEBUG_MODE:
-				print('[INFO]<', str(__name__), "> Initialized textures. Texture dictionary: ", str(circleTextures.textures), str(interfaceTextures.textures), str(backgroundTextures.textures))
+				print('[INFO]<{}> Initialized textures. Texture dictionaries: {}{}{}.'.format(__name__, str(circleTextures.textures), str(interfaceTextures.textures), str(backgroundTextures.textures)))
 
 	except Exception as e:
 		logError(e)
 		print('An error appeared during textures loading. ')
 		if sets.DEBUG_MODE:
-			print('[ERROR] ', str(e))
+			print('[ERROR] {}'.format(str(e)))
 		exitAll()
+
+def LoadTextures():
+	try:
+		LoadBackgroundTextures()
+		LoadCircleTextures()
+		LoadInterfaceTextures()
+
+		if not all([circleTextures.is_empty, interfaceTextures.is_empty, backgroundTextures.is_empty]):
+			if sets.DEBUG_MODE:
+				print('[INFO]<{}> Initialized textures. Texture dictionaries: {}{}{}.'.format(__name__, str(circleTextures.textures), str(interfaceTextures.textures), str(backgroundTextures.textures)))
+
+	except Exception as e:
+		logError(e)
+		print('An error appeared during textures loading. ')
+		if sets.DEBUG_MODE:
+			print('[ERROR] {}'.format(str(e)))
+		exitAll()			
 
 def LoadSounds():
 	try:
@@ -274,13 +315,13 @@ def LoadSounds():
 
 		if not hitsounds.is_empty:
 			if sets.DEBUG_MODE:
-				print('[INFO]<', str(__name__), "> Initialized sounds. Sounds dictionary: ", str(hitsounds.sounds))
+				print('[INFO]<{}> Initialized sounds. Sounds dictionary: {}.'.format(__name__, str(hitsounds.sounds)))
 
 	except Exception as e:
 		logError(e)
 		print('An error appeared during sounds loading. ')
 		if sets.DEBUG_MODE:
-			print('[ERROR] ', str(e))
+			print('[ERROR] {}'.format(str(e)))
 		exitAll()
 
 def SetKeyBindings():
@@ -293,7 +334,7 @@ def SetKeyBindings():
 		logError(e)
 		print('An error appeared during loading key bindings. ')
 		if sets.DEBUG_MODE:
-			print('[ERROR] ', str(e))
+			print('[ERROR] {}'.format(str(e)))
 		exitAll()
 
 def InitializeWindow(width, height):
@@ -319,18 +360,20 @@ def InitializeWindow(width, height):
 				win = pygame.display.set_mode((width, height), pygame.DOUBLEBUF|pygame.HWSURFACE|pygame.HWACCEL)
 
 		if sets.DEBUG_MODE:
-			print('[INFO] Current display driver: ', pygame.display.get_driver())
+			print('[INFO] Current display driver: {}.'.format(pygame.display.get_driver()))
 
 		return win
+
 	except Exception as e:
 		logError(e)
 		print('An error appeared during window initialization.')
 		if sets.DEBUG_MODE:
-			print('[ERROR] ', str(e))
+			print('[ERROR] {}'.format(str(e)))
 		exitAll()
 
 def Start():
-	start = time.perf_counter()
+	#use perf_counter() only if we're on python 3.x
+	if LauncherInfo.timeMeasurementAvailable: start = time.perf_counter()
 
 	#initialize pygame
 	pygame.mixer.pre_init(22050, -16, 2, 512)
@@ -363,7 +406,9 @@ def Start():
 	#initialize textures
 	global circleTextures, backgroundTextures, interfaceTextures
 	circleTextures, backgroundTextures, interfaceTextures = InitializeTextureContainers()
-	LoadTextures()
+
+	if LauncherInfo.concurrencyAvailable: LoadTexturesConcurrently()
+	else: LoadTextures() 
 
 	#import menu module here to avoid cyclic import
 	import menu
@@ -375,8 +420,9 @@ def Start():
 		if not sets.DEBUG_MODE:
 			update.Check_version()
 
-		if sets.DEBUG_MODE:
-			print('[INFO]<', str(__name__), '> Program loaded in ', str(time.perf_counter() - start), ' seconds.')
+		if LauncherInfo.timeMeasurementAvailable:
+			if sets.DEBUG_MODE:
+				print('[INFO]<{}> Program loaded in {} seconds.'.format(__name__, (time.perf_counter() - start)))
 
 		print('Welcome to Oss!')
 	
@@ -385,7 +431,7 @@ def Start():
 
 	except Exception as e:
 		logError(e)
-		print('An error appeared. ', e)
+		print('An error appeared. {}'.format(e))
 
 	exitAll()
 	
