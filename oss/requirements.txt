@@ -1,5 +1,6 @@
 ##### requirements.txt for oss#####
-#
 pygame
 requests
 Pillow
+pywin32
+wmi

@@ -25,6 +25,7 @@ defaultset = True
 #each line starts with '/'
 /SDL_VIDEODRIVER = windib
 /SDL_VIDEO_WINDOW_POS = 0,0
+/SDL_VIDEO_CENTERED = 1
 
 #debug mode
 DEBUG_MODE = False
