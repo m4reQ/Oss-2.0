@@ -27,14 +27,9 @@ except ImportError as e:
 if LauncherInfo.concurrencyAvailable:
 	import concurrent.futures
 
-#####developer settings#####
-#NOTE!
-#All developer settings are variables 
-#in capital letters
+#create settings shortcuts
 DEBUG_MODE = sets.DEBUG_MODE
 TEST_MODE = sets.TEST_MODE
-
-#dictionary update mode
 DICT_UPDATE_MODE = sets.DICT_UPDATE_MODE
 
 #textures
@@ -61,6 +56,7 @@ class Game():
 		self.clock = pygame.time.Clock()
 		self.time = 0
 		self.win = win
+		self.menu = parentWin
 		self.width = win.get_width()
 		self.height = win.get_height()
 		self.is_running = True
@@ -84,7 +80,6 @@ class Game():
 		self.events = pygame.event.get()
 		self.draw_interface = True
 		self.toUpdate = []
-		self.menu = parentWin
 
 		interface.changeFont('comicsansms', 48)
 
@@ -127,14 +122,14 @@ class Game():
 			if type(self.circles).__name__ == 'str' or type(self.circles).__name__ == 'NoneType':
 				raise Exception('[ERROR] An error appeared during map loading.')
 		
-		radius = stats.getCS(1)
+		maxRadius = stats.getCS(1)
 
 		while self.is_running:
 			self.events = pygame.event.get()
 
 			if sets.auto_generate:
 				if len(self.circles) < 1:
-					obj = circle.Circle(random.randint(int(self.playfield['topX'] + radius), int(self.playfield['bottomX'] - radius)), random.randint(int(self.playfield['topX'] + radius), int(self.playfield['bottomY'] - radius)))
+					obj = circle.Circle(random.randint(int(self.playfield['topX'] + maxRadius), int(self.playfield['bottomX'] - maxRadius)), random.randint(int(self.playfield['topX'] + maxRadius), int(self.playfield['bottomY'] - maxRadius)))
 					self.circles.append(obj)
 
 			#event handling
@@ -148,7 +143,7 @@ class Game():
 
 			EventHandler.HandleInternalEvents(self)
 
-			self.health -= stats.getHP(self.HP) * self.render_time   * 79.2 #constant to compensate FPS multiplication
+			self.health -= stats.getHP(self.HP) * self.render_time * 79.2 #constant to compensate FPS multiplication
 
 			if DEBUG_MODE and len(self.circles) < 5:
 				print('[INFO]<{}> Circle list: {}.'.format(__name__, str(self.circles)))
@@ -300,7 +295,7 @@ class Game():
 
 	def DrawTime(self):
 		font = pygame.font.SysFont("comicsansms", 24)
-		time = round((self.time/1000), 2)
+		time = round((self.time/float(1000)), 2)
 		text = font.render('Time: ' + str(time) + 's', True, color.white)
 		pos = (self.width/10, 0)
 
