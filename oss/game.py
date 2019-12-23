@@ -191,7 +191,6 @@ class Game():
 		self.Close()
 	
 	def Close(self):
-		pygame.mixer.quit()
 		self.menu.game = None
 
 	def DrawPlayGround(self):
