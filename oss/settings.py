@@ -1,5 +1,15 @@
 import os
 from helper import exitAll
+debugging = False
+
+def SetDebugging(val):
+	"""
+	sets debugging mode to given value
+	rtype: bool
+	returns: None
+	"""
+	global debugging
+	debugging = val
 
 class Settings():
 	def __init__(self):
@@ -53,7 +63,23 @@ class Settings():
 				setattr(self, setting[0], setting[1])
 
 	def ExportToFile(self, filename):
-		raise Exception('[ERROR] Method is not implemented yet.')
+		from datetime import datetime #for current time and date
+		import getpass #for username
+
+		now = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+		user = getpass.getuser()
+
+		if debugging:
+			print('[INFO]<{}> Exporting settings to "{}" file'.format(__name__, filename))
+
+		with open(filename, 'a') as f:
+			for setting, value in self.__dict__.items():
+				string = '{} = {}\n'.format(setting, value)
+				f.write(string)
+			f.write('#Settings configuration for {} generated {}.'.format(user, now))
+
+		if debugging:
+			print('[INFO]<{}> Export done.'.format(__name__))
 
 	def GetSettings(self):
 		return self.__dict__
