@@ -1,5 +1,16 @@
-import pygame
 import os
+from helper import exitAll
+
+debugging = False
+
+def SetDebugging(val):
+	"""
+	sets debugging mode to given value
+	rtype: bool
+	returns: None
+	"""
+	global debugging
+	debugging = val
 
 class Settings():
 	def __init__(self):
@@ -21,7 +32,7 @@ class Settings():
 			elif value.lower() == 'false':
 				value = False
 			else:
-				raise Exception('[ERROR] Error appeared during loading setting ' + key + '. Wrong value type ' + value + '.')
+				raise Exception('[ERROR] Error appeared during loading setting {}. Wrong value type {}.'.format(key, value))
 
 			return key, value
 
@@ -53,17 +64,32 @@ class Settings():
 				setattr(self, setting[0], setting[1])
 
 	def ExportToFile(self, filename):
-		raise Exception('[ERROR] Method is not implemented yet.')
+		from datetime import datetime #for current time and date
+		import getpass #for username
+
+		now = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+		user = getpass.getuser()
+
+		if debugging:
+			print('[INFO]<{}> Exporting settings to "{}" file'.format(__name__, filename))
+
+		with open(filename, 'a') as f:
+			for setting, value in self.__dict__.items():
+				string = '{} = {}\n'.format(setting, value)
+				f.write(string)
+			f.write('#Settings configuration for {} generated {}.'.format(user, now))
+
+		if debugging:
+			print('[INFO]<{}> Export done.'.format(__name__))
 
 	def GetSettings(self):
 		return self.__dict__
 
 	def GetSetting(self, setName):
 		if not setName in self.__dict__.keys():
-			raise Exception('[ERROR] Attribute ' + setName + " doesn't exist.")
+			raise Exception("[ERROR] Attribute {} doesn't exist".format(setName))
 		else:
 			return getattr(self, setName)
 
 if __name__ == '__main__':
-	pygame.quit()
-	quit()
+	exitAll()
