@@ -1,6 +1,6 @@
 from .circle import Circle
 from helper import logError, exitAll
-from utils import translate
+from utils import translateCoord
 from launcher import maps_path
 
 is_loaded = False
@@ -63,7 +63,7 @@ def Make_map(data, targetRes):
 
 				ptr += 3
 
-				tposX, tposY = translate((posX, posY), targetRes, 1)
+				tposX, tposY = translateCoord((posX, posY), targetRes, 1)
 
 				obj = Circle(int(tposX), int(tposY), time)
 				circles.append(obj)

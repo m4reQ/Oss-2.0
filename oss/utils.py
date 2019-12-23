@@ -36,6 +36,33 @@ def DimImage(image, dimPercent):
 
 	return img_d
 
+def translateCoord(data, res, mode):
+	"""
+	translates position of point to unified coordinate system
+	max value in each direction is 1.0 and the min is 0.0
+	available modes are: 0-encode, 1-decode
+	rtype: tuple, tuple, int
+	returns: tuple
+	"""
+
+	x, y = data
+	resX, resY = res
+
+	#encode
+	if mode == 0:
+		uX = x / resX
+		uY = y / resY
+
+		return (uX, uY)
+	#decode
+	elif mode == 1:
+		tX = x * resX
+		tY = y * resY
+
+		return (int(tX), int(tY))
+	else:
+		raise Exception('[ERROR] Invalid translation mode.')
+
 class color():
 	red = (255,0,0)
 	green = (0,255,0)
@@ -116,33 +143,6 @@ class stats:
 			return 10
 		else:
 			return value
-
-def translate(data, res, mode):
-	"""
-	translates position of point to unified coordinate system
-	max value in each direction is 1.0 and the min is 0.0
-	available modes are: 0-encode, 1-decode
-	rtype: tuple, tuple, int
-	returns: tuple
-	"""
-
-	x, y = data
-	resX, resY = res
-
-	#encode
-	if mode == 0:
-		uX = x / resX
-		uY = y / resY
-
-		return (uX, uY)
-	#decode
-	elif mode == 1:
-		tX = x * resX
-		tY = y * resY
-
-		return (int(tX), int(tY))
-	else:
-		raise Exception('[ERROR] Invalid translation mode.')
 
 #-----Function utils-----
 def run_once(f):

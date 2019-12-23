@@ -1,6 +1,6 @@
 try:
 	from helper import exitAll, logError
-	from utils import color, translate
+	from utils import color, translateCoord
 	from launcher import backgroundTextures, interfaceTextures
 	from launcher import LauncherInfo
 	from launcher import sets, targetFPS
@@ -37,9 +37,9 @@ class Menu():
 		interface.changeFont('comicsansms', 24)
 
 		self.cursor = interface.InterfaceElement(cursor_texture.get_width(), cursor_texture.get_height(), self.cursor_pos, image=cursor_texture)
-		startButtonPos = translate((0.62, 0.88), (self.width, self.height), 1)
+		startButtonPos = translateCoord((0.62, 0.88), (self.width, self.height), 1)
 		self.startButton = interface.InterfaceElement(180, 30, startButtonPos, rect=pygame.Rect(startButtonPos, (180, 30)), text='Start new game', textPosition=(startButtonPos[0]+2, startButtonPos[1]-6), textColor=color.white, color=color.green)
-		exitButtonPos = translate((0.025 ,0.88), (self.width, self.height), 1)
+		exitButtonPos = translateCoord((0.025 ,0.88), (self.width, self.height), 1)
 		self.exitButton = interface.InterfaceElement(180, 30, exitButtonPos, rect=pygame.Rect(exitButtonPos, (180, 30)), text='Exit.', textPosition=(exitButtonPos[0] + 60, exitButtonPos[1]-6), color=color.green, textColor=color.white)
 
 	def Render(self):

@@ -1,10 +1,4 @@
 try:
-	import os
-except ImportError:
-	print('Critical error! Cannot load os module.')
-	exit()
-
-try:
 	from helper import *
 	import pygame
 	from launcher import sets
@@ -43,14 +37,10 @@ TEST_MODE = sets.TEST_MODE
 #dictionary update mode
 DICT_UPDATE_MODE = sets.DICT_UPDATE_MODE
 
-#####STATICS#####
 #textures
 cursor_texture = interfaceTextures.GetTexture('cursor')
 miss_texture = interfaceTextures.GetTexture('miss')
 bg_texture = backgroundTextures.GetTexture('bg_' + str(random.randint(0, backgroundTextures.count - 2)))
-
-#surfaces initialization
-bg_surf = background_surf
 
 #called once to update window background
 @run_once
@@ -59,6 +49,7 @@ def pre_update_display():
 		print('[INFO]<{}> Updating screen.'.format(__name__))
 	pygame.display.update()
 
+#timed updates
 @run_interval(interval=10)
 def timed_update_display():
 	if DEBUG_MODE:
@@ -172,10 +163,8 @@ class Game():
 			else: self.Render()
 
 			#update
-			#dictionary update
-			pre_update_display()
-
-			if DICT_UPDATE_MODE:
+			if DICT_UPDATE_MODE: #dictionary update
+				pre_update_display()
 				pygame.display.update(self.toUpdate)
 				if DEBUG_MODE:
 					print('[INFO]<{}> Updating: {}.'.format(__name__, str(self.toUpdate)))
@@ -184,11 +173,10 @@ class Game():
 
 				if sets.timed_updates_enable:
 					timed_update_display()
-
-			#standard update (window update)
-			if not DICT_UPDATE_MODE:
+			if not DICT_UPDATE_MODE: #standard update (window update)
 				pygame.display.flip()
 
+			#calculate fps etc.
 			if targetFPS == 0:
 				self.clock.tick()
 			else:
@@ -198,6 +186,7 @@ class Game():
 			self.render_time = round(self.clock.get_time(), 3) / 1000
 			self.time = pygame.time.get_ticks() - self.menu.time
 		
+		#close if game has ended
 		self.Close()
 	
 	def Close(self):
