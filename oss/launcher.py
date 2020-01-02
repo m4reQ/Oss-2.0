@@ -27,6 +27,7 @@ try:
 	from Containers.soundcontainer import SetDebugging as scSetDebugging
 	from GameElements.interface import SetDebugging as iSetDebugging
 	from eventhandler import SetDebugging as ehSetDebugging
+	from GameElements.map import SetDebugging as mSetDebugging
 	import time
 	import pygame
 	from settings import Settings
@@ -139,9 +140,11 @@ def LoadSettings():
 		scSetDebugging(True)
 		iSetDebugging(True)
 		ehSetDebugging(True)
+		mSetDebugging(True)
 
 def SetGameStats(ar, cs, hp):
 	try:
+		#just return clamped values
 		return (stats.clamp(ar), stats.clamp(cs), stats.clamp(hp))
 	except Exception as e:
 		logError(e)

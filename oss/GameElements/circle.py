@@ -1,5 +1,4 @@
 import pygame
-from helper import *
 from utils import stats, color
 from launcher import circleTextures as TextureContainer
 from launcher import hitsounds as SoundContainer
@@ -12,16 +11,16 @@ class Circle(object):
 	count = 0
 	radius = int(stats.getCS(CS) * scale)
 
-	def __init__(self, X, Y, time=0):
+	def __init__(self, X, Y, startTime=0):
 
 		self.pos = (X, Y)
-		self.time = time
+		self.startTime = startTime
 
 		self.texture_count = Circle.texture_count
 		self.background_count = Circle.background_count
 
-		self.font_name = str('font_' + str(self.texture_count))
-		self.bg_name = str('bg_' + str(self.background_count))
+		self.font_name = 'font_{}'.format(self.texture_count)
+		self.bg_name = 'bg_{}'.format(self.background_count)
 
 		if Circle.texture_count < 9:
 			Circle.texture_count += 1

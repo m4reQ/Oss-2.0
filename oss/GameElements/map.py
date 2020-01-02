@@ -1,9 +1,18 @@
-from .circle import Circle
 from helper import logError, exitAll
 from utils import translateCoord
-from launcher import maps_path
 
 is_loaded = False
+
+debugging = False
+
+def SetDebugging(val):
+	"""
+	sets debugging mode to given value
+	rtype: bool
+	returns: None
+	"""
+	global debugging
+	debugging = val
 
 def Load_map(file):
 	"""
@@ -11,6 +20,9 @@ def Load_map(file):
 	returns: array
 	"""
 	global is_loaded
+
+	#import paths here to avoid cyclic import
+	from launcher import maps_path
 
 	if is_loaded:
 		raise Exception('[ERROR] Map is already loaded.')
@@ -40,7 +52,8 @@ def Load_map(file):
 		e = new_element[0]
 		formatted_data.append(e)
 
-	print('[INFO]<{}> Map "{}" loaded.'.format(__name__, file))
+	if debugging:
+		print('[INFO]<{}> Map "{}" loaded.'.format(__name__, file))
 
 	is_loaded = True
 
@@ -52,6 +65,9 @@ def Make_map(data, targetRes):
 	returns: array
 	"""
 	ptr = 0
+
+	#import circles here to avoid cyclic import
+	from .circle import Circle
 
 	circles = []
 	for element in data:

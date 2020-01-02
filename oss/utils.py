@@ -195,23 +195,22 @@ def deprecated(newMethod):
 	return decorator
 
 #-----Memory utils-----
-def FreeMem(useDebugging):
+def FreeMem(useDebugging, msg='Starting garbage collection'):
 	"""
 	Triggers garbage collection
 	rtype: bool
 	returns: None
 	"""
 
-	objectsCount = gc.get_count()[0]
-
-	if useDebugging:
-		print('[INFO]<{}> Starting garbage collection.'.format(__name__))
-	
-	gc.collect()
-
-	if useDebugging:
-		print('[INFO]<{}> Freed {} objects.'.format(__name__, objectsCount - gc.get_count()[0]))
-
+	try:
+		objectsCount = gc.get_count()[0]
+		if useDebugging:
+			print('[INFO]<{}> {}.'.format(__name__, msg))
+		gc.collect()
+		if useDebugging:
+			print('[INFO]<{}> Freed {} objects.'.format(__name__, objectsCount - gc.get_count()[0]))
+	except Exception as e:
+		print('[ERROR]<{}> An error occured during garbage collection. \n{}'.format(__name__, str(e)))
 	
 if __name__ == "__main__":
     pygame.quit()

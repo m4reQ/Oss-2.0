@@ -35,10 +35,10 @@ DEBUG_MODE = sets.DEBUG_MODE
 TEST_MODE = sets.TEST_MODE
 DICT_UPDATE_MODE = sets.DICT_UPDATE_MODE
 
-#textures
+#create textures shortcuts
 cursor_texture = interfaceTextures.GetTexture('cursor')
 miss_texture = interfaceTextures.GetTexture('miss')
-bg_texture = backgroundTextures.GetTexture('bg_' + str(random.randint(0, backgroundTextures.count - 2)))
+bg_texture = backgroundTextures.GetTexture('bg_{}'.format(random.randint(0, backgroundTextures.count - 2)))
 
 #called once to update window background
 @run_once
@@ -91,7 +91,7 @@ class Game():
 		self.points_text = interface.InterfaceElement(0, 55, position=(0, self.height - 70), textColor=color.random())
 
 		#at the end of initialization trigger garbage collection
-		FreeMem(DEBUG_MODE)
+		FreeMem(DEBUG_MODE, 'Started after-init garbage collection.')
 
 	def Render(self):
 		self.DrawPlayGround()
@@ -127,6 +127,9 @@ class Game():
 
 			if type(self.circles).__name__ == 'str' or type(self.circles).__name__ == 'NoneType':
 				raise Exception('[ERROR] An error appeared during map loading.')
+		
+		#free memory after map loading
+		FreeMem(DEBUG_MODE, 'Started after map loading garbage collection.')
 		
 		maxRadius = stats.getCS(1)
 
@@ -192,36 +195,45 @@ class Game():
 		self.Close()
 	
 	def Close(self):
-		pygame.mixer.quit()
 		self.menu.game = None
+		map.is_loaded = False
+
+		circle.Circle.count = 0
+		circle.Circle.texture_count = 0
+		circle.Circle.background_count = 0
+
+		del(self)
+		FreeMem(DEBUG_MODE, 'Started onclose garbage collection.')
 
 	def DrawPlayGround(self):
 		self.win.blit(bg_texture, (0, 0))
 
 		for circle in self.circles:
+			#get top circle (the first circle added)
+			topCircle = self.circles[0]
 			if not sets.auto_generate: #in case of playing a map
-				if self.time >= circle.time and self.time <= circle.time + stats.getAR(self.AR):
+				if self.time >= circle.startTime and self.time <= circle.startTime + stats.getAR(self.AR):
 					circle.Draw(self.win)  
 					for event in self.events:
 						if event.type == pygame.KEYDOWN:
 							if event.key == keyBindTable['kl'] or event.key == keyBindTable['kr']:
-								if circle.Collide(self.cursor_pos):
-									circle.Hit(self)
+								if topCircle.Collide(self.cursor_pos):
+									topCircle.Hit(self)
 								else:
-									circle.Miss(self)
+									topCircle.Miss(self)
 						if event.type == pygame.MOUSEBUTTONDOWN:
 							if event.button == 1:
 								self.click_count[0] += 1
 							elif event.button == 3:
 								self.click_count[1] += 1
 
-							if circle.Collide(self.cursor_pos):
-								circle.Hit(self)
+							if topCircle.Collide(self.cursor_pos):
+								topCircle.Hit(self)
 							else:
-								circle.Miss(self)
+								topCircle.Miss(self)
 
-				elif self.time >= circle.time + stats.getAR(self.AR):
-					circle.Miss(self)
+				elif self.time >= topCircle.startTime + stats.getAR(self.AR):
+					topCircle.Miss(self)
 			else: #in case of playing in auto generate mode
 				circle.Draw(self.win)  
 				for event in self.events:
