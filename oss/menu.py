@@ -1,6 +1,6 @@
 try:
 	from helper import exitAll, logError
-	from utils import color, translateCoord
+	from utils import color, translateCoord, FreeMem
 	from launcher import backgroundTextures, interfaceTextures
 	from launcher import LauncherInfo
 	from launcher import sets, targetFPS
@@ -9,6 +9,7 @@ try:
 	from launcher import sets
 	from eventhandler import EventHandler
 	import GameElements.interface as interface
+	from os import system
 except Exception as e:
 	print(e)
 	logError(e)
@@ -91,7 +92,14 @@ class Menu():
 		print('Goodbye!')
 		if sets.DEBUG_MODE:
 			print('[INFO]<{}> Program exited after: {} seconds.'.format(__name__, self.time))
-		exitAll()
+		
+		pygame.mixer.quit()
+		pygame.quit()
+
+		FreeMem(sets.DEBUG_MODE)
+		
+		system('pause >NUL')
+		quit()
 
 	def DrawCursor(self):
 		self.cursor.positionX = self.cursor_pos[0] - self.cursor.width/2

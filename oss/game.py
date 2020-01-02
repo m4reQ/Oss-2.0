@@ -90,6 +90,9 @@ class Game():
 		self.combo_text = interface.InterfaceElement(0, 55, position=(10, self.height - 70), textColor=color.white)
 		self.points_text = interface.InterfaceElement(0, 55, position=(0, self.height - 70), textColor=color.random())
 
+		#at the end of initialization trigger garbage collection
+		FreeMem(DEBUG_MODE)
+
 	def Render(self):
 		self.DrawPlayGround()
 		if self.draw_interface:

@@ -4,6 +4,7 @@ import ctypes
 from PIL import Image
 import pygame
 import math
+import gc
 
 user32 = ctypes.windll.user32
 
@@ -192,6 +193,25 @@ def deprecated(newMethod):
 			return f(*args, **kwargs)
 		return wrapper
 	return decorator
+
+#-----Memory utils-----
+def FreeMem(useDebugging):
+	"""
+	Triggers garbage collection
+	rtype: bool
+	returns: None
+	"""
+
+	objectsCount = gc.get_count()[0]
+
+	if useDebugging:
+		print('[INFO]<{}> Starting garbage collection.'.format(__name__))
+	
+	gc.collect()
+
+	if useDebugging:
+		print('[INFO]<{}> Freed {} objects.'.format(__name__, objectsCount - gc.get_count()[0]))
+
 	
 if __name__ == "__main__":
     pygame.quit()

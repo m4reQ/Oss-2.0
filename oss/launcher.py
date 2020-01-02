@@ -20,7 +20,7 @@ except ImportError:
 try:
 	from helper import ask, logError, exitAll
 	import repair
-	from utils import resolutions, stats, ConvertImage, DimImage
+	from utils import resolutions, stats, ConvertImage, DimImage, FreeMem
 	from Containers.texturecontainer import GenTexture, TextureContainer
 	from Containers.soundcontainer import GenSound, SoundContainer
 	from Containers.texturecontainer import SetDebugging as tcSetDebugging
@@ -375,13 +375,20 @@ def Start():
 	#use perf_counter() only if we're on python 3.x
 	if LauncherInfo.timeMeasurementAvailable: start = time.perf_counter()
 
+	#load settings
+	LoadSettings()
+
+	print('Initiaizing oss!')
+	if sets.DEBUG_MODE:
+		if LauncherInfo.concurrencyAvailable:
+			print('[INFO]<{}> Initialization started using multithereading.'.format(__name__))
+		else:
+			print('[INFO]<{}> Initialization started using singlethreading.'.format(__name__))
+
 	#initialize pygame
 	pygame.mixer.pre_init(22050, -16, 2, 512)
 	pygame.mixer.init()
 	pygame.init()
-
-	#load settings
-	LoadSettings()
 
 	#load key bindings
 	SetKeyBindings()
@@ -413,6 +420,9 @@ def Start():
 	#import menu module here to avoid cyclic import
 	import menu
 
+	#free memory after initialization
+	FreeMem(sets.DEBUG_MODE)
+
 	try:
 		if sets.TEST_MODE:
 			raise Exception('[INFO] Test mode enabled.')
@@ -432,6 +442,4 @@ def Start():
 	except Exception as e:
 		logError(e)
 		print('An error appeared. {}'.format(e))
-
-	exitAll()
 	
