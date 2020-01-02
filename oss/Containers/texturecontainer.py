@@ -39,11 +39,11 @@ class TextureContainer(object):
 
 		TextureContainer.containerID += 1
 		if debugging:
-			print('[INFO]<', str(__name__), "> Texture container: '", str(self.name), "' initialized.")
+			print('[INFO]<{}> Texture container: "{}" initialized.'.format(__name__, self.name))
 
 	def AddTexture(self, texture, texName):
 		if not type(texture).__name__ == 'Surface':
-			raise Exception('[ERROR] Cannot add object of type ' + str(type(texture).__name__) + '. TextureContainer can only contain pygame.Surface type objects.')
+			raise Exception('[ERROR] Cannot add object of type {}. TextureContainer can only contain pygame.Surface type objects.'.format(type(texture).__name__))
 		
 		self.__textures[texName] = texture
 
@@ -87,3 +87,7 @@ class TextureContainer(object):
 	@property
 	def count(self):
 		return len(self.__textures)
+
+if __name__ == '__main__':
+	quit()
+	pygame.quit()

@@ -1,6 +1,5 @@
 import os
 from helper import exitAll
-
 debugging = False
 
 def SetDebugging(val):

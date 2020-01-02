@@ -37,7 +37,7 @@ class Circle(object):
 		Circle.count += 1
 
 	def __repr__(self):
-		return str('Circle at position: ' + str(self.pos) + '. Font texture: ' + self.font_name + '. Background texture: ' + self.bg_name + '.')
+		return str('Circle at position: {}. Font texture: {}. Background texture: {}.'.format(self.pos, self.font_name, self.bg_name))
 		
 	def Draw(self, surf):
 		surf.blit(TextureContainer.GetTexture(self.bg_name), (self.pos[0] - Circle.radius, self.pos[1] - Circle.radius))

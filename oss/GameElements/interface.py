@@ -39,9 +39,9 @@ class InterfaceElement:
 	def __init__(self, width, height, position, image=None, rect=None, text=None, color=None, textColor=None, textPosition=None):
 		if debugging:
 			if not InterfaceElement.font:
-				print('[WARNING]', str(self), ' Font not defined.')
+				print('[WARNING] {} Font not defined.'.format(str(self)))
 			if text and not textColor:
-				print('[WARNING]', str(self), ' Text color not defined.')
+				print('[WARNING] {} Text color not defined.'.format(str(self)))
 
 		self.positionX, self.positionY = position
 		self.width = width
@@ -88,7 +88,7 @@ class InterfaceElement:
 			surface.blit(rText, (self.textPositionX, self.textPositionY))
 		else:
 			if debugging:
-				print('[WARNING]', str(self), ' No drawable set matches conditions. Skipping render.')
+				print('[WARNING] {} No drawable set matches conditions. Skipping render.'.format(str(self)))
 			pass
 
 	def getRect(self):

@@ -22,6 +22,9 @@ except ImportError as e:
 	
 	pygame.quit()
 	quit()
+#import cuncurrent.futures ONLY if it's available
+if LauncherInfo.concurrencyAvailable:
+	import concurrent.futures
 
 #import cuncurrent.futures ONLY if it's available
 if LauncherInfo.concurrencyAvailable:
@@ -186,6 +189,7 @@ class Game():
 		self.Close()
 	
 	def Close(self):
+		pygame.mixer.quit()
 		self.menu.game = None
 
 	def DrawPlayGround(self):

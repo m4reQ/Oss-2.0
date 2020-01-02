@@ -45,7 +45,7 @@ class EventHandler:
 		if event.key == keyBindTable['quit']:
 			game.is_running = False
 			if debugging:
-				print('[INFO]<', str(__name__), '> User interruption by closing window')
+				print('[INFO]<{}> User interruption by closing window'.format(__name__))
 				
 		if event.key == keyBindTable['hideInterface']:
 			game.draw_interface = not game.draw_interface
@@ -53,32 +53,35 @@ class EventHandler:
 		#force screen update (ONLY IN DEBUG MODE)
 		if debugging:
 			if event.key == keyBindTable['updateWindow']:
-				print('[INFO]<', str(__name__), '> Preformed window update.')
+				print('[INFO]<{}> Preformed window update.'.format(__name__))
 				pygame.display.update()
 		
 		#get current mouse position (ONLY IN DEBUG MODE)
 		if debugging:
 			if event.key == keyBindTable['debugGetPos']:
 				pos = pygame.mouse.get_pos()
-				print('[INFO]<', str(__name__), '> Current mouse position: ', pos, ', mapped coords (current resolution): ', str(pos[0] / game.width), str(pos[1] / game.height))
+				print('[INFO]<{}> Current mouse position: {}, mapped coords (current resolution): {}'.format(__name__, pos, (pos[0] / game.width, pos[1] / game.height)))
 
-		if event.key == keyBindTable['kl']:
-			game.click_count[0] += 1
-		if event.key == keyBindTable['kr']:
-			game.click_count[1] += 1
+		try: #try to increment click_count
+			if event.key == keyBindTable['kl']:
+				game.click_count[0] += 1
+			if event.key == keyBindTable['kr']:
+				game.click_count[1] += 1
+		except AttributeError: #if it's not there and we're in menu pass
+			pass
 
 	@staticmethod
 	def HandleEvents(game, event):
 		if event.type == pygame.QUIT:
 			game.is_running = False
 			if debugging:
-				print('[INFO]<', str(__name__), '> User interruption by closing window')
+				print('[INFO]<{}> User interruption by closing window.'.format(__name__))
 
 	@staticmethod
 	def HandleInternalEvents(game):
 		if game.health <= 0:
 			if debugging:
-				print('[INFO]<', str(__name__), '> health reached ' + str(game.health))
+				print('[INFO]<{}> health reached {}.'.format(__name__, game.health))
 			game.is_running = False
 
 		if game.health >= game.maxhealth:
@@ -86,7 +89,7 @@ class EventHandler:
 
 		if not game.circles:
 			if debugging:
-				print('[INFO]<', str(__name__), '> List depleted at time: ', str(game.time), 'ms.')
+				print('[INFO]<{}> List depleted at time: {}ms.'.format(__name__, game.time))
 			game.is_running = False
 
 if __name__ == '__main__':

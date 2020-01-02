@@ -1,6 +1,5 @@
 import os
 import random
-from helper import exitAll
 import ctypes
 from PIL import Image
 import pygame
@@ -37,7 +36,34 @@ def DimImage(image, dimPercent):
 
 	return img_d
 
-class color(object):
+def translateCoord(data, res, mode):
+	"""
+	translates position of point to unified coordinate system
+	max value in each direction is 1.0 and the min is 0.0
+	available modes are: 0-encode, 1-decode
+	rtype: tuple, tuple, int
+	returns: tuple
+	"""
+
+	x, y = data
+	resX, resY = res
+
+	#encode
+	if mode == 0:
+		uX = x / resX
+		uY = y / resY
+
+		return (uX, uY)
+	#decode
+	elif mode == 1:
+		tX = x * resX
+		tY = y * resY
+
+		return (int(tX), int(tY))
+	else:
+		raise Exception('[ERROR] Invalid translation mode.')
+
+class color():
 	red = (255,0,0)
 	green = (0,255,0)
 	blue = (0,0,255)
@@ -57,7 +83,7 @@ class color(object):
 		"""
 		return (random.randint(0,225), random.randint(0,225), random.randint(0,225))
 
-class resolutions(object):
+class resolutions():
 	SD = (640, 480)
 	HD = (1360, 768)
 	FHD = (1920, 1080)
@@ -118,33 +144,6 @@ class stats:
 		else:
 			return value
 
-def translate(data, res, mode):
-	"""
-	translates position of point to unified coordinate system
-	max value in each direction is 1.0 and the min is 0.0
-	available modes are: 0-encode, 1-decode
-	rtype: tuple, tuple, int
-	returns: tuple
-	"""
-
-	x, y = data
-	resX, resY = res
-
-	#encode
-	if mode == 0:
-		uX = x / resX
-		uY = y / resY
-
-		return (uX, uY)
-	#decode
-	elif mode == 1:
-		tX = x * resX
-		tY = y * resY
-
-		return (int(tX), int(tY))
-	else:
-		raise Exception('[ERROR] Invalid translation mode.')
-
 #-----Function utils-----
 def run_once(f):
 	"""
@@ -189,9 +188,11 @@ def deprecated(newMethod):
 	"""
 	def decorator(f):
 		def wrapper(*args, **kwargs):
-			print('[WARNING] Method ' + f.__name__ + ' is deprecated and will be removed soon. Instead use: ' + newMethod)
+			print('[WARNING] Method {} is deprecated and will be removed soon. Instead use: {}.'.format(f.__name__, newMethod))
 			return f(*args, **kwargs)
 		return wrapper
 	return decorator
+	
 if __name__ == "__main__":
-    exitAll()
+    pygame.quit()
+    quit()

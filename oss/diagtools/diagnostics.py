@@ -56,7 +56,6 @@ def Get_screen_res():
 
 def Gen_log():
     print('Generating log file...')
-
     with open('diaglog.txt', 'w+') as  f:
         f.write('')
     
@@ -77,5 +76,7 @@ def Gen_log():
             f.write('{}: {}\n'.format(key, val))
 
 if __name__ == '__main__':
-    Gen_log()
+    #Gen_log()
+    #for now diaglog is not working so raise exception
+    raise Exception('Diaglog is not working in this build. It will be soon restored.')
     exit()
