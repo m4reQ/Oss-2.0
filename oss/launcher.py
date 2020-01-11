@@ -77,10 +77,6 @@ scale = 1
 #resolution
 resolution = resolutions.SD
 
-#target frame rate
-#set 0 for unlimited
-targetFPS = 60
-
 #####GAME STATS#####
 #circle approach rate
 AR = None
@@ -111,9 +107,6 @@ interfaceTextures = None
 
 #sound containers
 hitsounds = None
-
-#display surfaces
-background_surf = None
 
 #game window
 mainWindow = None
@@ -176,21 +169,6 @@ def InitializeSoundContainers():
 	except Exception as e:
 		logError(e)
 		print('An error appeared during sound containers initialization. ')
-		if sets.DEBUG_MODE:
-			print('[ERROR] {}'.format(str(e)))
-		exitAll()
-
-def InitializeSurfaces():
-	try:
-		bg = pygame.Surface(resolution, pygame.HWSURFACE|pygame.SRCALPHA|pygame.HWACCEL)#.convert_alpha()
-		bg = bg.fill((0, 0, 0, int(darkenPercent*255)))
-		dark = pygame.Surface(resolution, pygame.HWSURFACE|pygame.SRCALPHA|pygame.HWACCEL)#.convert_alpha()
-		dark.fill((0, 0, 0, darkenPercent*255))
-
-		return (bg, dark)
-	except Exception as e:
-		logError(e)
-		print('An error appeared during surfaces initialization. ')
 		if sets.DEBUG_MODE:
 			print('[ERROR] {}'.format(str(e)))
 		exitAll()
@@ -404,10 +382,6 @@ def Start():
 	global hitsounds
 	hitsounds = InitializeSoundContainers()
 	LoadSounds()
-
-	#initialize surfaces
-	global background, dim
-	background, dim = InitializeSurfaces()
 
 	#initialize window
 	global resolution, mainWindow

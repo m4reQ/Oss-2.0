@@ -41,7 +41,7 @@ class Circle(object):
 	def Draw(self, surf):
 		surf.blit(TextureContainer.GetTexture(self.bg_name), (self.pos[0] - Circle.radius, self.pos[1] - Circle.radius))
 
-		pygame.draw.circle(surf, color.white, self.pos, Circle.radius, int(2 * scale))
+		pygame.draw.circle(surf, color.white, self.pos, Circle.radius, int(3 * scale))
 		pygame.draw.circle(surf, color.gray, self.pos, (Circle.radius + int(1 * scale)), int(1 * scale))
 
 		font_position = (self.pos[0] - Circle.radius, self.pos[1] - Circle.radius)

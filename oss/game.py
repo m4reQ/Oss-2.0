@@ -4,8 +4,6 @@ try:
 	from launcher import sets
 	from launcher import AR, CS, HP
 	from launcher import backgroundTextures, interfaceTextures
-	from launcher import background_surf
-	from launcher import targetFPS
 	from launcher import resolution
 	from launcher import LauncherInfo
 	from eventhandler import keyBindTable
@@ -122,11 +120,12 @@ class Game():
 		global DEBUG_MODE
 		
 		if not sets.auto_generate:
-			map_data = map.Load_map('test')
-			self.circles = map.Make_map(map_data, (self.width, self.height))
+			self.circles = map.Make_map('Resources/maps/test.txt', (self.width, self.height))
 
-			if type(self.circles).__name__ == 'str' or type(self.circles).__name__ == 'NoneType':
-				raise Exception('[ERROR] An error appeared during map loading.')
+		if self.circles == -1:
+			if DEBUG_MODE:
+				print('[ERROR]<{}> An error appeared during map loading.'.format(__name__))
+			self.is_running = False
 		
 		#free memory after map loading
 		FreeMem(DEBUG_MODE, 'Started after map loading garbage collection.')
@@ -182,10 +181,10 @@ class Game():
 				pygame.display.flip()
 
 			#calculate fps etc.
-			if targetFPS == 0:
-				self.clock.tick()
+			if sets.use_fps_cap:
+				self.clock.tick(60)
 			else:
-				self.clock.tick(targetFPS)
+				self.clock.tick()
 
 			self.fps = int(self.clock.get_fps())
 			self.render_time = round(self.clock.get_time(), 3) / 1000

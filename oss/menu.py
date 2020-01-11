@@ -3,10 +3,9 @@ try:
 	from utils import color, translateCoord, FreeMem
 	from launcher import backgroundTextures, interfaceTextures
 	from launcher import LauncherInfo
-	from launcher import sets, targetFPS
+	from launcher import sets
 	from game import Game
 	import pygame
-	from launcher import sets
 	from eventhandler import EventHandler
 	import GameElements.interface as interface
 	from os import system
@@ -78,11 +77,9 @@ class Menu():
 
 			#update
 			pygame.display.flip()
-
-			if targetFPS == 0:
-				self.clock.tick()
-			else:
-				self.clock.tick(targetFPS)
+			
+			#always use vsync here because going on higher frame rate is unnecessary
+			self.clock.tick(60)
 
 			self.time = pygame.time.get_ticks()
 		

@@ -2,7 +2,6 @@ from helper import logError, exitAll
 from utils import translateCoord
 
 is_loaded = False
-
 debugging = False
 
 def SetDebugging(val):
@@ -14,77 +13,79 @@ def SetDebugging(val):
 	global debugging
 	debugging = val
 
-def Load_map(file):
-	"""
-	rtype: string
-	returns: array
-	"""
-	global is_loaded
-
-	#import paths here to avoid cyclic import
-	from launcher import maps_path
-
-	if is_loaded:
-		raise Exception('[ERROR] Map is already loaded.')
+def ParseMap(filepath):
+	data = []
+	lineCount = 0
 
 	try:
-		with open(maps_path + file + '.txt', "r") as f:
-			data = []
+		with open(filepath, "r") as f:
 			for line in f.readlines():
+				lineCount += 1
+
 				if str(line) == '#':
-					f.close()
 					break
 				else:
-					data.append(line)
+					line = str(line)
+					lineData = line.split(",")
 
-		try:
-			for element in data:
-				data.remove('\n')
-		except ValueError:
-			pass
-	except Exception as e:
-		logError(e)
-		raise Exception('[ERROR] Cannot open file "{}".'.format(file))
+					newLineData = []
+					for x in lineData:
+						x = x.replace("\n", "")
+						x = x.replace(" ", "")
 
-	formatted_data = []
-	for element in data:
-		new_element = element.split('\n')
-		e = new_element[0]
-		formatted_data.append(e)
+						try:
+							x = float(x)
+						except ValueError: #if even a single fragment of any line failed to parse stop loading rest of map
+							if debugging:
+								print("[ERROR]<{}> Invalid map format at line {}".format(__name__, lineCount))
 
-	if debugging:
-		print('[INFO]<{}> Map "{}" loaded.'.format(__name__, file))
+							return -1
 
-	is_loaded = True
+						newLineData.append(x)
+						
+					data.append(newLineData)
 
-	return formatted_data
+	except FileNotFoundError:
+		print("Error cannot load map: File {} didn't found.".format(filepath))
+		return -1 #indicate that a error appeared
 
-def Make_map(data, targetRes):
+	return data
+
+def Make_map(filepath, targetRes):
 	"""
 	rtype: array, tuple
 	returns: array
 	"""
-	ptr = 0
+	global is_loaded
+
+	data = ParseMap(filepath)
+
+	if data == -1:
+		print("Cannot load map from '{}'.".format(filepath))
+		return -1
 
 	#import circles here to avoid cyclic import
 	from .circle import Circle
 
 	circles = []
 	for element in data:
-		while ptr <= len(data)-1:
-			try:
-				posX = float(data[ptr])
-				posY = float(data[ptr+1])
-				time = int(data[ptr+2])
+		try:
+			posX = float(element[0])
+			posY = float(element[1])
+			time = int(element[2])
 
-				ptr += 3
+			tposX, tposY = translateCoord((posX, posY), targetRes, 1)
 
-				tposX, tposY = translateCoord((posX, posY), targetRes, 1)
+			obj = Circle(int(tposX), int(tposY), time)
+			circles.append(obj)
+		except IndexError:
+			print('[ERROR] Cannot make object {}.\n Maybe map has outdated or invalid format.'.format(str(obj)))
+			return
+	
+	if debugging:
+		print('[INFO]<{}> Map "{}" loaded.'.format(__name__, filepath))
 
-				obj = Circle(int(tposX), int(tposY), time)
-				circles.append(obj)
-			except IndexError:
-				raise Exception('[ERROR] Cannot make object {}.\nCannot load map. Maybe map has outdated or invalid format.'.format(str(obj)))
+	is_loaded = True
 
 	return circles
 

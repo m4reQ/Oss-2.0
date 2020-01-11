@@ -27,6 +27,10 @@ defaultset = True
 /SDL_VIDEO_WINDOW_POS = 0,0
 /SDL_VIDEO_CENTERED = 1
 
+#FPS cap
+#forces program to run at 60 fps
+use_fps_cap = True
+
 #debug mode
 DEBUG_MODE = False
 
