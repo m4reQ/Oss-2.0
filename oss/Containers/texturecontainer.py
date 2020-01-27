@@ -4,27 +4,19 @@ debugging = False
 
 def SetDebugging(val):
 	"""
-	sets debugging mode to given value
-	rtype: bool
-	returns: None
+	Sets debugging mode to given value.
+	:param val: (bool) value to set debugging
 	"""
 	global debugging
 	debugging = val
 
-def GenTexture(texPath, scale=None):
+def GenTexture(texPath):
 	"""
-	loads texture to pygame image object
-	rtype: string, int tuple
-	returns: pygame.Image
+	Creates texture from given image.
+	:param texPath: (string) actual texture file path
+	:returns: pygame.Surface
 	"""
-	texture = pygame.image.load(texPath)
-
-	if scale:
-		texture = pygame.transform.scale(texture, scale)
-	else:
-		if debugging:
-			print('[WARNING] Cannot scale texture because scaling is not enabled.')
-	return texture
+	return pygame.image.load(texPath)
 
 class TextureContainer(object):
 	containerID = 0
@@ -71,6 +63,12 @@ class TextureContainer(object):
 			self.__textures[destName] = item
 		except KeyError:
 			raise Exception('[ERROR] Dictionary key not found.')
+	
+	def ScaleTexture(self, texName, scale):
+		self.__textures[texName] = pygame.transform.scale(self.__textures[texName], (scale, scale))
+	
+	def ScaleTextureXY(self, texName, scaleX, scaleY):
+		self.__textures[texName] = pygame.transform.scale(self.__textures[texName], (scaleX, scaleY))
 
 	@property
 	def textures(self):
@@ -79,8 +77,8 @@ class TextureContainer(object):
 	@property
 	def is_empty(self):
 		"""
-		returns True if container is empty
-		returns: bool
+		Returns True if container is empty
+		:returns: bool
 		"""
 		return self.__textures == {}
 

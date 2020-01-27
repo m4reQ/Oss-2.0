@@ -1,7 +1,6 @@
 import os
 from helper import ask, logError, exitAll
 import requests
-import traceback
 
 directory = os.getcwd()
 

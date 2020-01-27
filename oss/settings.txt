@@ -10,7 +10,7 @@ borderless = True
 mouse_visible = False
 
 #automatic circle generation
-auto_generate = True
+auto_generate = False
 
 #timed screen updates
 timed_updates_enable = False
@@ -32,7 +32,7 @@ defaultset = True
 use_fps_cap = True
 
 #debug mode
-DEBUG_MODE = False
+DEBUG_MODE = True
 
 #test mode
 #Enable if you want to test certain methods

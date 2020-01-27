@@ -11,6 +11,20 @@ class LauncherInfo:
 	concurrencyAvailable = True
 	timeMeasurementAvailable = True
 
+	@staticmethod
+	def GetInfo(file=""):
+		info = "LauncherInfo\n"
+
+		for e in dir(LauncherInfo):
+			if e[0] != '_' and e[1] != '_':
+				info += "{}: {}\n".format(e, getattr(LauncherInfo, e))
+		
+		if not file:
+			return info
+		else:
+			with open(file, "w+") as f:
+				f.write(info)
+
 #check if python supports concurrent execution
 try:
 	import concurrent.futures
@@ -69,6 +83,9 @@ if not sys.warnoptions:
 	import warnings
 	warnings.simplefilter("ignore")
 
+#indicates if program was already initialized
+initialized = False
+
 #scale
 #used to change size of objects depending on used resolution
 #temporary set to 1 until making better method of calculating it
@@ -121,9 +138,9 @@ def LoadSettings():
 	try:
 		global sets
 		sets.LoadFromFile('settings.txt')
-	except Exception as e:
+	except Exception as e: #we cannot use HandleError here because it requires sets.DEBUG_MODE variable
 		logError(e)
-		print('An error appeared during settings loading.')
+		print("An error appeared during settings loading.")
 		if sets.DEBUG_MODE:
 			print('[ERROR] {}'.format(str(e)))
 		exitAll()
@@ -135,16 +152,29 @@ def LoadSettings():
 		ehSetDebugging(True)
 		mSetDebugging(True)
 
+def HandleError(msg, error):
+	"""
+	Performs a set of actions to properly catch error
+	:param msg: (str) Error message to display
+	:param error: (Exception) Actual catched error
+	"""
+	logError(error)
+	print(msg)
+	if sets.DEBUG_MODE:
+		print('[ERROR] {}'.format(str(error)))
+	exitAll()
+
 def SetGameStats(ar, cs, hp):
 	try:
-		#just return clamped values
-		return (stats.clamp(ar), stats.clamp(cs), stats.clamp(hp))
+		#clamp values
+		ar = stats.clamp(ar)
+		cs = stats.clamp(cs)
+		hp = stats.clamp(hp)
+
+		#convert stats to actual usable values
+		return(stats.getAR(ar), stats.getCS(cs), stats.getHP(hp))
 	except Exception as e:
-		logError(e)
-		print('An error appeared during setting game stats.')
-		if sets.DEBUG_MODE:
-			print('[ERROR] {}'.format(str(e)))
-		exitAll()
+		HandleError("An error appeared during setting game stats.", e)
 
 def InitializeTextureContainers():
 	try:
@@ -155,11 +185,7 @@ def InitializeTextureContainers():
 
 		return containers
 	except Exception as e:
-		logError(e)
-		print('An error appeared during texture containers initialization. ')
-		if sets.DEBUG_MODE:
-			print('[ERROR] {}'.format(str(e)))
-		exitAll()
+		HandleError("An error appeared during texture containers initialization.", e)
 
 def InitializeSoundContainers():
 	try:
@@ -167,34 +193,44 @@ def InitializeSoundContainers():
 
 		return containers
 	except Exception as e:
-		logError(e)
-		print('An error appeared during sound containers initialization. ')
-		if sets.DEBUG_MODE:
-			print('[ERROR] {}'.format(str(e)))
-		exitAll()
+		HandleError("An error appeared during sound containers initialization.", e)
 
 def LoadCircleTextures():
 	#circle radius
-	radius = int(stats.getCS(CS) * scale)
+	radius = int(CS * scale)
 
 	#circle textures
 	#check if textures was previously loaded
 	if circleTextures.is_empty:
 		#load font textures
 		for i in range(10):
-			tex = GenTexture(tex_path + 'circles/' + str(i) + '.png', (radius*2, radius*2))
-			circleTextures.AddTexture(tex, str('font_' + str(i)))
+			texName = 'font_' + str(i)
+
+			tex = GenTexture(tex_path + 'circles/' + str(i) + '.png')
+			circleTextures.AddTexture(tex, texName)
+
+			circleTextures.ScaleTexture(texName, radius * 2 * scale)
 		#load background textures
 		for i in range(5):
-			tex = GenTexture(tex_path + 'circles/circlebg_' + str(i) + '.png', (radius*2, radius*2))
-			circleTextures.AddTexture(tex, str('bg_' + str(i)))
+			texName = 'bg_' + str(i)
+
+			tex = GenTexture(tex_path + 'circles/circlebg_' + str(i) + '.png')
+			circleTextures.AddTexture(tex, texName)
+
+			circleTextures.ScaleTexture(texName, radius * 2 * scale)
+		
+		circleTextures.AddTexture(GenTexture(tex_path + "circles/circlehit.png"), "hitlayout")
+		circleTextures.ScaleTexture("hitlayout", radius * 2 * scale)
 
 def LoadInterfaceTextures():
 	#interface textures
 	#check if textures was previously loaded
 	if interfaceTextures.is_empty:
-		interfaceTextures.AddTexture(GenTexture(tex_path + 'cursor.png', (16 * scale, 16 * scale)), 'cursor')
-		interfaceTextures.AddTexture(GenTexture(tex_path + 'miss.png', (16 * scale, 16 * scale)), 'miss')
+		interfaceTextures.AddTexture(GenTexture(tex_path + 'cursor.png'), 'cursor')
+		interfaceTextures.ScaleTexture("cursor", 16 * scale)
+
+		interfaceTextures.AddTexture(GenTexture(tex_path + 'miss.png'), 'miss')
+		interfaceTextures.ScaleTexture("miss", 16 * scale)
 
 def LoadBackgroundTextures():
 	#load backgrounds
@@ -236,8 +272,13 @@ def LoadBackgroundTextures():
 
 		#load backgrounds to backgroundTextures container
 		for i in range(count_jpg-1):
-			tex = GenTexture(tex_path + 'backgrounds/bg' + str(i) + '.png', resolution)
-			backgroundTextures.AddTexture(tex, 'bg_' + str(i))
+			texName = 'bg_' + str(i)
+
+			tex = GenTexture(tex_path + 'backgrounds/bg' + str(i) + '.png')
+			backgroundTextures.AddTexture(tex, texName)
+
+			backgroundTextures.ScaleTextureXY(texName, resolution[0], resolution[1])
+
 
 		#convert background textures to support alpha blending
 		#and dim all of them
@@ -245,7 +286,8 @@ def LoadBackgroundTextures():
 			tex = DimImage(backgroundTextures.textures[key], darkenPercent)
 			backgroundTextures.textures[key] = tex
 
-		backgroundTextures.AddTexture(GenTexture(tex_path + 'backgrounds/menu_background.png', resolution), 'menu_background')
+		backgroundTextures.AddTexture(GenTexture(tex_path + 'backgrounds/menu_background.png'), 'menu_background')
+		backgroundTextures.ScaleTextureXY("menu_background", resolution[0], resolution[1])
 
 def LoadTexturesConcurrently():
 	try:
@@ -259,11 +301,7 @@ def LoadTexturesConcurrently():
 				print('[INFO]<{}> Initialized textures. Texture dictionaries: {}{}{}.'.format(__name__, str(circleTextures.textures), str(interfaceTextures.textures), str(backgroundTextures.textures)))
 
 	except Exception as e:
-		logError(e)
-		print('An error appeared during textures loading. ')
-		if sets.DEBUG_MODE:
-			print('[ERROR] {}'.format(str(e)))
-		exitAll()
+		HandleError("An error appeared during textures loading.", e)
 
 def LoadTextures():
 	try:
@@ -276,11 +314,7 @@ def LoadTextures():
 				print('[INFO]<{}> Initialized textures. Texture dictionaries: {}{}{}.'.format(__name__, str(circleTextures.textures), str(interfaceTextures.textures), str(backgroundTextures.textures)))
 
 	except Exception as e:
-		logError(e)
-		print('An error appeared during textures loading. ')
-		if sets.DEBUG_MODE:
-			print('[ERROR] {}'.format(str(e)))
-		exitAll()			
+		HandleError("An error appeared during textures loading.", e)		
 
 def LoadSounds():
 	try:
@@ -299,11 +333,7 @@ def LoadSounds():
 				print('[INFO]<{}> Initialized sounds. Sounds dictionary: {}.'.format(__name__, str(hitsounds.sounds)))
 
 	except Exception as e:
-		logError(e)
-		print('An error appeared during sounds loading. ')
-		if sets.DEBUG_MODE:
-			print('[ERROR] {}'.format(str(e)))
-		exitAll()
+		HandleError("An error appeared during sounds loading.", e)
 
 def SetKeyBindings():
 	try:
@@ -312,11 +342,7 @@ def SetKeyBindings():
 		keybind['kl'] = pygame.K_z
 		keybind['kr'] = pygame.K_x
 	except Exception as e:
-		logError(e)
-		print('An error appeared during loading key bindings. ')
-		if sets.DEBUG_MODE:
-			print('[ERROR] {}'.format(str(e)))
-		exitAll()
+		HandleError("An error appeared during loading key bindings.", e)
 
 def InitializeWindow(width, height):
 	"""
@@ -346,13 +372,21 @@ def InitializeWindow(width, height):
 		return win
 
 	except Exception as e:
-		logError(e)
-		print('An error appeared during window initialization.')
-		if sets.DEBUG_MODE:
-			print('[ERROR] {}'.format(str(e)))
-		exitAll()
+		HandleError("An error appeared during window initialization.", e)
+
+def InitPygame():
+	try:
+		pygame.mixer.pre_init(22050, -16, 2, 512)
+		pygame.mixer.init()
+		pygame.init()
+	except Exception as e:
+		HandleError("An error appeared during pygame initialization.", e)
 
 def Start():
+	global initialized
+	if initialized:
+		raise Exception("Error! Program is already initialized.")
+
 	#use perf_counter() only if we're on python 3.x
 	if LauncherInfo.timeMeasurementAvailable: start = time.perf_counter()
 
@@ -367,9 +401,7 @@ def Start():
 			print('[INFO]<{}> Initialization started using singlethreading.'.format(__name__))
 
 	#initialize pygame
-	pygame.mixer.pre_init(22050, -16, 2, 512)
-	pygame.mixer.init()
-	pygame.init()
+	InitPygame()
 
 	#load key bindings
 	SetKeyBindings()
@@ -407,9 +439,11 @@ def Start():
 		if not sets.DEBUG_MODE:
 			update.Check_version()
 
-		if LauncherInfo.timeMeasurementAvailable:
-			if sets.DEBUG_MODE:
+		if sets.DEBUG_MODE:
+			if LauncherInfo.timeMeasurementAvailable:
 				print('[INFO]<{}> Program loaded in {} seconds.'.format(__name__, (time.perf_counter() - start)))
+
+		initialized = True
 
 		print('Welcome to Oss!')
 	

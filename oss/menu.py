@@ -88,7 +88,7 @@ class Menu():
 	def Close(self):
 		print('Goodbye!')
 		if sets.DEBUG_MODE:
-			print('[INFO]<{}> Program exited after: {} seconds.'.format(__name__, self.time))
+			print('[INFO]<{}> Program exited after: {} miliseconds.'.format(__name__, self.time))
 		
 		pygame.mixer.quit()
 		pygame.quit()

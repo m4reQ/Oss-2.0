@@ -2,7 +2,7 @@ try:
 	from helper import *
 	import pygame
 	from launcher import sets
-	from launcher import AR, CS, HP
+	from launcher import AR, HP
 	from launcher import backgroundTextures, interfaceTextures
 	from launcher import resolution
 	from launcher import LauncherInfo
@@ -11,7 +11,7 @@ try:
 	import time
 	import random
 	from eventhandler import EventHandler
-	import GameElements.circle as circle
+	from GameElements.circle import Circle
 	import GameElements.map as map
 	import GameElements.interface as interface
 except ImportError as e:
@@ -73,9 +73,6 @@ class Game():
 		self.combo = 0
 		self.maxhealth = 100
 		self.health = self.maxhealth
-		self.AR = AR
-		self.CS = CS
-		self.HP = HP
 		self.render_time = 0
 		self.fps = 0
 		self.events = pygame.event.get()
@@ -137,7 +134,7 @@ class Game():
 
 			if sets.auto_generate:
 				if len(self.circles) < 1:
-					obj = circle.Circle(random.randint(int(self.playfield['topX'] + maxRadius), int(self.playfield['bottomX'] - maxRadius)), random.randint(int(self.playfield['topX'] + maxRadius), int(self.playfield['bottomY'] - maxRadius)))
+					obj = Circle(random.randint(int(self.playfield['topX'] + maxRadius), int(self.playfield['bottomX'] - maxRadius)), random.randint(int(self.playfield['topX'] + maxRadius), int(self.playfield['bottomY'] - maxRadius)), -1)
 					self.circles.append(obj)
 
 			#event handling
@@ -151,7 +148,7 @@ class Game():
 
 			EventHandler.HandleInternalEvents(self)
 
-			self.health -= stats.getHP(self.HP) * self.render_time * 79.2 #constant to compensate FPS multiplication
+			self.health -= HP * self.render_time * 79.2 #constant to compensate FPS multiplication
 
 			if DEBUG_MODE and len(self.circles) < 5:
 				print('[INFO]<{}> Circle list: {}.'.format(__name__, str(self.circles)))
@@ -163,9 +160,6 @@ class Game():
 			#NOTE!
 			#Don't put anything below this section
 			#it may cause glitches
-			if LauncherInfo.concurrencyAvailable: self.RenderConcurrently()
-			else: self.Render()
-
 			#update
 			if DICT_UPDATE_MODE: #dictionary update
 				pre_update_display()
@@ -175,16 +169,15 @@ class Game():
 
 				self.toUpdate.clear()
 
-				if sets.timed_updates_enable:
-					timed_update_display()
-			if not DICT_UPDATE_MODE: #standard update (window update)
-				pygame.display.flip()
+				if sets.timed_updates_enable: timed_update_display()
+					
+			if not DICT_UPDATE_MODE: pygame.display.flip()#standard update (window update)
+
+			#render
+			self.RenderConcurrently() if LauncherInfo.concurrencyAvailable else self.Render()
 
 			#calculate fps etc.
-			if sets.use_fps_cap:
-				self.clock.tick(60)
-			else:
-				self.clock.tick()
+			self.clock.tick(60) if sets.use_fps_cap else self.clock.tick()
 
 			self.fps = int(self.clock.get_fps())
 			self.render_time = round(self.clock.get_time(), 3) / 1000
@@ -197,9 +190,9 @@ class Game():
 		self.menu.game = None
 		map.is_loaded = False
 
-		circle.Circle.count = 0
-		circle.Circle.texture_count = 0
-		circle.Circle.background_count = 0
+		Circle.count = 0
+		Circle.texture_count = 0
+		Circle.background_count = 0
 
 		del(self)
 		FreeMem(DEBUG_MODE, 'Started onclose garbage collection.')
@@ -209,49 +202,43 @@ class Game():
 
 		for circle in self.circles:
 			#get top circle (the first circle added)
-			topCircle = self.circles[0]
 			if not sets.auto_generate: #in case of playing a map
-				if self.time >= circle.startTime and self.time <= circle.startTime + stats.getAR(self.AR):
+				topCircle = self.circles[0]
+
+				if self.time >= circle.startTime and self.time <= circle.endTime:
 					circle.Draw(self.win)  
+					if self.time >= circle.hitTime and self.time <= circle.endTime:
+						circle.DrawLayout(self.win)
+						
 					for event in self.events:
 						if event.type == pygame.KEYDOWN:
 							if event.key == keyBindTable['kl'] or event.key == keyBindTable['kr']:
-								if topCircle.Collide(self.cursor_pos):
-									topCircle.Hit(self)
-								else:
-									topCircle.Miss(self)
+								topCircle.Collide(self, self.cursor_pos)
+
 						if event.type == pygame.MOUSEBUTTONDOWN:
 							if event.button == 1:
 								self.click_count[0] += 1
 							elif event.button == 3:
 								self.click_count[1] += 1
 
-							if topCircle.Collide(self.cursor_pos):
-								topCircle.Hit(self)
-							else:
-								topCircle.Miss(self)
+							topCircle.Collide(self, self.cursor_pos)
 
-				elif self.time >= topCircle.startTime + stats.getAR(self.AR):
+				if self.time > topCircle.endTime:
 					topCircle.Miss(self)
 			else: #in case of playing in auto generate mode
 				circle.Draw(self.win)  
 				for event in self.events:
 					if event.type == pygame.KEYDOWN:
 						if event.key == keyBindTable['kl'] or event.key == keyBindTable['kr']:
-							if circle.Collide(self.cursor_pos):
-								circle.Hit(self)
-							else:
-								circle.Miss(self)
+							topCircle.Collide(self, self.cursor_pos)
+
 					if event.type == pygame.MOUSEBUTTONDOWN:
 						if event.button == 1:
 							self.click_count[0] += 1
 						elif event.button == 3:
 							self.click_count[1] += 1
 
-						if circle.Collide(self.cursor_pos):
-							circle.Hit(self)
-						else:
-							circle.Miss(self)
+						topCircle.Collide(self, self.cursor_pos)
 							
 	def DrawCursor(self):
 		self.cursor.positionX = self.cursor_pos[0] - self.cursor.width/2

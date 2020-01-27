@@ -2,11 +2,19 @@ import os
 import traceback
 import pygame
 
-def logError(exception):
-	with open('log.txt', 'w+') as logf:
+def logError(exception, file="log.txt"):
+	"""
+	Logs exception to specified log file.
+	:param exception: (str) exception string
+	:param file: (str) name of the log file
+	"""
+	with open(file, 'w+') as logf:
 		logf.write(traceback.format_exc())
 
 def exitAll():
+	"""
+	Hard exits the whole program with an additional pause.
+	"""
 	try:
 		pygame.mixer.quit()
 		pygame.quit()
@@ -17,9 +25,9 @@ def exitAll():
 
 def ask(question):
 	"""
-	creates a (Y/N) question with given question string
-	rtype:string
-	returns: bool
+	Creates a (Y/N) question with given question string.
+	:param question: (str) question string
+	:returns: bool
 	"""
 	q = ''
 	while not any([q.upper() == 'Y', q.upper() == 'N']):
