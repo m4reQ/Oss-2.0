@@ -4,13 +4,13 @@
 full_screen = False
 
 #open in borderless window
-borderless = True
+borderless = False
 
 #mouse visibility
 mouse_visible = False
 
 #automatic circle generation
-auto_generate = False
+auto_generate = True
 
 #timed screen updates
 timed_updates_enable = False
@@ -28,11 +28,14 @@ defaultset = True
 /SDL_VIDEO_CENTERED = 1
 
 #FPS cap
-#forces program to run at 60 fps
-use_fps_cap = True
+#forces program to run at 120 fps
+use_fps_cap = False
 
 #debug mode
 DEBUG_MODE = True
+
+#show circle list
+SHOW_CIRCLE_LIST = False
 
 #test mode
 #Enable if you want to test certain methods

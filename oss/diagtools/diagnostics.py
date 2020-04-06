@@ -7,6 +7,7 @@ try:
     import pygame
 except ImportError as e:
     print(e)
+    os.system("pause")
 
 dir = os.getcwd()
 path = os.path.join(dir[:-10], 'oss')

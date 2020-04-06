@@ -5,11 +5,19 @@ except ImportError:
 	print('Critical error! Cannot load os or sys module.')
 	exit()
 
+#disable python warnings
+if not sys.warnoptions:
+	import warnings
+	warnings.simplefilter("ignore")
+
+#disable pygame welcome prompt
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+
 #create launcher infos to allow backward compatibility
 #assume user uses python 3.x
 class LauncherInfo:
 	concurrencyAvailable = True
-	timeMeasurementAvailable = True
+	timePerfCounterAvailable = True
 
 	@staticmethod
 	def GetInfo(file=""):
@@ -25,24 +33,31 @@ class LauncherInfo:
 			with open(file, "w+") as f:
 				f.write(info)
 
-#check if python supports concurrent execution
+#check if python supports modern concurrent execution
 try:
 	import concurrent.futures
 except ImportError:
 	LauncherInfo.concurrencyAvailable = False
 
+#check if time module has function perf_counter
+import time
+if not 'perf_counter' in dir(time):
+	LauncherInfo.timePerfCounterAvailable = False
+
 try:
 	from helper import ask, logError, exitAll
 	import repair
+
+	from resourceManager import ResourceManager
+	from texture import Texture
+	from sound import Sound
+
 	from utils import resolutions, stats, ConvertImage, DimImage, FreeMem
-	from Containers.texturecontainer import GenTexture, TextureContainer
-	from Containers.soundcontainer import GenSound, SoundContainer
-	from Containers.texturecontainer import SetDebugging as tcSetDebugging
-	from Containers.soundcontainer import SetDebugging as scSetDebugging
-	from GameElements.interface import SetDebugging as iSetDebugging
 	from eventhandler import SetDebugging as ehSetDebugging
 	from GameElements.map import SetDebugging as mSetDebugging
-	import time
+	from logger import logged, Logger
+	import pygameWindow
+	from pygameWindow import WindowFlags
 	import pygame
 	from settings import Settings
 	import update
@@ -58,13 +73,14 @@ except ImportError as e:
 
 	exitAll()
 
-#check if time module has function perf_counter
-if not 'perf_counter' in dir(time):
-	LauncherInfo.timeMeasurementAvailable = False
-
 #clear log file
-with open('log.txt', 'w+') as logf:
-	logf.write('')
+open('log.txt', 'w+').close()
+
+#clear function logs
+open('funcLog.txt', 'w+').close()
+
+#set function log output
+Logger.logFile = "funcLog.txt"
 
 #check maps folder
 if not os.path.exists('./Resources/maps'):
@@ -77,11 +93,6 @@ if not os.path.exists('./Resources/maps'):
 
 		exitAll()
 	print('Directory created.')
-
-#disable python warnings
-if not sys.warnoptions:
-	import warnings
-	warnings.simplefilter("ignore")
 
 #indicates if program was already initialized
 initialized = False
@@ -102,28 +113,31 @@ CS = None
 #hp drop
 HP = None
 
+#raw stats
+AR_raw = 5
+CS_raw = 5
+HP_raw = 5
+
 #background dimming
-darkenPercent = 0.5
+darkenPercent = 0.7
 
 #master volume
 mVolume = 0.55
 
+#cursor size
+curSize = 1.0
+
 #####STATICS#####
 #folder paths
-tex_path = 'Resources/textures/'
+texPath = 'Resources/textures/'
 maps_path = 'Resources/maps/'
-sounds_path = 'Resources/sounds/'
+soundsPath = 'Resources/sounds/'
 
 #main settings container
 sets = Settings()
 
-#texture containers
-circleTextures = None
-backgroundTextures = None
-interfaceTextures = None
-
-#sound containers
-hitsounds = None
+#resource managers
+mainResManager = ResourceManager("mainManager", 0)
 
 #game window
 mainWindow = None
@@ -145,12 +159,11 @@ def LoadSettings():
 			print('[ERROR] {}'.format(str(e)))
 		exitAll()
 	
-	if sets.DEBUG_MODE:
-		tcSetDebugging(True)
-		scSetDebugging(True)
-		iSetDebugging(True)
-		ehSetDebugging(True)
-		mSetDebugging(True)
+	# if sets.DEBUG_MODE:
+	# 	tcSetDebugging(True)
+	# 	scSetDebugging(True)
+	# 	ehSetDebugging(True)
+	# 	mSetDebugging(True)
 
 def HandleError(msg, error):
 	"""
@@ -172,165 +185,115 @@ def SetGameStats(ar, cs, hp):
 		hp = stats.clamp(hp)
 
 		#convert stats to actual usable values
-		return(stats.getAR(ar), stats.getCS(cs), stats.getHP(hp))
+		return (stats.getAR(ar), stats.getCS(cs), stats.getHP(hp))
 	except Exception as e:
 		HandleError("An error appeared during setting game stats.", e)
 
-def InitializeTextureContainers():
-	try:
-		containers = (
-			TextureContainer(name='circle'),
-			TextureContainer(name='backgrounds'),
-			TextureContainer(name='interface'))
-
-		return containers
-	except Exception as e:
-		HandleError("An error appeared during texture containers initialization.", e)
-
-def InitializeSoundContainers():
-	try:
-		containers = (SoundContainer(name='hitsounds'))
-
-		return containers
-	except Exception as e:
-		HandleError("An error appeared during sound containers initialization.", e)
-
 def LoadCircleTextures():
-	#circle radius
 	radius = int(CS * scale)
 
-	#circle textures
-	#check if textures was previously loaded
-	if circleTextures.is_empty:
-		#load font textures
-		for i in range(10):
-			texName = 'font_' + str(i)
+	for i in range(10):
+		texName = 'circlefont_' + str(i)
 
-			tex = GenTexture(tex_path + 'circles/' + str(i) + '.png')
-			circleTextures.AddTexture(tex, texName)
+		tex = Texture("{}circles/{}.png".format(texPath, i))
+		tex.Scale(radius * 2 * scale)
+		mainResManager.AddTexture(texName, tex)
 
-			circleTextures.ScaleTexture(texName, radius * 2 * scale)
-		#load background textures
-		for i in range(5):
-			texName = 'bg_' + str(i)
+	for i in range(5):
+		texName = 'circlebg_'+ str(i)
 
-			tex = GenTexture(tex_path + 'circles/circlebg_' + str(i) + '.png')
-			circleTextures.AddTexture(tex, texName)
+		tex = Texture("{}circles/circlebg_{}.png".format(texPath, i))
+		tex.Scale(radius * 2 * scale)
+		mainResManager.AddTexture(texName, tex)
 
-			circleTextures.ScaleTexture(texName, radius * 2 * scale)
-		
-		circleTextures.AddTexture(GenTexture(tex_path + "circles/circlehit.png"), "hitlayout")
-		circleTextures.ScaleTexture("hitlayout", radius * 2 * scale)
+	circleHit = Texture(texPath + "circles/circlehit.png")
+	circleHit.Scale(radius* 2 * scale)
+	mainResManager.AddTexture("hitlayout", circleHit)
 
 def LoadInterfaceTextures():
-	#interface textures
-	#check if textures was previously loaded
-	if interfaceTextures.is_empty:
-		interfaceTextures.AddTexture(GenTexture(tex_path + 'cursor.png'), 'cursor')
-		interfaceTextures.ScaleTexture("cursor", 16 * scale)
+	cursor = Texture(texPath + 'cursor.png')
+	cursor.Scale(int(32 * curSize * scale))
+	mainResManager.AddTexture("cursor", cursor)
 
-		interfaceTextures.AddTexture(GenTexture(tex_path + 'miss.png'), 'miss')
-		interfaceTextures.ScaleTexture("miss", 16 * scale)
+	miss = Texture(texPath + 'miss.png')
+	miss.Scale(16 * scale)
+	mainResManager.AddTexture("miss", miss)
 
 def LoadBackgroundTextures():
-	#load backgrounds
-	#check if textures was previously loaded
-	if backgroundTextures.is_empty:
-		#get names and number of files in backgrounds directory
-		filenames = [name for name in os.listdir(os.path.join(tex_path, 'backgrounds')) if os.path.isfile(os.path.join(tex_path, 'backgrounds', name))]
-		
-		#remove Thumbs.db from filename list if it's present
-		try: filenames.remove('Thumbs.db')
-		except ValueError: pass
+	#get names and number of files in backgrounds directory
+	filenames = [name for name in os.listdir(os.path.join(texPath, 'backgrounds')) if os.path.isfile(os.path.join(texPath, 'backgrounds', name))]
 
-		#get all images
-		jpgs = [os.path.join(tex_path, 'backgrounds', name) for name in filenames if name[-4:] != '.png']
-		pngs = [os.path.join(tex_path, 'backgrounds', name) for name in filenames if name[-4:] != '.jpg']
+	#remove Thumbs.db from filename list if it's present
+	try: filenames.remove('Thumbs.db')
+	except ValueError: pass
 
-		#get all names without .jpg or .png
-		jpgNames = [name[:-4] for name in jpgs]
-		pngNames = [name[:-4] for name in pngs]
+	#get all images
+	jpgs = [os.path.join(texPath, 'backgrounds', name) for name in filenames if name[-4:] != '.png']
+	pngs = [os.path.join(texPath, 'backgrounds', name) for name in filenames if name[-4:] != '.jpg']
 
-		count_jpg = len(jpgs)
+	#get all names without .jpg or .png
+	jpgNames = [name[:-4] for name in jpgs]
+	pngNames = [name[:-4] for name in pngs]
 
-		#convert jpg images to png
-		if sets.DEBUG_MODE:
-			print('[INFO]<{}> Processing background images...'.format(__name__))
+	jpgCount = len(jpgs)
 
-		if LauncherInfo.concurrencyAvailable:
-			with concurrent.futures.ThreadPoolExecutor() as executor:
-				for idx, tex in enumerate(jpgNames):
-					if not tex in pngNames:
-							executor.submit(ConvertImage, jpgs[idx])
-		else:
+	#convert jpg images to png
+	if sets.DEBUG_MODE:
+		print('[INFO]<{}> Processing background images...'.format(__name__))
+
+	if LauncherInfo.concurrencyAvailable:
+		with concurrent.futures.ThreadPoolExecutor() as executor:
 			for idx, tex in enumerate(jpgNames):
 				if not tex in pngNames:
-					ConvertImage(jpgs[idx])
+					executor.submit(ConvertImage, jpgs[idx])
+	else:
+		for idx, tex in enumerate(jpgNames):
+			if not tex in pngNames:
+				ConvertImage(jpgs[idx])
 
-		if sets.DEBUG_MODE:
-			print('[INFO]<{}> Background images processing done.'.format(__name__))
+	if sets.DEBUG_MODE:
+		print('[INFO]<{}> Background images processing done.'.format(__name__))
 
-		#load backgrounds to backgroundTextures container
-		for i in range(count_jpg-1):
-			texName = 'bg_' + str(i)
+	for i in range(jpgCount - 1):
+		texName = 'bg_' + str(i)
 
-			tex = GenTexture(tex_path + 'backgrounds/bg' + str(i) + '.png')
-			backgroundTextures.AddTexture(tex, texName)
+		tex = Texture("{}backgrounds/bg{}.png".format(texPath, i))
+		tex.ScaleXY(resolution[0], resolution[1])
+		tex.Dim(darkenPercent)
+		mainResManager.AddTexture(texName, tex)
 
-			backgroundTextures.ScaleTextureXY(texName, resolution[0], resolution[1])
-
-
-		#convert background textures to support alpha blending
-		#and dim all of them
-		for key in backgroundTextures.textures:
-			tex = DimImage(backgroundTextures.textures[key], darkenPercent)
-			backgroundTextures.textures[key] = tex
-
-		backgroundTextures.AddTexture(GenTexture(tex_path + 'backgrounds/menu_background.png'), 'menu_background')
-		backgroundTextures.ScaleTextureXY("menu_background", resolution[0], resolution[1])
-
-def LoadTexturesConcurrently():
-	try:
-		with concurrent.futures.ThreadPoolExecutor() as executor:
-			executor.submit(LoadBackgroundTextures)
-			executor.submit(LoadCircleTextures)
-			executor.submit(LoadInterfaceTextures)
-
-		if not all([circleTextures.is_empty, interfaceTextures.is_empty, backgroundTextures.is_empty]):
-			if sets.DEBUG_MODE:
-				print('[INFO]<{}> Initialized textures. Texture dictionaries: {}{}{}.'.format(__name__, str(circleTextures.textures), str(interfaceTextures.textures), str(backgroundTextures.textures)))
-
-	except Exception as e:
-		HandleError("An error appeared during textures loading.", e)
+	menuBg = Texture(texPath + 'backgrounds/menu_background.png')
+	menuBg.ScaleXY(resolution[0], resolution[1])
+	mainResManager.AddTexture("menu_background", menuBg)
 
 def LoadTextures():
 	try:
-		LoadBackgroundTextures()
-		LoadCircleTextures()
-		LoadInterfaceTextures()
-
-		if not all([circleTextures.is_empty, interfaceTextures.is_empty, backgroundTextures.is_empty]):
-			if sets.DEBUG_MODE:
-				print('[INFO]<{}> Initialized textures. Texture dictionaries: {}{}{}.'.format(__name__, str(circleTextures.textures), str(interfaceTextures.textures), str(backgroundTextures.textures)))
-
+		if LauncherInfo.concurrencyAvailable:
+			with concurrent.futures.ThreadPoolExecutor() as executor:
+				executor.submit(LoadBackgroundTextures)
+				executor.submit(LoadCircleTextures)
+				executor.submit(LoadInterfaceTextures)
+		else:
+			LoadBackgroundTextures()
+			LoadCircleTextures()
+			LoadInterfaceTextures()
 	except Exception as e:
-		HandleError("An error appeared during textures loading.", e)		
+		HandleError("An error appeared during textures loading.", e)
 
 def LoadSounds():
 	try:
-		global mVolume
+		for i in range(1, 3):
+			hitSound = Sound("{}hit{}.wav".format(soundsPath, i))
+			hitSound.SetVolume(mVolume)
+			mainResManager.AddSound("hit" + str(i), hitSound)
 
-		if hitsounds.is_empty:
-			hitsounds.AddSound(GenSound(sounds_path + 'hit1.wav'), 'hit1')
-			hitsounds.AddSound(GenSound(sounds_path + 'hit2.wav'), 'hit2')
-			hitsounds.AddSound(GenSound(sounds_path + 'miss.wav'), 'miss')
+		miss = Sound(soundsPath + "miss.wav")
+		miss.SetVolume(mVolume)
+		mainResManager.AddSound("miss", miss)
 
-		for s in hitsounds.sounds.values():
-			s.set_volume(mVolume)
-
-		if not hitsounds.is_empty:
-			if sets.DEBUG_MODE:
-				print('[INFO]<{}> Initialized sounds. Sounds dictionary: {}.'.format(__name__, str(hitsounds.sounds)))
+		btn = Sound(soundsPath + "button_slide.wav")
+		btn.SetVolume(mVolume)
+		mainResManager.AddSound("button_slide", miss)
 
 	except Exception as e:
 		HandleError("An error appeared during sounds loading.", e)
@@ -353,25 +316,19 @@ def InitializeWindow(width, height):
 
 	try:
 		pygame.mouse.set_visible(sets.mouse_visible)
-
 		if sets.full_screen:
-			try: 
-				win = pygame.display.set_mode((width, height), pygame.FULLSCREEN|pygame.DOUBLEBUF|pygame.HWSURFACE|pygame.HWACCEL)
-			except Exception as e:
-				print('Cannot set window, because resolution is too high.')
-				logError(e)
+			win = pygameWindow.CreateWindow(width, height, "Oss!", WindowFlags.FullScreen | WindowFlags.DoubleBuf | WindowFlags.Accelerated)
 		else:
 			if sets.borderless:
-				win = pygame.display.set_mode((width, height), pygame.DOUBLEBUF|pygame.NOFRAME|pygame.HWSURFACE|pygame.HWACCEL)
-			if not sets.borderless:
-				win = pygame.display.set_mode((width, height), pygame.DOUBLEBUF|pygame.HWSURFACE|pygame.HWACCEL)
+				win = pygameWindow.CreateWindow(width, height, "Oss!", WindowFlags.BorderLess | WindowFlags.DoubleBuf | WindowFlags.Accelerated)
+			else:
+				win = pygameWindow.CreateWindow(width, height,"Oss!",  WindowFlags.DoubleBuf | WindowFlags.Accelerated)
 
 		if sets.DEBUG_MODE:
-			print('[INFO] Current display driver: {}.'.format(pygame.display.get_driver()))
+			print('[INFO]<{}> Current display driver: {}.'.format(__name__, pygame.display.get_driver()))
 
 		return win
-
-	except Exception as e:
+	except Exception:
 		HandleError("An error appeared during window initialization.", e)
 
 def InitPygame():
@@ -387,8 +344,8 @@ def Start():
 	if initialized:
 		raise Exception("Error! Program is already initialized.")
 
-	#use perf_counter() only if we're on python 3.x
-	if LauncherInfo.timeMeasurementAvailable: start = time.perf_counter()
+	#if perf_counter() is unavailable use less precise time.time() method
+	start = (time.perf_counter() if LauncherInfo.timePerfCounterAvailable else time.time())
 
 	#load settings
 	LoadSettings()
@@ -408,23 +365,22 @@ def Start():
 
 	#set game stats (AR, CS, HP)
 	global AR, CS, HP
-	AR, CS, HP = SetGameStats(5, 5, 5)
-
-	#initialize sounds
-	global hitsounds
-	hitsounds = InitializeSoundContainers()
-	LoadSounds()
+	AR, CS, HP = SetGameStats(AR_raw, CS_raw, HP_raw)
 
 	#initialize window
-	global resolution, mainWindow
+	global mainWindow
 	mainWindow = InitializeWindow(resolution[0], resolution[1])
 
-	#initialize textures
-	global circleTextures, backgroundTextures, interfaceTextures
-	circleTextures, backgroundTextures, interfaceTextures = InitializeTextureContainers()
+	#initialize resources
+	LoadTextures()
+	LoadSounds()
+	mainFont = pygame.font.SysFont('comicsansms', 22)
+	mainResManager.AddMainFont(mainFont)
+	mainResManager.AddFont("comicsansms_48", pygame.font.SysFont('comicsansms', 48))
+	mainResManager.AddFont("comicsansms_24", pygame.font.SysFont('comicsansms', 24))
+	mainResManager.AddFont("comicsansms_12", pygame.font.SysFont('comicsansms', 12))
 
-	if LauncherInfo.concurrencyAvailable: LoadTexturesConcurrently()
-	else: LoadTextures() 
+	print("[INFO]<{}> Initialized resources. Memory reserved: {}kb. (approx.)".format(__name__, mainResManager.Size / 1000.0))
 
 	#import menu module here to avoid cyclic import
 	import menu
@@ -440,8 +396,7 @@ def Start():
 			update.Check_version()
 
 		if sets.DEBUG_MODE:
-			if LauncherInfo.timeMeasurementAvailable:
-				print('[INFO]<{}> Program loaded in {} seconds.'.format(__name__, (time.perf_counter() - start)))
+			print('[INFO]<{}> Program loaded in {} seconds.'.format(__name__, ((time.perf_counter() if LauncherInfo.timePerfCounterAvailable else time.time()) - start)))
 
 		initialized = True
 
@@ -449,6 +404,19 @@ def Start():
 	
 		m = menu.Menu(mainWindow)
 		m.Run()
+
+		print('Goodbye!')
+
+		if sets.DEBUG_MODE:
+			print('[INFO]<{}> Program exited after: {} miliseconds.'.format(__name__, m.time))
+		
+		pygame.mixer.quit()
+		pygame.quit()
+
+		FreeMem(sets.DEBUG_MODE)
+		
+		os.system('pause >NUL')
+		quit()
 
 	except Exception as e:
 		logError(e)

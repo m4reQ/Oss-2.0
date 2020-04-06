@@ -1,8 +1,4 @@
-import os
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-
-import pygame
-from helper import logError, exitAll
+from helper import logError
 import launcher
 
 try:
@@ -13,5 +9,4 @@ try:
 except Exception as e:
 	logError(e)
 	print(e)
-
-	exitAll()
+	quit()

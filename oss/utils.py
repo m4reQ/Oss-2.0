@@ -1,3 +1,6 @@
+if __name__ == "__main__":
+    quit()
+
 import os
 import random
 import ctypes
@@ -13,9 +16,9 @@ def Clamp(val, min, max):
 	"""
 	Clamps a given value to be between max and min parameters.
 	Converts value to float.
-	:param val: (float, int, double) Value to clamp
-	:param min: (float, int, double) Minimal value
-	:param max: (float, int, double) Maximal value
+	:param val: (float, int) Value to clamp
+	:param min: (float, int) Minimal value
+	:param max: (float, int) Maximal value
 	:returns: float
 	"""
 	val = float(val)
@@ -29,10 +32,22 @@ def Clamp(val, min, max):
 	else:
 		return val
 
+def GetMax(val, maximum):
+	"""
+	Returns higher of the two given values.
+	:param val: (float, int) Value to clamp
+	:param max: (float, int) Maximal value
+	:returns: float
+	"""
+	val = float(val)
+	maximum = float(maximum)
+	return max([val, maximum])
+
 #-----Graphic utils-----
 def ConvertImage(filepath):
 	"""
 	Converts image from jpg to png and adds alpha.
+	Shouldn't be used frequently because of very low performance.
 	:param filepath: (str) Path to an image
 	"""
 	img = Image.open(filepath)
@@ -88,6 +103,24 @@ def translateCoord(data, res, mode):
 	else:
 		raise Exception('[ERROR] Invalid translation mode.')
 
+def GetTextColor(bgColor):
+	avg = sum(bgColor) / len(bgColor)
+	textColor = (255, 255, 255) if avg <= 128 else (0, 0, 0)
+
+	return textColor
+
+def IsFullyVisible(rect, winSize):
+	xTest = rect.left >= 0 and rect.right <= winSize[0]
+	yTest = rect.bottom <= winSize[1] and rect.top >= 0
+
+	return xTest and yTest
+
+def IsPartiallyVisible(rect, winSize):
+	xTest = rect.left >= 0 or rect.right <= winSize[0]
+	yTest = rect.bottom <= winSize[1] or rect.top >= 0
+
+	return (xTest or yTest) and not IsFullyVisible(rect, winSize)
+
 class color():
 	red = (255,0,0)
 	green = (0,255,0)
@@ -106,6 +139,14 @@ class color():
 		:returns: tuple(int, int, int)
 		"""
 		return (random.randint(0,225), random.randint(0,225), random.randint(0,225))
+
+	@staticmethod
+	def GetNegative(color):
+		r = 255 - color[0]
+		g = 255 - color[1]
+		b = 255 - color[2]
+
+		return (r, g, b)
 
 class resolutions():
 	SD = (640, 480)
@@ -156,15 +197,69 @@ class stats:
 		"""
 		hp = (HP+5) * 0.014
 		return hp
+	
+	@staticmethod
+	def GetARMultiplier(AR):
+		"""
+		Calculates score multiplier based on given AR
+		:param AR: (float) circle approach time
+		:returns: float
+		"""
+		if AR > 0 and AR <= 7:
+			return math.log(AR, 3) + 1
+		elif AR > 7 and AR <= 9:
+			return math.sqrt(AR ** 2 + 1) - 4.3
+		elif AR > 9 and AR <= 10:
+			return math.cos(AR) + AR - (AR / 2.7)
+		else:
+			return 0.0
+	
+	@staticmethod
+	def GetCSMultiplier(CS):
+		"""
+		Calculates score multiplier based on given CS
+		:param CS: (float) circle size
+		:returns: float
+		"""
+		if CS > 0 and CS < 6:
+			return (CS + 1) / 4
+		elif CS >= 6 and CS <= 10:
+			return CS - 4.25
+		else:
+			return 0.0
+	
+	@staticmethod
+	def GetHPMultiplier(HP):
+		"""
+		Calculates score multiplier based on given HP
+		:param HP: (float) hp drop
+		:returns: float
+		"""
+		if HP > 0 and HP <= 10:
+			return HP / 10.0
+		else:
+			return 0.0
 
 	@staticmethod
-	def getScoredPoints(combo):
+	def GetScoredPoints(combo):
 		"""
 		Calculates points get for a hit at the given combo.
 		:param combo: (int) actual combo
 		:returns: int
 		"""
 		return int(((combo-1) / 300) * 2 * combo + math.sqrt(2 * combo))
+	
+	@staticmethod
+	def CalculatePoints(combo, ar, cs, hp):
+		"""
+		Calculates points get for a hit a the given combo and multiplies it by all stat modifiers
+		:param combo: (int) actual combo
+		:param ar: (float) circle approach rate
+		:param cs: (float) circle size
+		:param hp: (float) hp drop
+		:returns: int
+		"""
+		return int(stats.GetScoredPoints(combo) * stats.GetARMultiplier(ar) * stats.GetCSMultiplier(cs) * stats.GetHPMultiplier(hp))
 
 	@staticmethod
 	def clamp(value):
@@ -241,7 +336,3 @@ def FreeMem(useDebugging, msg='Starting garbage collection'):
 			print('[INFO]<{}> Freed {} objects.'.format(__name__, objectsCount - gc.get_count()[0]))
 	except Exception as e:
 		print('[ERROR]<{}> An error occured during garbage collection. \n{}'.format(__name__, str(e)))
-	
-if __name__ == "__main__":
-    pygame.quit()
-    quit()

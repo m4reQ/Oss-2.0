@@ -1,3 +1,6 @@
+if __name__ == '__main__':
+	quit()
+
 import pygame
 
 debugging = False
@@ -43,7 +46,7 @@ class EventHandler:
 	@staticmethod
 	def HandleKeys(game, event):
 		if event.key == keyBindTable['quit']:
-			game.is_running = False
+			game.isRunning = False
 			if debugging:
 				print('[INFO]<{}> User interruption by closing window'.format(__name__))
 				
@@ -73,7 +76,7 @@ class EventHandler:
 	@staticmethod
 	def HandleEvents(game, event):
 		if event.type == pygame.QUIT:
-			game.is_running = False
+			game.isRunning = False
 			if debugging:
 				print('[INFO]<{}> User interruption by closing window.'.format(__name__))
 
@@ -82,7 +85,7 @@ class EventHandler:
 		if game.health <= 0:
 			if debugging:
 				print('[INFO]<{}> health reached {}.'.format(__name__, game.health))
-			game.is_running = False
+			game.isRunning = False
 
 		if game.health >= game.maxhealth:
 			game.health = game.maxhealth
@@ -90,8 +93,4 @@ class EventHandler:
 		if not game.circles:
 			if debugging:
 				print('[INFO]<{}> List depleted at time: {}ms.'.format(__name__, game.time))
-			game.is_running = False
-
-if __name__ == '__main__':
-	pygame.quit()
-	quit()
+			game.isRunning = False

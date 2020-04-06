@@ -1,3 +1,6 @@
+if __name__ == '__main__':
+	quit()
+
 from helper import logError, exitAll
 from utils import translateCoord
 
@@ -74,9 +77,9 @@ def Make_map(filepath, targetRes):
 			posY = float(element[1])
 			time = int(element[2])
 
-			tposX, tposY = translateCoord((posX, posY), targetRes, 1)
+			tposX, tposY = translateCoord((posX, posY), tuple(targetRes), 1)
 
-			obj = Circle(int(tposX), int(tposY), time)
+			obj = Circle((tposX, tposY), time)
 			circles.append(obj)
 		except IndexError:
 			print('[ERROR] Cannot make object {}.\n Maybe map has outdated or invalid format.'.format(str(obj)))
@@ -88,6 +91,3 @@ def Make_map(filepath, targetRes):
 	is_loaded = True
 
 	return circles
-
-if __name__ == '__main__':
-	exitAll()
