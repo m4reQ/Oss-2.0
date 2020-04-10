@@ -74,6 +74,16 @@ class EventHandler:
 			pass
 
 	@staticmethod
+	def HandleMouse(game, event):
+		try:
+			if event.button == 1:
+				game.click_count[0] += 1
+			elif event.button == 3:
+				game.click_count[1] += 1
+		except AttributeError:
+			pass
+
+	@staticmethod
 	def HandleEvents(game, event):
 		if event.type == pygame.QUIT:
 			game.isRunning = False
@@ -90,7 +100,10 @@ class EventHandler:
 		if game.health >= game.maxhealth:
 			game.health = game.maxhealth
 
-		if not game.circles:
+		if game.time_ms >= game.map.length:
+			game.map.shouldPlay = False
+
+		if not game.map.shouldPlay:
 			if debugging:
-				print('[INFO]<{}> List depleted at time: {}ms.'.format(__name__, game.time))
+				print('[INFO]<{}> Map ended at time: {}ms.'.format(__name__, game.time))
 			game.isRunning = False

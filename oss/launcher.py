@@ -55,7 +55,6 @@ try:
 	from utils import resolutions, stats, ConvertImage, DimImage, FreeMem
 	from eventhandler import SetDebugging as ehSetDebugging
 	from GameElements.map import SetDebugging as mSetDebugging
-	from logger import logged, Logger
 	import pygameWindow
 	from pygameWindow import WindowFlags
 	import pygame
@@ -75,12 +74,6 @@ except ImportError as e:
 
 #clear log file
 open('log.txt', 'w+').close()
-
-#clear function logs
-open('funcLog.txt', 'w+').close()
-
-#set function log output
-Logger.logFile = "funcLog.txt"
 
 #check maps folder
 if not os.path.exists('./Resources/maps'):

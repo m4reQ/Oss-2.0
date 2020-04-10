@@ -19,9 +19,9 @@ class Button:
 			if len(rect) == 4:
 				self.rect = pygame.Rect(rect[0], rect[1], rect[2], rect[3])
 			else:
-				raise TypeError(f"Given list not valid (expected 4 elements, got {len(rect)})")
+				raise TypeError("Given list not valid (expected 4 elements, got {})".format(len(rect)))
 		else:
-			raise TypeError(f"Expected pygame.Rect object or tuple, got {type(rect)}")
+			raise TypeError("Expected pygame.Rect object or tuple, got {}".format(type(rect)))
 
 		self.color = self.activeColor = self.inactiveColor = color
 		self.onClickFunc = onClickFunc

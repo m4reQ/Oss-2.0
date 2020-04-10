@@ -4,9 +4,7 @@ if __name__ == '__main__':
 try:
 	from helper import exitAll, logError
 	from utils import color, translateCoord, FreeMem
-	from launcher import mainResManager
-	from launcher import LauncherInfo
-	from launcher import sets
+	from launcher import mainResManager, LauncherInfo, sets
 	from GUIElements.pygameButton import Button
 	import time
 	from game import Game

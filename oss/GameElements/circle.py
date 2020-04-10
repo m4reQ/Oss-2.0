@@ -3,9 +3,8 @@ if __name__ == '__main__':
 
 import pygame
 from utils import stats, color, GetMax
-from launcher import CS, HP, AR, scale
-from launcher import CS_raw, HP_raw, AR_raw
-from launcher import mainResManager
+from launcher import CS, HP, AR, scale, CS_raw, HP_raw, AR_raw, mainResManager
+from map import EmptyMap
 import math
 
 class Circle(object):
@@ -74,7 +73,7 @@ class Circle(object):
 			self.alpha -= 255 / 0.5 * game.frameTime #int(255.0 / Circle.fadeOutDuration * (1 / game.frameTime))
 
 		if self.alpha <= 0:
-			game.circles.remove(self)
+			game.map.objectsLeft.remove(self)
 	
 	def DrawLayout(self, surf):
 		if not self.destroyed:
@@ -118,10 +117,9 @@ class Circle(object):
 
 		if game.combo >= 5:
 			game.health += HP * 50
-		
-		if self.startTime < 0:
-			game.GenerateRandomCircle()
 
+		if isinstance(game.map, EmptyMap):
+			game.GenerateRandomCircle()
 		self.destroyed = True
 		
 	def Miss(self, game):
@@ -132,9 +130,8 @@ class Circle(object):
 
 		game.combo = 0
 		game.health -= HP * 100
-		game.points_text.textColor = color.random()
+		game.pointsColor = color.random()
 
-		if self.startTime < 0:
+		if isinstance(game.map, EmptyMap):
 			game.GenerateRandomCircle()
-
 		self.destroyed = True

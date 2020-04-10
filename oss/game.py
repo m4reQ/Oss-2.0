@@ -16,8 +16,7 @@ try:
 	import random
 	from eventhandler import EventHandler
 	from GameElements.circle import Circle
-	import GameElements.map as map
-	from logger import logged
+	from GameElements.map import Map, EmptyMap
 except ImportError as e:
 	print(e)
 	logError(e)
@@ -49,6 +48,7 @@ class Game():
 		self.isRunning = True
 		self.click_count = [0, 0] #[0] stands for left key, [1] for right
 		self.cursorPos = (0, 0)
+		self.map = None
 		self.circles = []
 		self.playfield = {
 		'topLeft': (self.width / 10 + CS, self.height / 10 + CS),
@@ -103,9 +103,13 @@ class Game():
 		global DEBUG_MODE
 		
 		if not sets.auto_generate:
-			self.circles = map.Make_map('Resources/maps/test.txt', (self.width, self.height))
+			Map.resolution = (self.width, self.height)
+			self.map = Map('Resources/maps/test.txt')
+		else:
+			self.map = EmptyMap()
+			self.GenerateRandomCircle()
 
-		if self.circles == -1:
+		if self.map.loadSuccess == -1:
 			if DEBUG_MODE:
 				print('[ERROR]<{}> An error appeared during map loading.'.format(__name__))
 			self.isRunning = False
@@ -121,10 +125,6 @@ class Game():
 			
 			self.events = pygame.event.get()
 
-			if sets.auto_generate:
-				if len(self.circles) < 1:
-					self.GenerateRandomCircle()
-
 			#event handling
 			for event in self.events: 
 				self.cursorPos = pygame.mouse.get_pos()
@@ -137,12 +137,6 @@ class Game():
 			EventHandler.HandleInternalEvents(self)
 
 			self.health -= HP * self.frameTime * 79.2 #constant to compensate FPS multiplication
-
-			if sets.SHOW_CIRCLE_LIST:
-				if DEBUG_MODE and len(self.circles) < 5:
-					print('[INFO]<{}> Circle list: {}.'.format(__name__, str(self.circles)))
-				if DEBUG_MODE and len(self.circles) >= 5:
-					print('[INFO]<{}> Circle list Minimized. Contains: {} circles.'.format(__name__, len(self.circles)))
 
 			#render
 			#drawing section
@@ -165,7 +159,7 @@ class Game():
 
 			#calculate fps etc.
 			if sets.use_fps_cap:
-				time.sleep(1 / 120)
+				time.sleep(1.0 / 120.0)
 
 			if LauncherInfo.timePerfCounterAvailable:
 				self.frameTime = time.perf_counter() - start
@@ -182,11 +176,10 @@ class Game():
 	def GenerateRandomCircle(self):
 		pos = (random.randint(self.playfield['minX'], self.playfield['maxX']), random.randint(self.playfield['minY'], self.playfield['maxY']))
 		obj = Circle(pos, -1)
-		self.circles.append(obj)
+		self.map.objectsLeft.append(obj)
 	
 	def Close(self):
 		self.menu.game = None
-		map.is_loaded = False
 
 		Circle.count = 0
 		Circle.texture_count = 0
@@ -197,13 +190,16 @@ class Game():
 	def DrawPlayGround(self):
 		self.win.blit(mainResManager.GetTexture(self.backgroundName).Get(), (0, 0))
 
+		if len(self.map.objectsLeft) == 0:
+			return
+
 		#get the top circle (first circle active)
-		for circle in self.circles:
+		for circle in self.map.objectsLeft:
 			if not circle.destroyed:
 				topCircle = circle
 				break
 
-		for circle in self.circles:
+		for circle in self.map.objectsLeft:
 			circle.Update(self)
 			if not sets.auto_generate: #in case of playing a map
 				if self.time_ms >= circle.startTime and self.time_ms <= circle.endTime:
@@ -217,14 +213,10 @@ class Game():
 								topCircle.Collide(self, self.cursorPos)
 
 						if event.type == pygame.MOUSEBUTTONDOWN:
-							if event.button == 1:
-								self.click_count[0] += 1
-							elif event.button == 3:
-								self.click_count[1] += 1
-
+							EventHandler.HandleMouse(self, event)
 							topCircle.Collide(self, self.cursorPos)
 
-				if self.time_ms > topCircle.endTime:
+				elif self.time_ms > topCircle.endTime:
 					topCircle.Miss(self)
 			else: #in case of playing in auto generate mode
 				circle.Draw(self.win)  
@@ -234,11 +226,7 @@ class Game():
 							topCircle.Collide(self, self.cursorPos)
 
 					if event.type == pygame.MOUSEBUTTONDOWN:
-						if event.button == 1:
-							self.click_count[0] += 1
-						elif event.button == 3:
-							self.click_count[1] += 1
-
+						EventHandler.HandleMouse(self, event)
 						topCircle.Collide(self, self.cursorPos)
 							
 	def DrawCursor(self):

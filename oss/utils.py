@@ -166,6 +166,13 @@ class resolutions():
 		return (width, height)
 
 #-----Game utils-----
+def GetMaxPoints(maxCombo):
+	points = 0
+	for i in range(maxCombo):
+		points += stats.CalculatePoints(i, 10, 10, 10)
+
+	return points
+
 class stats:
 	@staticmethod
 	def getCS(CS):

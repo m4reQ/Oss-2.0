@@ -2,9 +2,8 @@ if __name__ == '__main__':
 	quit()
 
 from helper import logError, exitAll
-from utils import translateCoord
+from utils import translateCoord, GetMaxPoints
 
-is_loaded = False
 debugging = False
 
 def SetDebugging(val):
@@ -25,50 +24,46 @@ def ParseMap(filepath):
 			for line in f.readlines():
 				lineCount += 1
 
-				if str(line) == '#':
-					break
-				else:
-					line = str(line)
-					lineData = line.split(",")
+				if line[0] == '#' or line[0] == "[":
+					continue
 
-					newLineData = []
-					for x in lineData:
-						x = x.replace("\n", "")
-						x = x.replace(" ", "")
+				lineData = line.split(",")
 
-						try:
-							x = float(x)
-						except ValueError: #if even a single fragment of any line failed to parse stop loading rest of map
-							if debugging:
-								print("[ERROR]<{}> Invalid map format at line {}".format(__name__, lineCount))
+				newLineData = []
+				for x in lineData:
+					x = x.replace("\n", "")
+					x = x.replace(" ", "")
 
-							return -1
+					try:
+						x = float(x)
+					except ValueError: #if even a single fragment of any line failed to parse stop loading rest of map
+						if debugging:
+							print("[ERROR]<{}> Invalid map format at line {}".format(__name__, lineCount))
 
-						newLineData.append(x)
+						return -1
+
+					newLineData.append(x)
 						
-					data.append(newLineData)
+				data.append(newLineData)
 
-	except FileNotFoundError:
+	except IOError:
 		print("Error cannot load map: File {} didn't found.".format(filepath))
 		return -1 #indicate that a error appeared
 
 	return data
 
-def Make_map(filepath, targetRes):
+def MakeMap(filepath, targetRes):
 	"""
 	rtype: array, tuple
 	returns: array
 	"""
-	global is_loaded
-
 	data = ParseMap(filepath)
 
 	if data == -1:
-		print("Cannot load map from '{}'.".format(filepath))
-		return -1
+		return
 
 	#import circles here to avoid cyclic import
-	from .circle import Circle
+	from circle import Circle
 
 	circles = []
 	for element in data:
@@ -88,6 +83,59 @@ def Make_map(filepath, targetRes):
 	if debugging:
 		print('[INFO]<{}> Map "{}" loaded.'.format(__name__, filepath))
 
-	is_loaded = True
-
 	return circles
+
+#Name, ID, Length, Object count
+
+class Map:
+	resolution = (0, 0)
+
+	@staticmethod
+	def ReadHeader(filename):
+		try:
+			with open(filename) as f:
+				while True:
+					first = f.readline()
+					first = first.replace("\n", "")
+					if first[0] == "#":
+						continue
+					if first[0] == "[" and first[-1] == "]":
+						break
+		except IOError:
+			print("Error cannot load map: File {} didn't found.".format(filename))
+			return (0, 0, 0, -1)
+
+		first = first[1:-1]
+		data = first.split(",")
+		data = [x.replace(" ", "") for x in data]
+		data[-1] = data[-1].replace("\n", "")
+
+		return (data[0], int(data[1]), int(data[2]), 1)
+
+	def __init__(self, filename):
+		self.filename = filename
+		self.name, self.id, self.length, self.loadSuccess = Map.ReadHeader(filename)
+
+		if self.loadSuccess == -1:
+			print("Cannot load map from '{}'.".format(filepath))
+
+		self.objects = MakeMap(filename, Map.resolution)
+		self.objectsLeft = self.objects[:]
+		self.objCount = len(self.objects)
+
+		self.shouldPlay = True
+
+		self.maxCombo = self.objCount
+		self.maxPoints = GetMaxPoints(self.maxCombo)
+
+	def __str__(self):
+		return "Map - Name: {}, ID: {}, Length: {}, Objects: {}".format(self.name, self.id, self.length, self.objCount)
+
+class EmptyMap(object):
+	def __init__(self):
+		self.objectsLeft = []
+		self.shouldPlay = True
+
+		self.loadSuccess = 1
+		self.length = float('inf')
+	
