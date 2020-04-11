@@ -2,7 +2,7 @@ import os
 import launcher
 
 if __name__ == '__main__':
-	launcher.Start()
+	launcher.Start(False)
 else:
 	raise Exception('[ERROR] Tried to access main launch method from external module.')
 

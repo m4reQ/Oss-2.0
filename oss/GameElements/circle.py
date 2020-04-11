@@ -19,7 +19,7 @@ class Circle(object):
 		self.pos = pos
 
 		self.destroyed = False
-		self.alpha = 255
+		self.alpha = 200
 
 		if time != -1:
 			self.startTime = GetMax(time - AR, 0)
@@ -44,7 +44,7 @@ class Circle(object):
 		self.circleSurf.set_colorkey((255, 0, 255))
 		self.circleSurf.blit(self.bgTexture.Get(), (0, 0))
 		pygame.draw.circle(self.circleSurf, (255, 255, 255, 255), (int(Circle.radius), int(Circle.radius)), Circle.radius, int(3 * scale))
-		pygame.draw.circle(self.circleSurf, (128, 128, 128, 255), (int(Circle.radius), int(Circle.radius)), (Circle.radius + int(1 * scale)), int(1 * scale))
+		pygame.draw.circle(self.circleSurf, (128, 128, 128, 255), (int(Circle.radius), int(Circle.radius)), (Circle.radius + int(1 * scale)), int(2 * scale))
 		self.circleSurf.blit(self.fontTexture.Get(), (0, 0))
 		self.circleSurf = self.circleSurf.convert()
 
@@ -74,7 +74,7 @@ class Circle(object):
 
 	def Update(self, game):
 		if self.destroyed:
-			self.alpha -= 255 / 0.5 * game.frameTime #int(255.0 / Circle.fadeOutDuration * (1 / game.frameTime))
+			self.alpha -= 255 / Circle.fadeOutDuration * game.frameTime
 
 		if self.alpha <= 0:
 			game.map.objectsLeft.remove(self)

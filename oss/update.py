@@ -1,4 +1,5 @@
 import os
+import sys
 from helper import ask, logError, exitAll
 import requests
 
@@ -24,7 +25,7 @@ except IOError as e:
 	if ask("Do you want to download the latest version?"):
 		Update(directory)
 	else:
-		quit()
+		sys.exit()
 
 #get local version
 version = f.readlines()

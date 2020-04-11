@@ -1,5 +1,6 @@
 if __name__ == "__main__":
-    quit()
+    import sys
+    sys.exit()
 
 import os
 import random
@@ -176,7 +177,9 @@ def GetPlayfield(width, height, CS):
 		'minX': int(width / 10 + CS),
 		'minY': int(height / 10 + CS),
 		'maxX': int(width - width / 10 - CS),
-		'maxY': int(height - height / 10 - CS)}
+		'maxY': int(height - height / 10 - CS),
+		'width': int((width - width / 10 - CS) - (width / 10 + CS)),
+		'height': int((height - height / 10 - CS) - (height / 10 + CS))}
 
 def GetMaxPoints(maxCombo):
 	points = 0

@@ -1,0 +1,24 @@
+{
+    "autoGenerate": true,
+    "borderless": true,
+    "cursorSize": 1.0,
+    "darkenPercent": 0.75,
+    "fullscreen": false,
+    "interfaceEnabled": true,
+    "keyBinds": {
+        "debugGetPos": 282,
+        "debugUpdateWindow": 96,
+        "hideInterface": 291,
+        "kl": 122,
+        "kr": 120,
+        "savePreferencies": 115
+    },
+    "lockMouse": false,
+    "masterVolume": 0.75,
+    "mouseVisible": false,
+    "resolution": [
+        640,
+        480
+    ],
+    "useFpsCap": false
+}

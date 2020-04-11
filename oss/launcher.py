@@ -48,9 +48,9 @@ try:
 	from texture import Texture
 	from sound import Sound
 	from utils import resolutions, stats, ConvertImage, DimImage, FreeMem
+	from preferencies import Preferencies
 	import pygameWindow
 	from pygameWindow import WindowFlags
-	from settings import Settings
 	import update
 except ImportError:
 	print("Error during importing internal modules")
@@ -95,8 +95,8 @@ debugging = False
 #temporary set to 1 until making better method of calculating it
 scale = 1
 
-#resolution
-resolution = resolutions.SD
+#user preferencies
+prefs = None
 
 #####GAME STATS#####
 #circle approach rate
@@ -111,23 +111,11 @@ AR_raw = 5
 CS_raw = 5
 HP_raw = 5
 
-#background dimming
-darkenPercent = 0.7
-
-#master volume
-mVolume = 0.55
-
-#cursor size
-curSize = 1.0
-
 #####STATICS#####
 #folder paths
 texPath = 'Resources/textures/'
 mapsPath = 'Resources/maps/'
 soundsPath = 'Resources/sounds/'
-
-#main settings container
-sets = Settings()
 
 #resource managers
 mainResManager = ResourceManager("mainManager", 0)
@@ -138,21 +126,16 @@ mainWindow = None
 #indicates if program is already initialized
 initialized = False
 
-#key bind table
-keybind = {
-'kl': None,
-'kr': None}
-
-def LoadSettings():
+def LoadPreferencies():
 	try:
-		global sets
-		sets.LoadFromFile('settings.txt')
+		global prefs
+		prefs = Preferencies.ImportFromFile(Preferencies.PREFS_FILE)
 	except Exception as e:
-		print("An error appeared during settings loading.")
+		print("An error appeared during user preferencies loading.")
+		if debugging:
+			print('[ERROR]<{}> {}'.format(__name__, str(e)))
+
 		raise
-	
-	global debugging
-	debugging = sets.DEBUG_MODE
 
 def InitPygame():
 	try:
@@ -161,18 +144,6 @@ def InitPygame():
 		pygame.init()
 	except Exception as e:
 		print("An error appeared during pygame initialization.")
-		if debugging:
-			print('[ERROR]<{}> {}'.format(__name__, str(e)))
-		
-		raise
-
-def SetKeyBindings():
-	try:
-		global keybind
-		keybind['kl'] = pygame.K_z
-		keybind['kr'] = pygame.K_x
-	except Exception as e:
-		print("An error appeared during loading key bindings.")
 		if debugging:
 			print('[ERROR]<{}> {}'.format(__name__, str(e)))
 		
@@ -201,11 +172,11 @@ def InitializeWindow(width, height):
 	returns: pygame.Surface
 	"""
 	try:
-		pygame.mouse.set_visible(sets.mouse_visible)
-		if sets.full_screen:
+		pygame.mouse.set_visible(prefs.mouseVisible)
+		if prefs.fullscreen:
 			win = pygameWindow.CreateWindow(width, height, "Oss!", WindowFlags.FullScreen | WindowFlags.DoubleBuf | WindowFlags.Accelerated)
 		else:
-			if sets.borderless:
+			if prefs.borderless:
 				win = pygameWindow.CreateWindow(width, height, "Oss!", WindowFlags.BorderLess | WindowFlags.DoubleBuf | WindowFlags.Accelerated)
 			else:
 				win = pygameWindow.CreateWindow(width, height,"Oss!",  WindowFlags.DoubleBuf | WindowFlags.Accelerated)
@@ -262,7 +233,7 @@ def LoadCircleTextures():
 
 def LoadInterfaceTextures():
 	cursor = Texture(texPath + 'cursor.png')
-	cursor.Scale(int(32 * curSize * scale))
+	cursor.Scale(int(32 * prefs.cursorSize * scale))
 	mainResManager.AddTexture("cursor", cursor)
 
 	miss = Texture(texPath + 'miss.png')
@@ -308,27 +279,27 @@ def LoadBackgroundTextures():
 		texName = 'bg_' + str(i)
 
 		tex = Texture("{}backgrounds/bg{}.png".format(texPath, i))
-		tex.ScaleXY(resolution[0], resolution[1])
-		tex.Dim(darkenPercent)
+		tex.ScaleXY(prefs.resolution[0], prefs.resolution[1])
+		tex.Dim(prefs.darkenPercent)
 		mainResManager.AddTexture(texName, tex)
 
 	menuBg = Texture(texPath + 'backgrounds/menu_background.png')
-	menuBg.ScaleXY(resolution[0], resolution[1])
+	menuBg.ScaleXY(prefs.resolution[0], prefs.resolution[1])
 	mainResManager.AddTexture("menu_background", menuBg)
 
 def LoadSounds():
 	try:
 		for i in range(1, 3):
 			hitSound = Sound("{}hit{}.wav".format(soundsPath, i))
-			hitSound.SetVolume(mVolume)
+			hitSound.SetVolume(prefs.masterVolume)
 			mainResManager.AddSound("hit" + str(i), hitSound)
 
 		miss = Sound(soundsPath + "miss.wav")
-		miss.SetVolume(mVolume)
+		miss.SetVolume(prefs.masterVolume)
 		mainResManager.AddSound("miss", miss)
 
 		btn = Sound(soundsPath + "button_slide.wav")
-		btn.SetVolume(mVolume)
+		btn.SetVolume(prefs.masterVolume)
 		mainResManager.AddSound("button_slide", miss)
 
 	except Exception as e:
@@ -338,7 +309,10 @@ def LoadSounds():
 		
 		raise
 
-def Start():
+def Start(debugMode):
+	global debugging
+	debugging = debugMode
+
 	global initialized
 	if initialized:
 		raise Exception("Error! Program is already initialized.")
@@ -346,8 +320,8 @@ def Start():
 	#if perf_counter() is unavailable use less precise time.time() method
 	start = time.perf_counter() if LauncherInfo.timePerfCounterAvailable else time.time()
 
-	#load settings
-	LoadSettings() #from this point we can use debugging var instead of sets.DEBUG_MODE
+	#load prefs
+	LoadPreferencies()
 
 	print('Initiaizing oss!')
 
@@ -360,8 +334,8 @@ def Start():
 	#initialize pygame
 	InitPygame()
 
-	#load key bindings
-	SetKeyBindings()
+	if prefs.lockMouse:
+		pygame.event.set_grab(True)
 
 	#set game stats (AR, CS, HP)
 	global AR, CS, HP
@@ -369,7 +343,7 @@ def Start():
 
 	#initialize window
 	global mainWindow
-	mainWindow = InitializeWindow(resolution[0], resolution[1])
+	mainWindow = InitializeWindow(prefs.resolution[0], prefs.resolution[1])
 
 	#initialize resources
 	LoadTextures()
@@ -407,7 +381,7 @@ def Start():
 		print('Goodbye!')
 
 		if debugging:
-			print('[INFO]<{}> Program exited after: {} miliseconds.'.format(__name__, m.time))
+			print('[INFO]<{}> Program exited after: {} seconds.'.format(__name__, m.time))
 		
 		pygame.mixer.quit()
 		pygame.quit()

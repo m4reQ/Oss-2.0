@@ -1,10 +1,11 @@
 if __name__ == '__main__':
-	quit()
+	import sys
+	sys.exit()
 
 try:
 	from helper import *
 	import pygame
-	from launcher import sets, debugging, AR, HP, CS, mainResManager, resolution, LauncherInfo
+	from launcher import debugging, AR, HP, CS, mainResManager, LauncherInfo, prefs
 	from eventhandler import keyBindTable
 	import time
 	from utils import *
@@ -83,7 +84,7 @@ class Game:
 	def Run(self):
 		global debugging
 		
-		if not sets.auto_generate:
+		if not prefs.autoGenerate:
 			Map.resolution = (self.width, self.height)
 			self.map = Map('Resources/maps/test.txt')
 		else:
@@ -130,7 +131,7 @@ class Game:
 			self.RenderConcurrently() if LauncherInfo.concurrencyAvailable else self.Render()
 
 			#calculate fps etc.
-			if sets.use_fps_cap:
+			if prefs.useFpsCap:
 				time.sleep(1.0 / 120.0)
 
 			if LauncherInfo.timePerfCounterAvailable:
@@ -178,7 +179,7 @@ class Game:
 						
 				for event in self.events:
 					if event.type == pygame.KEYDOWN:
-						if event.key == keyBindTable['kl'] or event.key == keyBindTable['kr']:
+						if event.key == prefs.keyBinds['kl'] or event.key == prefs.keyBinds['kr']:
 							topCircle.Collide(self, self.cursorPos)
 
 					if event.type == pygame.MOUSEBUTTONDOWN:

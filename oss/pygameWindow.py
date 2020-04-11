@@ -1,5 +1,6 @@
 if __name__ == "__main__":
-	quit()
+	import sys
+	sys.exit()
 
 import pygame
 import time

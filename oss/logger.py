@@ -1,4 +1,6 @@
-if __name__ == "__main__": quit()
+if __name__ == "__main__": 
+	import sys
+    sys.exit()
 
 import time
 from datetime import datetime

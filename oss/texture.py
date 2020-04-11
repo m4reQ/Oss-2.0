@@ -1,3 +1,7 @@
+if __name__ == "__main__":
+	import sys
+	sys.exit()
+
 import pygame
 
 LOG_TEXTURES = False
@@ -40,6 +44,9 @@ class Texture(object):
 		dark.fill((0, 0, 0, dimPercent*255))
 
 		self.tex.blit(dark, (0, 0))
+	
+	def SetAlpha(self, alpha):
+		self.tex.set_alpha(alpha)
 
 	def Get(self):
 		return self.tex

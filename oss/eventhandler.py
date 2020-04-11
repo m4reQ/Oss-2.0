@@ -11,8 +11,7 @@ keyBindTable = {
 	'kr': pygame.K_x,
 	'updateWindow': pygame.K_BACKQUOTE,
 	'hideInterface': pygame.K_F10,
-	'debugGetPos': pygame.K_F1
-}
+	'debugGetPos': pygame.K_F1}
 
 def SetDebugging(val):
 	"""

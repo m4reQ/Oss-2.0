@@ -1,12 +1,13 @@
 if __name__ == "__main__":
-	quit()
+	import sys
+	sys.exit()
 
 try:
 	import pygame
 	from helper import logError, exitAll
 	from utils import FreeMem, GetPlayfield, color, translateCoord, TranslationMode
 	import concurrent.futures
-	from launcher import debugging, mapsPath, CS, mainResManager, keybind
+	from launcher import debugging, mapsPath, CS, mainResManager, prefs
 	import time
 except ImportError as e:
 	logError(e)
@@ -24,7 +25,6 @@ class Editor:
 
 	@classmethod
 	def Start(cls, win, menu):
-		print(RegisterMode.Time)
 		inst = cls(win, menu)
 		menu.game = inst
 		inst.Run()
@@ -55,7 +55,7 @@ class Editor:
 					self.isRunning = False
 				
 				if event.type == pygame.KEYDOWN:
-					if event.key == keybind["kl"] or event.key == keybind["kr"]:
+					if event.key == prefs.keyBinds["kl"] or event.key == prefs.keyBinds["kr"]:
 						if self.cursorPos[0] >= self.playfield["minX"] and self.cursorPos[0] <= self.playfield["maxX"] and self.cursorPos[1] >= self.playfield["minY"] and self.cursorPos[1] <= self.playfield["maxY"]:
 								self.Click()
 					
@@ -84,6 +84,10 @@ class Editor:
 	def Render(self):
 		#clear
 		self.win.fill((110, 33, 84))
+
+		#render playfield
+		playField = pygame.Rect(self.playfield["minX"], self.playfield["minY"], self.playfield["width"], self.playfield["height"])
+		pygame.draw.rect(self.win, (0, 0, 0), playField, 1)
 
 		#render points
 		pygame.draw.circle(self.win, color.red, self.lastRegs[0], 3)

@@ -1,4 +1,9 @@
+if __name__ == "__main__":
+	import sys
+	sys.exit()
+
 import os
+import sys
 import traceback
 import pygame
 
@@ -19,7 +24,7 @@ def exitAll():
 		pygame.mixer.quit()
 		pygame.quit()
 		os.system("pause >NUL")
-		quit()
+		sys.exit()
 	except Exception:
 		pass
 
@@ -38,6 +43,3 @@ def ask(question):
 			return True
 		elif q.upper() == 'N':
 			return False
-
-if __name__ == '__main__':
-	exitAll()
