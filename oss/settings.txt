@@ -4,13 +4,13 @@
 full_screen = False
 
 #open in borderless window
-borderless = False
+borderless = True
 
 #mouse visibility
 mouse_visible = False
 
 #automatic circle generation
-auto_generate = False
+auto_generate = True
 
 #timed screen updates
 timed_updates_enable = False
@@ -32,18 +32,4 @@ defaultset = True
 use_fps_cap = False
 
 #debug mode
-DEBUG_MODE = True
-
-#test mode
-#Enable if you want to test certain methods
-#instead of running whole program.
-#Works only in certain IDEs.
-TEST_MODE = False
-
-#update method
-#allows to switch between updating whole screen
-#set to True if you want to use a dictionary update method
-#will be removed when dictionary update is done
-#NOTE! Dict update method isn't done yet and it's
-#recommended to leave it False.
-DICT_UPDATE_MODE = False
+DEBUG_MODE = False

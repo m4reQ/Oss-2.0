@@ -1,148 +1,127 @@
-try:
-	import pygame
-	import os
-	import traceback
-	from game import resolution
-	from helper import *
-	import concurrent.futures
-except Exception:
-	logf = open('log.txt', 'w+')
-	logf.write(traceback.format_exc())
-	logf.close()
-
-	pygame.quit()
+if __name__ == "__main__":
 	quit()
 
-#debug mode
-DEBUG_MODE = True
+try:
+	import pygame
+	from helper import logError, exitAll
+	from utils import FreeMem, GetPlayfield, color, translateCoord, TranslationMode
+	import concurrent.futures
+	from launcher import debugging, mapsPath, CS, mainResManager, keybind
+	import time
+except ImportError as e:
+	logError(e)
+	exitAll()
 
-#mouse visibility
-mouse_visible = False
+#register files
+TIME_FILE = open(mapsPath + "editor/time.txt", 'w+')
+POS_FILE = open(mapsPath + "editor/position.txt", 'w+')
 
-#cursor texture
-cursor_texture = None
+class RegisterMode():
+	Time, Position = range(2)
 
-#register mode
-reg_mode = 'p'
+class Editor:
+	regMode = RegisterMode.Position
 
-#save files
-timef = open(os.path.join('maps', 'time.txt'), 'w+')
-posf = open(os.path.join('maps','position.txt'), 'w+')
-
-clock = pygame.time.Clock()
-
-def Initialize_window(width, height):
-	"""
-	Initializes application window
-	rtype: int, int
-	returns: pygame.Surface
-	"""
-	global cursor_texture
-	pygame.init()
-
-	pygame.mouse.set_visible(mouse_visible)
-
-	win = pygame.display.set_mode((width, height), pygame.HWSURFACE|pygame.DOUBLEBUF)
-	cursor_texture = pygame.image.load('Resources/textures/cursor.png')
-	cursor_texture = pygame.transform.scale(cursor_texture, (16, 16))
-
-	return win
-
-class Editor():
-	def __init__(self, res):
-		self.width, self.height = res
-		self.win = Initialize_window(self.width, self.height)
-		self.is_running = True
-		self.playfield = {
-		'topX': (self.width / 10),					#top X
-		'topY': (self.height / 10),					#top Y
-		'bottomX': (self.width - self.width / 10),		#bottom X
-		'bottomY': (self.height - self.height / 10)}	#bottom Y
-		self.cursor_texture = cursor_texture
-		self.cursor_pos = (0, 0)
+	@classmethod
+	def Start(cls, win, menu):
+		print(RegisterMode.Time)
+		inst = cls(win, menu)
+		menu.game = inst
+		inst.Run()
+	
+	def __init__(self, parentWin, menu):
+		self.width = parentWin.get_width()
+		self.height = parentWin.get_height()
+		self.win = parentWin
+		self.menu = menu
+		self.isRunning = True
+		self.cursorPos = (0, 0)
+		self.playfield = GetPlayfield(self.width, self.height, CS)
+		self.lastRegs = [(0, 0), (0, 0)]
 		self.time = 0
-		self.last_regs = [(0, 0), (0, 0)]
-		self.events = []
+		self.objCount = 0
+
+		pygame.display.set_caption("Oss! - Editor")
 
 	def Run(self):
-		global i 
-		i = 0
-		dark = pygame.Surface((self.width, self.height))
-		dark.fill(color.black)
-
-		while self.is_running:
-			self.win.blit(dark, (0, 0))
-
-			with concurrent.futures.ThreadPoolExecutor() as executor:
-				executor.submit(self.win.blit, [dark, (0, 0)])
-				executor.submit(self.Time)
-				executor.submit(self.Point, self.win, color.red, self.last_regs[0])
-				executor.submit(self.Point, self.win, color.green, self.last_regs[1])
-				executor.submit(self.Cursor)
-
-			self.events = pygame.event.get()
-			for event in self.events:
-				self.cursor_pos = pygame.mouse.get_pos()
+		while self.isRunning:
+			start = time.time()
+			#update
+			for event in pygame.event.get():
+				if event.type == pygame.MOUSEMOTION:
+					self.cursorPos = pygame.mouse.get_pos()
+				
 				if event.type == pygame.QUIT:
-					self.is_running = False
+					self.isRunning = False
+				
 				if event.type == pygame.KEYDOWN:
-					if event.key == pygame.K_z or event.key == pygame.K_x:
-						if self.cursor_pos[0] > self.playfield['topX'] and self.cursor_pos[0] < self.playfield['bottomX']:
-							if self.cursor_pos[1] > self.playfield['topY'] and self.cursor_pos[1] < self.playfield['bottomY']:
+					if event.key == keybind["kl"] or event.key == keybind["kr"]:
+						if self.cursorPos[0] >= self.playfield["minX"] and self.cursorPos[0] <= self.playfield["maxX"] and self.cursorPos[1] >= self.playfield["minY"] and self.cursorPos[1] <= self.playfield["maxY"]:
 								self.Click()
+					
+					if event.key == pygame.K_ESCAPE:
+						self.isRunning = False
+					
+					if event.key == pygame.K_m:
+						Editor.regMode = RegisterMode.Position if Editor.regMode == RegisterMode.Time else RegisterMode.Time
 
-			
+			#render 
+			self.Render()
+
 			pygame.display.flip()
-			clock.tick()
-			self.time = pygame.time.get_ticks()
+			time.sleep(1.0 / 60.0)
 
-		pygame.quit()
-		quit()
+			self.time += time.time() - start
+		
+		self.Close()
+	
+	def Close(self):
+		POS_FILE.close()
+		TIME_FILE.close()
+		self.menu.game = None
+		FreeMem(debugging, 'Started onclose garbage collection.')
+	
+	def Render(self):
+		#clear
+		self.win.fill((110, 33, 84))
 
-	def Cursor(self):
-		self.win.blit(self.cursor_texture, (self.cursor_pos[0] - self.cursor_texture.get_width()/2, self.cursor_pos[1] - self.cursor_texture.get_height()/2))
+		#render points
+		pygame.draw.circle(self.win, color.red, self.lastRegs[0], 3)
+		pygame.draw.circle(self.win, color.green, self.lastRegs[1], 3)
 
+		#render mode
+		if Editor.regMode == RegisterMode.Time:
+			mode = "Time"
+		elif Editor.regMode == RegisterMode.Position:
+			mode = "Position"
+		else:
+			mode = "Invalid"
+
+		rModeText = mainResManager.GetFont("comicsansms_18").render("Register mode: {}".format(mode), True, color.white)
+		self.win.blit(rModeText, (3, 3))
+
+		#render time
+		rTimeText = mainResManager.GetFont("comicsansms_24").render("Time: {}ms".format(int(self.time * 1000)), True, color.white)
+		self.win.blit(rTimeText, (3, rModeText.get_height() + 3))
+		
+		#render cursor
+		self.win.blit(mainResManager.GetTexture('cursor').Get(), (self.cursorPos[0] - mainResManager.GetTexture('cursor').Width / 2, self.cursorPos[1] - mainResManager.GetTexture('cursor').Height / 2))
+	
 	def Click(self):
-		global reg_mode, i
+		if debugging:
+			print('[INFO]<{}>Last registered: {}, {}'.format(__name__, self.time, self.cursorPos))
 
-		if DEBUG_MODE:
-			print('Last registered: ' + str(self.time) + ', ' + str(self.cursor_pos))
+		if Editor.regMode == RegisterMode.Time:
+			TIME_FILE.write("{}. object at time: {}\n".format(self.objCount, self.time))
+			self.objCount += 1
+		elif Editor.regMode == RegisterMode.Position:
+			tPos = translateCoord(self.cursorPos, (self.width, self.height), TranslationMode.Encode)
+			POS_FILE.write("{}. object at position: {}, {}\n".format(self.objCount, tPos[0], tPos[1]))
+			lastReg = self.cursorPos
 
-		if reg_mode == 't':
-			timef.write(str(i) + '. Object at time: ' + str(self.time) + '\n')
+			self.lastRegs[0], self.lastRegs[1] = self.lastRegs[1], lastReg
 
-			i += 1
-		elif reg_mode == 'p':
-			tpos = Translate(self.cursor_pos, (self.width, self.height), 0)
-			posf.write(str(i) + '. Object at position: ' + str(tpos[0]) + ', ' + str(tpos[1]) + '\n')
-			last_reg = self.cursor_pos
-
-			self.last_regs[0], self.last_regs[1] = self.last_regs[1], last_reg
-
-			i += 1
+			self.objCount += 1
 		else:
 			print('Wrong register mode! Changing register mode to "time".')
-			reg_mode = 't'
-
-	def Time(self):
-		font = pygame.font.SysFont("comicsansms", 24)
-		text = font.render('Time: ' + str(self.time) + 'ms', True, color.white)
-		pos = (0, 0)
-
-		self.win.blit(text, pos)
-
-	def Point(self, win, color, pos):
-		pygame.draw.circle(win, color, pos, 3)
-
-if __name__ == '__main__':
-	try:
-		e = Editor(resolution)
-
-		e.Run()
-	except Exception :
-		logf = open('log.txt', 'w+')
-		logf.write(traceback.format_exc())
-		logf.close()
-
-		pygame.quit()
-		quit()
+			Editor.regMode = RegisterMode.Time

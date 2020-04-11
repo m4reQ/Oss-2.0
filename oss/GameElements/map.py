@@ -3,8 +3,7 @@ if __name__ == '__main__':
 
 from helper import logError, exitAll
 from utils import translateCoord, GetMaxPoints
-
-debugging = False
+from launcher import debugging
 
 def SetDebugging(val):
 	"""
@@ -62,8 +61,8 @@ def MakeMap(filepath, targetRes):
 	if data == -1:
 		return
 
-	#import circles here to avoid cyclic import
-	from circle import Circle
+	#import circles here to avoid circular import
+	from .circle import Circle
 
 	circles = []
 	for element in data:
@@ -77,15 +76,13 @@ def MakeMap(filepath, targetRes):
 			obj = Circle((tposX, tposY), time)
 			circles.append(obj)
 		except IndexError:
-			print('[ERROR] Cannot make object {}.\n Maybe map has outdated or invalid format.'.format(str(obj)))
+			print('Cannot make object {}.\n Maybe map has outdated or invalid format.'.format(str(obj)))
 			return
 	
 	if debugging:
 		print('[INFO]<{}> Map "{}" loaded.'.format(__name__, filepath))
 
 	return circles
-
-#Name, ID, Length, Object count
 
 class Map:
 	resolution = (0, 0)
@@ -102,7 +99,7 @@ class Map:
 					if first[0] == "[" and first[-1] == "]":
 						break
 		except IOError:
-			print("Error cannot load map: File {} didn't found.".format(filename))
+			print("Cannot load map: File {} didn't found.".format(filename))
 			return (0, 0, 0, -1)
 
 		first = first[1:-1]
@@ -117,7 +114,7 @@ class Map:
 		self.name, self.id, self.length, self.loadSuccess = Map.ReadHeader(filename)
 
 		if self.loadSuccess == -1:
-			print("Cannot load map from '{}'.".format(filepath))
+			print("Cannot load map from '{}'.".format(filename))
 
 		self.objects = MakeMap(filename, Map.resolution)
 		self.objectsLeft = self.objects[:]

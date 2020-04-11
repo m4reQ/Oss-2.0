@@ -4,11 +4,7 @@ if __name__ == '__main__':
 try:
 	from helper import *
 	import pygame
-	from launcher import sets
-	from launcher import AR, HP, CS
-	from launcher import mainResManager
-	from launcher import resolution
-	from launcher import LauncherInfo
+	from launcher import sets, debugging, AR, HP, CS, mainResManager, resolution, LauncherInfo
 	from eventhandler import keyBindTable
 	import time
 	from utils import *
@@ -20,29 +16,22 @@ try:
 except ImportError as e:
 	print(e)
 	logError(e)
+	exitAll()
 	
-	pygame.quit()
-	quit()
 #import cuncurrent.futures ONLY if it's available
 if LauncherInfo.concurrencyAvailable:
 	import concurrent.futures
 
-#create settings shortcuts
-DEBUG_MODE = sets.DEBUG_MODE
-TEST_MODE = sets.TEST_MODE
-DICT_UPDATE_MODE = sets.DICT_UPDATE_MODE
+class Game:
+	@classmethod
+	def Start(cls, win, menu):
+		inst = cls(win, menu)
+		menu.game = inst
+		inst.Run()
 
-#called once to update window background
-@run_once
-def pre_update_display():
-	if DEBUG_MODE:
-		print('[INFO]<{}> Updating screen.'.format(__name__))
-	pygame.display.update()
-
-class Game():
-	def __init__(self, win, parentWin):
+	def __init__(self, win, menu):
 		self.win = win
-		self.menu = parentWin
+		self.menu = menu
 		self.width = win.get_width()
 		self.height = win.get_height()
 		self.isRunning = True
@@ -50,15 +39,7 @@ class Game():
 		self.cursorPos = (0, 0)
 		self.map = None
 		self.circles = []
-		self.playfield = {
-		'topLeft': (self.width / 10 + CS, self.height / 10 + CS),
-		'topRight': (self.width - self.width / 10 - CS, self.height / 10 + CS),
-		'bottomLeft': (self.width / 10 + CS, self.height - self.height / 10 - CS),
-		'bottomRight': (self.width - self.width / 10 - CS, self.height - self.height / 10 - CS),
-		'minX': int(self.width / 10 + CS),
-		'minY': int(self.height / 10 + CS),
-		'maxX': int(self.width - self.width / 10 - CS),
-		'maxY': int(self.height - self.height / 10 - CS)}
+		self.playfield = GetPlayfield(self.width, self.height, CS)
 		self.points = 0
 		self.combo = 0
 		self.maxhealth = 100
@@ -74,7 +55,7 @@ class Game():
 		self.events = pygame.event.get()
 
 		#at the end of initialization trigger garbage collection
-		FreeMem(DEBUG_MODE, 'Started after-init garbage collection.')
+		FreeMem(debugging, 'Started after-init garbage collection.')
 
 	def Render(self):
 		self.DrawPlayGround()
@@ -83,7 +64,7 @@ class Game():
 			self.DrawHealthBar()
 			self.DrawPoints()
 			self.DrawClicksCounter()
-			if DEBUG_MODE:
+			if debugging:
 				self.DrawFPSCounter()
 		self.DrawCursor()
 
@@ -95,12 +76,12 @@ class Game():
 				executor.submit(self.DrawCombo)
 				executor.submit(self.DrawPoints)
 				executor.submit(self.DrawClicksCounter)
-				if DEBUG_MODE:
+				if debugging:
 					executor.submit(self.DrawFPSCounter)
 			executor.submit(self.DrawCursor)
 
 	def Run(self):
-		global DEBUG_MODE
+		global debugging
 		
 		if not sets.auto_generate:
 			Map.resolution = (self.width, self.height)
@@ -110,12 +91,12 @@ class Game():
 			self.GenerateRandomCircle()
 
 		if self.map.loadSuccess == -1:
-			if DEBUG_MODE:
+			if debugging:
 				print('[ERROR]<{}> An error appeared during map loading.'.format(__name__))
 			self.isRunning = False
 		
 		#free memory after map loading
-		FreeMem(DEBUG_MODE, 'Started after map loading garbage collection.')
+		FreeMem(debugging, 'Started after map loading garbage collection.')
 
 		while self.isRunning:
 			if LauncherInfo.timePerfCounterAvailable:
@@ -127,7 +108,8 @@ class Game():
 
 			#event handling
 			for event in self.events: 
-				self.cursorPos = pygame.mouse.get_pos()
+				if event.type == pygame.MOUSEMOTION:
+					self.cursorPos = pygame.mouse.get_pos()
 
 				if event.type == pygame.KEYDOWN:
 					EventHandler.HandleKeys(self, event)
@@ -143,18 +125,8 @@ class Game():
 			#NOTE!
 			#Don't put anything below this section
 			#it may cause glitches
-			#update
-			if DICT_UPDATE_MODE: #dictionary update
-				pre_update_display()
-				pygame.display.update(self.toUpdate)
-				if DEBUG_MODE:
-					print('[INFO]<{}> Updating: {}.'.format(__name__, str(self.toUpdate)))
-
-				self.toUpdate.clear()
 					
 			pygame.display.flip()
-
-			#render
 			self.RenderConcurrently() if LauncherInfo.concurrencyAvailable else self.Render()
 
 			#calculate fps etc.
@@ -185,7 +157,7 @@ class Game():
 		Circle.texture_count = 0
 		Circle.background_count = 0
 
-		FreeMem(DEBUG_MODE, 'Started onclose garbage collection.')
+		FreeMem(debugging, 'Started onclose garbage collection.')
 
 	def DrawPlayGround(self):
 		self.win.blit(mainResManager.GetTexture(self.backgroundName).Get(), (0, 0))
@@ -201,25 +173,9 @@ class Game():
 
 		for circle in self.map.objectsLeft:
 			circle.Update(self)
-			if not sets.auto_generate: #in case of playing a map
-				if self.time_ms >= circle.startTime and self.time_ms <= circle.endTime:
-					circle.Draw(self.win)  
-					if self.time_ms >= circle.hitTime and self.time_ms <= circle.endTime:
-						circle.DrawLayout(self.win)
+			if self.time_ms >= circle.startTime and self.time_ms <= circle.endTime:
+				circle.Draw(self.win, self.time_ms)
 						
-					for event in self.events:
-						if event.type == pygame.KEYDOWN:
-							if event.key == keyBindTable['kl'] or event.key == keyBindTable['kr']:
-								topCircle.Collide(self, self.cursorPos)
-
-						if event.type == pygame.MOUSEBUTTONDOWN:
-							EventHandler.HandleMouse(self, event)
-							topCircle.Collide(self, self.cursorPos)
-
-				elif self.time_ms > topCircle.endTime:
-					topCircle.Miss(self)
-			else: #in case of playing in auto generate mode
-				circle.Draw(self.win)  
 				for event in self.events:
 					if event.type == pygame.KEYDOWN:
 						if event.key == keyBindTable['kl'] or event.key == keyBindTable['kr']:
@@ -228,6 +184,8 @@ class Game():
 					if event.type == pygame.MOUSEBUTTONDOWN:
 						EventHandler.HandleMouse(self, event)
 						topCircle.Collide(self, self.cursorPos)
+			elif self.time_ms > circle.endTime:
+				topCircle.Miss(self)
 							
 	def DrawCursor(self):
 		self.win.blit(mainResManager.GetTexture('cursor').Get(), (self.cursorPos[0] - mainResManager.GetTexture('cursor').Width / 2, self.cursorPos[1] - mainResManager.GetTexture('cursor').Height / 2))

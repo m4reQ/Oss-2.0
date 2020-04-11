@@ -72,13 +72,16 @@ def DimImage(image, dimPercent):
 
 	return img_d
 
+class TranslationMode:
+	Encode, Decode = range(2)
+
 def translateCoord(data, res, mode):
 	"""
 	Translates position of point to unified coordinate system
 	Max value in each direction is 1.0 and the min is 0.0
 	:param data: (tuple(float, float)) Position to be translated
 	:param res: (tuple(float, float)) Target resolution
-	:param mode: (int) Work mode. Available modes are: 0-encode, 1-decode
+	:param mode: (TranslationMode) Work mode. Available modes are: Encode, Decode.
 	:returns: (tuple(int, int), tuple(float, float))
 	"""
 
@@ -86,13 +89,13 @@ def translateCoord(data, res, mode):
 	resX, resY = res
 
 	#encode
-	if mode == 0:
+	if mode == TranslationMode.Encode:
 		uX = x / resX
 		uY = y / resY
 
 		return (uX, uY)
 	#decode
-	elif mode == 1:
+	elif mode == TranslationMode.Decode:
 		x = Clamp(x, 0, 1)
 		y = Clamp(y, 0, 1)
 
@@ -100,8 +103,6 @@ def translateCoord(data, res, mode):
 		tY = y * resY
 
 		return (int(tX), int(tY))
-	else:
-		raise Exception('[ERROR] Invalid translation mode.')
 
 def GetTextColor(bgColor):
 	avg = sum(bgColor) / len(bgColor)
@@ -166,6 +167,17 @@ class resolutions():
 		return (width, height)
 
 #-----Game utils-----
+def GetPlayfield(width, height, CS):
+	return {
+		'topLeft': (width / 10 + CS, height / 10 + CS),
+		'topRight': (width - width / 10 - CS, height / 10 + CS),
+		'bottomLeft': (width / 10 + CS, height - height / 10 - CS),
+		'bottomRight': (width - width / 10 - CS, height - height / 10 - CS),
+		'minX': int(width / 10 + CS),
+		'minY': int(height / 10 + CS),
+		'maxX': int(width - width / 10 - CS),
+		'maxY': int(height - height / 10 - CS)}
+
 def GetMaxPoints(maxCombo):
 	points = 0
 	for i in range(maxCombo):

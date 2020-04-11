@@ -4,7 +4,7 @@ if __name__ == '__main__':
 import pygame
 from utils import stats, color, GetMax
 from launcher import CS, HP, AR, scale, CS_raw, HP_raw, AR_raw, mainResManager
-from map import EmptyMap
+from .map import EmptyMap
 import math
 
 class Circle(object):
@@ -26,9 +26,9 @@ class Circle(object):
 			self.endTime = GetMax(time + AR, 0)
 			self.hitTime = GetMax(time - (AR / 2), 0) #a quarter after circle show time
 		else:
-			self.startTime = time - AR
-			self.endTime = time + AR
-			self.hitTime = time - (AR / 2) #a quarter after circle show time
+			self.startTime = -1
+			self.endTime = float('inf')
+			self.hitTime = float('inf')
 
 		self.textureCount = Circle.textureCount
 		self.backgroundCount = Circle.backgroundCount
@@ -64,9 +64,13 @@ class Circle(object):
 	def __repr__(self):
 		return str('Circle at position: {}. Font texture: {}. Background texture: {}.'.format(self.pos, self.textureCount, self.backgroundCount))
 		
-	def Draw(self, surf):
-		self.circleSurf.set_alpha(self.alpha)
-		surf.blit(self.circleSurf, (self.pos[0] - Circle.radius, self.pos[1] - Circle.radius))
+	def Draw(self, surf, time):
+		if time >= self.startTime and time <= self.endTime:
+			self.circleSurf.set_alpha(self.alpha)
+			surf.blit(self.circleSurf, (self.pos[0] - Circle.radius, self.pos[1] - Circle.radius))
+			if time >= self.hitTime and time <= self.endTime:
+				if not self.destroyed:
+					surf.blit(mainResManager.GetTexture("hitlayout").Get(), (self.pos[0] - Circle.radius, self.pos[1] - Circle.radius))
 
 	def Update(self, game):
 		if self.destroyed:
@@ -75,10 +79,6 @@ class Circle(object):
 		if self.alpha <= 0:
 			game.map.objectsLeft.remove(self)
 	
-	def DrawLayout(self, surf):
-		if not self.destroyed:
-			surf.blit(mainResManager.GetTexture("hitlayout").Get(), (self.pos[0] - Circle.radius, self.pos[1] - Circle.radius))
-		
 	def Collide(self, game, cursor_pos):
 		"""
 		checks if clicked point is inside a circle
