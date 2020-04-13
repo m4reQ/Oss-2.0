@@ -78,8 +78,9 @@ if not os.path.exists('./Resources/maps'):
 
 	try:
 		os.mkdir('./Resources/maps')
+		os.mkdir('./Resources/maps/editor')
 	except OSError:
-		print('Error! Cannot create directory.')
+		print('Error! Cannot create directories.')
 
 		raise
 
