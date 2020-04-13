@@ -63,18 +63,21 @@ def Gen_log():
     print('Generating log file...')
     with open('diaglog.txt', 'w+') as  f:
         f.write('')
-    
-    log['system_ver'] = Get_sys_ver()
-    log['python_ver'] = Get_python_ver()
-    log['path'] = '{} {}'.format(os.sys.path, os.popen('echo %path%').read())
-    log['screen_res'] = Get_screen_res()
-    log['CPU'] = str(platform.processor())
-    log['pygame_ver'] = str(pygame.version.ver)
+
     try:
-        log['sdl_driver'] = os.environ['SDL_VIDEODRIVER']
-    except KeyError:
-        log['sdl_driver'] = 'not set'
-    log['graphics_info'] = Get_graph_info()
+        log['system_ver'] = Get_sys_ver()
+        log['python_ver'] = Get_python_ver()
+        log['path'] = '{} {}'.format(os.sys.path, os.popen('echo %path%').read())
+        log['screen_res'] = Get_screen_res()
+        log['CPU'] = str(platform.processor())
+        log['pygame_ver'] = str(pygame.version.ver)
+        try:
+            log['sdl_driver'] = os.environ['SDL_VIDEODRIVER']
+        except KeyError:
+            log['sdl_driver'] = 'not set'
+        log['graphics_info'] = Get_graph_info()
+    except Exception:
+        pass
 
     for key, val in log.items():
         with open('diaglog.txt', 'a') as f:
