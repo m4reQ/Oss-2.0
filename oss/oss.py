@@ -4,7 +4,7 @@ import launcher
 
 if __name__ == '__main__':
 	try:
-		launcher.Start(True)
+		launcher.Start(False)
 	except Exception as e:
 		print("Error: {}".format(e))
 		raise
