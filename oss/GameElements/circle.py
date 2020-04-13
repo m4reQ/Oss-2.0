@@ -2,7 +2,9 @@ if __name__ == '__main__':
 	quit()
 
 import pygame
-from utils import stats, color, GetMax
+from Utils.game import Stats
+from Utils.graphics import Color
+from Utils.math import GetMax
 from launcher import CS, HP, AR, scale, CS_raw, HP_raw, AR_raw, mainResManager
 from .map import EmptyMap
 import math
@@ -39,14 +41,13 @@ class Circle(object):
 		self.fontTexture = mainResManager.GetTexture(self.fontName)
 		self.bgTexture = mainResManager.GetTexture(self.bgName)
 
-		self.circleSurf = pygame.Surface((Circle.radius * 2 + 4, Circle.radius * 2 + 4), pygame.HWSURFACE | pygame.SRCALPHA)
+		self.circleSurf = pygame.Surface((Circle.radius * 2 + 4, Circle.radius * 2 + 4), pygame.HWSURFACE | pygame.SRCALPHA).convert()
 		self.circleSurf.fill((255, 0, 255))
 		self.circleSurf.set_colorkey((255, 0, 255))
 		self.circleSurf.blit(self.bgTexture.Get(), (0, 0))
 		pygame.draw.circle(self.circleSurf, (255, 255, 255, 255), (int(Circle.radius), int(Circle.radius)), Circle.radius, int(3 * scale))
 		pygame.draw.circle(self.circleSurf, (128, 128, 128, 255), (int(Circle.radius), int(Circle.radius)), (Circle.radius + int(1 * scale)), int(2 * scale))
 		self.circleSurf.blit(self.fontTexture.Get(), (0, 0))
-		self.circleSurf = self.circleSurf.convert()
 
 		if Circle.textureCount < 9:
 			Circle.textureCount += 1
@@ -102,24 +103,25 @@ class Circle(object):
 		game.combo += 1
 
 		if self.startTime < 0:
-			scoredPoints = stats.CalculatePoints(game.combo, 1, CS_raw, HP_raw)
+			scoredPoints = Stats.CalculatePoints(game.combo, 1, CS_raw, HP_raw)
 		else:
-			scoredPoints = stats.CalculatePoints(game.combo, AR_raw, CS_raw, HP_raw)
+			scoredPoints = Stats.CalculatePoints(game.combo, AR_raw, CS_raw, HP_raw)
 
-		if self.startTime < -1:
+		if self.startTime == -1:
 			game.points += scoredPoints
 		elif game.time_ms >= self.startTime and game.time_ms <= self.hitTime:
 			game.points += int(scoredPoints / 2)
 		elif game.time_ms >= self.hitTime:
 			game.points += scoredPoints
 
-		game.pointsColor = color.random()
+		game.pointsColor = Color.Random()
 
 		if game.combo >= 5:
 			game.health += HP * 50
 
 		if isinstance(game.map, EmptyMap):
 			game.GenerateRandomCircle()
+			
 		self.destroyed = True
 		
 	def Miss(self, game):
@@ -130,7 +132,7 @@ class Circle(object):
 
 		game.combo = 0
 		game.health -= HP * 100
-		game.pointsColor = color.random()
+		game.pointsColor = Color.Random()
 
 		if isinstance(game.map, EmptyMap):
 			game.GenerateRandomCircle()

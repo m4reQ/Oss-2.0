@@ -5,7 +5,9 @@ if __name__ == "__main__":
 try:
 	import pygame
 	from helper import logError, exitAll
-	from utils import FreeMem, GetPlayfield, color, translateCoord, TranslationMode
+	from Utils.memory import FreeMem
+	from Utils.game import GetPlayfield
+	from Utils.graphics import Color, TranslateCoord, TranslationMode
 	import concurrent.futures
 	from launcher import debugging, mapsPath, CS, mainResManager, prefs
 	import time
@@ -90,8 +92,8 @@ class Editor:
 		pygame.draw.rect(self.win, (0, 0, 0), playField, 1)
 
 		#render points
-		pygame.draw.circle(self.win, color.red, self.lastRegs[0], 3)
-		pygame.draw.circle(self.win, color.green, self.lastRegs[1], 3)
+		pygame.draw.circle(self.win, Color.Red, self.lastRegs[0], 3)
+		pygame.draw.circle(self.win, Color.Green, self.lastRegs[1], 3)
 
 		#render mode
 		if Editor.regMode == RegisterMode.Time:
@@ -101,11 +103,11 @@ class Editor:
 		else:
 			mode = "Invalid"
 
-		rModeText = mainResManager.GetFont("comicsansms_18").render("Register mode: {}".format(mode), True, color.white)
+		rModeText = mainResManager.GetFont("comicsansms_18").render("Register mode: {}".format(mode), True, Color.White)
 		self.win.blit(rModeText, (3, 3))
 
 		#render time
-		rTimeText = mainResManager.GetFont("comicsansms_24").render("Time: {}ms".format(int(self.time * 1000)), True, color.white)
+		rTimeText = mainResManager.GetFont("comicsansms_24").render("Time: {}ms".format(int(self.time * 1000)), True, Color.White)
 		self.win.blit(rTimeText, (3, rModeText.get_height() + 3))
 		
 		#render cursor
@@ -119,7 +121,7 @@ class Editor:
 			TIME_FILE.write("{}. object at time: {}\n".format(self.objCount, self.time))
 			self.objCount += 1
 		elif Editor.regMode == RegisterMode.Position:
-			tPos = translateCoord(self.cursorPos, (self.width, self.height), TranslationMode.Encode)
+			tPos = TranslateCoord(self.cursorPos, (self.width, self.height), TranslationMode.Encode)
 			POS_FILE.write("{}. object at position: {}, {}\n".format(self.objCount, tPos[0], tPos[1]))
 			lastReg = self.cursorPos
 

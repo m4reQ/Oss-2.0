@@ -2,7 +2,8 @@ if __name__ == '__main__':
 	quit()
 
 from helper import logError, exitAll
-from utils import translateCoord, GetMaxPoints
+from Utils.graphics import TranslateCoord, TranslationMode
+from Utils.game import GetMaxPoints
 from launcher import debugging
 
 def SetDebugging(val):
@@ -71,7 +72,7 @@ def MakeMap(filepath, targetRes):
 			posY = float(element[1])
 			time = int(element[2])
 
-			tposX, tposY = translateCoord((posX, posY), tuple(targetRes), 1)
+			tposX, tposY = TranslateCoord((posX, posY), targetRes, TranslationMode.Decode)
 
 			obj = Circle((tposX, tposY), time)
 			circles.append(obj)

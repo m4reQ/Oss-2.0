@@ -4,10 +4,10 @@ if __name__ == "__main__":
 
 try:
 	from helper import exitAll, logError
-	from utils import color, translateCoord, FreeMem
+	from Utils.graphics import Color
 	from launcher import mainResManager, LauncherInfo, prefs, debugging
 	from GUIElements.pygameButton import Button
-	from GUIElements.pygameText import Text
+	from GUIElements.notification import Notification
 	import time
 	from game import Game
 	import pygame
@@ -21,7 +21,6 @@ if LauncherInfo.concurrencyAvailable:
 	import concurrent.futures
 
 Button.LoadFont("default", mainResManager.MainFont)
-Text.LoadFont("default", mainResManager.MainFont)
 
 class Menu():
 	fadeOutDuration = 1.0
@@ -41,35 +40,20 @@ class Menu():
 		self.exitButton = Button((25, self.height - 40, 170, 32), (156, 45, 119), self.Close, "Exit")
 		self.editorButton = Button((25, self.height - 120, 170, 32), (156, 45, 119), self.OpenEditor, "Maps editor")
 
-		self.startButton.activeColor = color.gray
-		self.exitButton.activeColor = color.gray
-		self.editorButton.activeColor = color.gray
+		self.startButton.activeColor = Color.Gray
+		self.exitButton.activeColor = Color.Gray
+		self.editorButton.activeColor = Color.Gray
 
 		self.startButton.colorOnHover = True
 		self.exitButton.colorOnHover = True
 		self.editorButton.colorOnHover = True
 
-		self.messageBox = Text((205, self.height - 40, self.width - 210, 32), "", bgColor=(200, 200, 200, 128))
-
 		pygame.display.set_caption("Oss! - Menu")
-
-	def Render(self):
-		self.DrawBackground()
-		self.DrawButtons()
-		self.DrawMessageBox()
-		self.DrawCursor()
-
-	def RenderConcurrently(self):
-		with concurrent.futures.ThreadPoolExecutor() as executor:
-			executor.submit(self.DrawBackground)
-			executor.submit(self.DrawButtons)
-			executor.submit(self.DrawMessageBox)
-			executor.submit(self.DrawCursor)
 
 	def Run(self):
 		while self.isRunning:
 			#event handling
-			start = time.time()
+			start = time.perf_counter() if LauncherInfo.timePerfCounterAvailable else time.time()
 			for event in pygame.event.get(): 
 				if event.type == pygame.MOUSEMOTION:
 					self.cursorPos = pygame.mouse.get_pos()
@@ -84,35 +68,36 @@ class Menu():
 						prefs.ExportToFile(prefs.PREFS_FILE)
 						if debugging:
 							print("[INFO]<{}> Saved user settings.".format(__name__))
-						self.messages.append("Saved user settings.")
+							self.AddMessage("Saved user settings")	
 					if event.key == prefs.keyBinds["debugGetPos"] and debugging:
 						pos = pygame.mouse.get_pos()
 						print('[INFO]<{}> Current mouse position: {}, mapped coords (current resolution): {}'.format(__name__, pos, (pos[0] / self.width, pos[1] / self.height)))
 					if event.key == prefs.keyBinds["debugUpdateWindow"] and debugging:
 						pygame.display.flip()
 
+			#update
 			self.startButton.Update()
 			self.exitButton.Update()
 			self.editorButton.Update()
-
-			if len(self.messages) != 0:
-				self.messageBox.text = str(self.messages[0])
+			for msg in self.messages:
+				msg.Update(self.frameTime)
+				if msg.dispose:
+					self.messages.remove(msg)
 
 			if self.game:
 				self.startButton.text = 'Game is currently running'
-				self.startButton.activeColor = color.red
-				self.startButton.inactiveColor = color.red
+				self.startButton.activeColor = Color.Red
+				self.startButton.inactiveColor = Color.Red
 
 			#render
-			if LauncherInfo.concurrencyAvailable: self.RenderConcurrently()
-			else: self.Render()
-
-			#update
+			self.DrawBackground()
+			self.DrawButtons()
+			self.DrawMessageBox()
+			self.DrawCursor()
 			pygame.display.flip()
 			
-			#always use vsync here because going on higher frame rate is unnecessary
-			time.sleep(1.0 / 60.0)
-			self.frameTime = time.time() - start
+			end = time.perf_counter() if LauncherInfo.timePerfCounterAvailable else time.time()
+			self.frameTime = end - start
 			self.time += self.frameTime
 		
 	def Close(self):
@@ -123,6 +108,9 @@ class Menu():
 
 	def OpenEditor(self):
 		Editor.Start(self.win, self)
+	
+	def AddMessage(self, message):
+		self.messages.append(Notification(pygame.Rect(205, self.height - 32, self.width - 205, 32), message, (128, 128, 128), (205, self.height + 32)))
 
 	def DrawCursor(self):
 		drawPos = (self.cursorPos[0] - mainResManager.GetTexture('cursor').Width / 2, self.cursorPos[1]- mainResManager.GetTexture('cursor').Height / 2)
@@ -137,5 +125,5 @@ class Menu():
 		self.editorButton.Render(self.win)
 	
 	def DrawMessageBox(self):
-		if self.messageBox.text != "":
-			self.messageBox.Render(self.win)
+		if len(self.messages) != 0:
+			self.messages[0].Render(self.win)

@@ -1,9 +1,5 @@
-try:
-	import os
-	import sys
-except ImportError:
-	print('Critical error! Cannot load os or sys module.')
-	exit()
+import os
+import sys
 
 #disable python warnings
 if not sys.warnoptions:
@@ -47,7 +43,9 @@ try:
 	from resourceManager import ResourceManager
 	from texture import Texture
 	from sound import Sound
-	from utils import resolutions, stats, ConvertImage, DimImage, FreeMem
+	from Utils.graphics import Resolutions, ConvertImage, DimImage
+	from Utils.memory import FreeMem
+	from Utils.game import Stats
 	from preferencies import Preferencies
 	import pygameWindow
 	from pygameWindow import WindowFlags
@@ -152,12 +150,12 @@ def InitPygame():
 def SetGameStats(ar, cs, hp):
 	try:
 		#clamp values
-		ar = stats.clamp(ar)
-		cs = stats.clamp(cs)
-		hp = stats.clamp(hp)
+		ar = Stats.Clamp(ar)
+		cs = Stats.Clamp(cs)
+		hp = Stats.Clamp(hp)
 
 		#convert stats to actual usable values
-		return (stats.getAR(ar), stats.getCS(cs), stats.getHP(hp))
+		return (Stats.GetAR(ar), Stats.GetCS(cs), Stats.GetHP(hp))
 	except Exception as e:
 		print("An error appeared during initializing game stats.")
 		if debugging:
@@ -389,7 +387,7 @@ def Start(debugMode):
 		FreeMem(debugging)
 		
 		os.system('pause >NUL')
-		quit()
+		sys.exit()
 
 	except Exception as e:
 		print('An error appeared. {}'.format(e))

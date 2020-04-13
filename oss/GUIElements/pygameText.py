@@ -26,7 +26,7 @@ class Text:
 		self.bgColor = bgColor
 		self.text = text
 		self.textColor = textColor
-		self.drawSurface = pygame.Surface((self.rect.width, self.rect.height))
+		self.drawSurface = pygame.Surface((self.rect.width, self.rect.height), pygame.HWSURFACE | pygame.SRCALPHA)
 		self.usedFont = "default"
 
 	def Render(self, surf):

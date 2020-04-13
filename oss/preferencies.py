@@ -2,7 +2,7 @@ if __name__ == "__main__":
     import sys
     sys.exit()
 
-from utils import resolutions
+from Utils.graphics import Resolutions
 import pygame
 import json
 
@@ -33,7 +33,7 @@ class Preferencies:
             self.lockMouse = False
             self.masterVolume = 0.75
             self.darkenPercent = 0.75
-            self.resolution = resolutions.SD
+            self.resolution = Resolutions.SD
             self.fullscreen = False
             self.borderless = True
             self.mouseVisible = False

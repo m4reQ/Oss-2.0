@@ -91,3 +91,37 @@ class Button:
 	@property
 	def HoverStateChanged(self):
 		return self.__hoverState != self.__previousHoverState
+
+class CloseButton(Button):
+	def __init__(self, rect, color, onClickFunc):
+		super().__init__(rect, color, onClickFunc)
+
+		self.__state = False
+		self.__previousState = False
+		self.__hoverState = False
+		self.__previousHoverState = False
+	
+	def Render(self, surf, pos=None, size=None):
+		if pos and size:
+			pygame.draw.aaline(surf, self.color, pos, (pos[0] + size[0], pos[1] + size[1]))
+			pygame.draw.aaline(surf, self.color, (pos[0], pos[1] + size[1]), (pos[0] + size[0], pos[1]))
+		else:
+			pygame.draw.aaline(surf, self.color, (self.rect.x, self.rect.y), (self.rect.x + self.rect.width, self.rect.y + self.rect.height))
+			pygame.draw.aaline(surf, self.color, (self.rect.x, self.rect.y + self.rect.width), (self.rect.x + self.rect.width, self.rect.y))
+	
+	def Update(self):
+		pos = pygame.mouse.get_pos()
+
+		if self.Collide(pos):
+			self.__hoverState = True
+		else:
+			self.__hoverState = False
+
+		if pygame.mouse.get_pressed()[0]:
+			if self.Collide(pos):
+				self.__state = True
+			else:
+				self.__state = False
+
+		if self.onClickFunc and self.__state != self.__previousState and self.__state:
+			self.onClickFunc()

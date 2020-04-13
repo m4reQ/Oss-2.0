@@ -2,23 +2,18 @@ if __name__ == '__main__':
 	import sys
 	sys.exit()
 
-try:
-	from helper import *
-	import pygame
-	from launcher import debugging, AR, HP, CS, mainResManager, LauncherInfo, prefs
-	from eventhandler import keyBindTable
-	import time
-	from utils import *
-	import time
-	import random
-	from eventhandler import EventHandler
-	from GameElements.circle import Circle
-	from GameElements.map import Map, EmptyMap
-except ImportError as e:
-	print(e)
-	logError(e)
-	exitAll()
-	
+import pygame
+from launcher import debugging, AR, HP, CS, mainResManager, LauncherInfo, prefs
+from eventhandler import EventHandler
+from Utils.memory import FreeMem
+from Utils.graphics import Color
+from Utils.game import Stats, GetPlayfield
+import time
+import random
+from eventhandler import EventHandler
+from GameElements.circle import Circle
+from GameElements.map import Map, EmptyMap
+
 #import cuncurrent.futures ONLY if it's available
 if LauncherInfo.concurrencyAvailable:
 	import concurrent.futures
@@ -44,7 +39,7 @@ class Game:
 		self.points = 0
 		self.combo = 0
 		self.maxhealth = 100
-		self.pointsColor = color.random()
+		self.pointsColor = Color.Random()
 		self.health = self.maxhealth
 		self.frameTime = 0.0
 		self.fps = 0.0
@@ -57,29 +52,6 @@ class Game:
 
 		#at the end of initialization trigger garbage collection
 		FreeMem(debugging, 'Started after-init garbage collection.')
-
-	def Render(self):
-		self.DrawPlayGround()
-		if self.draw_interface:
-			self.DrawCombo()
-			self.DrawHealthBar()
-			self.DrawPoints()
-			self.DrawClicksCounter()
-			if debugging:
-				self.DrawFPSCounter()
-		self.DrawCursor()
-
-	def RenderConcurrently(self):
-		with concurrent.futures.ThreadPoolExecutor() as executor:
-			executor.submit(self.DrawPlayGround)
-			if self.draw_interface:
-				executor.submit(self.DrawHealthBar)
-				executor.submit(self.DrawCombo)
-				executor.submit(self.DrawPoints)
-				executor.submit(self.DrawClicksCounter)
-				if debugging:
-					executor.submit(self.DrawFPSCounter)
-			executor.submit(self.DrawCursor)
 
 	def Run(self):
 		global debugging
@@ -94,6 +66,7 @@ class Game:
 		if self.map.loadSuccess == -1:
 			if debugging:
 				print('[ERROR]<{}> An error appeared during map loading.'.format(__name__))
+			self.menu.AddMessage("An error appeared during map loading.")
 			self.isRunning = False
 		
 		#free memory after map loading
@@ -126,9 +99,17 @@ class Game:
 			#NOTE!
 			#Don't put anything below this section
 			#it may cause glitches
-					
+			self.DrawPlayGround()
+			if self.draw_interface:
+				self.DrawCombo()
+				self.DrawHealthBar()
+				self.DrawPoints()
+				self.DrawClicksCounter()
+				if debugging:
+					self.DrawFPSCounter()
+			self.DrawCursor()
+
 			pygame.display.flip()
-			self.RenderConcurrently() if LauncherInfo.concurrencyAvailable else self.Render()
 
 			#calculate fps etc.
 			if prefs.useFpsCap:
@@ -194,7 +175,7 @@ class Game:
 	def DrawCombo(self):
 		font = mainResManager.GetFont("comicsansms_48")
 
-		rText = font.render('combo: {}'.format(self.combo), True, color.white)
+		rText = font.render('combo: {}'.format(self.combo), True, Color.White)
 
 		pos = (3, self.height - rText.get_height() - 3 - 12)
 		self.win.blit(rText, pos)
@@ -216,22 +197,22 @@ class Game:
 		barBgRect = pygame.Rect(pos, bgSize)
 
 		if self.health <= self.maxhealth / 5:
-			c = color.red
+			c = Color.Red
 		else:
-			c = color.green
+			c = Color.Green
 
-		pygame.draw.rect(self.win, color.gray, (pos, bgSize))
+		pygame.draw.rect(self.win, Color.Gray, (pos, bgSize))
 		pygame.draw.rect(self.win, c, (pos, barSize))
 
 		font = mainResManager.GetFont("comicsansms_24")
-		rText = font.render('Time: {}s'.format(round(self.time, 2)), True, color.white)
+		rText = font.render('Time: {}s'.format(round(self.time, 2)), True, Color.White)
 
 		self.win.blit(rText, (barBgRect.x, barBgRect.centery - rText.get_height() / 2))
 
 	def DrawClicksCounter(self):
 		font = mainResManager.GetFont("comicsansms_24")
-		rTextLeft = font.render(str(self.click_count[0]), True, color.white)
-		rTextRight = font.render(str(self.click_count[1]), True, color.white)
+		rTextLeft = font.render(str(self.click_count[0]), True, Color.White)
+		rTextRight = font.render(str(self.click_count[1]), True, Color.White)
 
 		leftPos = (self.width - rTextLeft.get_width() - 3, self.height / 2 - rTextLeft.get_height() / 2)
 		rightPos = (self.width - rTextRight.get_width() - 3, self.height / 2 + rTextRight.get_height() / 2)
@@ -242,7 +223,7 @@ class Game:
 	def DrawFPSCounter(self):
 		font = mainResManager.GetFont("comicsansms_12")
 		text = 'Frame time: {}ms | FPS: {}'.format(round(self.frameTime * 1000, 3), round(self.fps, 3))
-		rText = font.render(text, True, color.white)
+		rText = font.render(text, True, Color.White)
 		pos = (int(self.width - 38 * 6), self.height - rText.get_height() - 2)
 
 		self.win.blit(rText, pos)
