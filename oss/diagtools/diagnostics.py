@@ -1,3 +1,8 @@
+#WARNING
+#This module is quite old and probably could 
+#not work in 100% as it should be. Be careful
+#when using it.
+
 try:
     import os
     import sys
@@ -7,7 +12,6 @@ try:
     import pygame
 except ImportError as e:
     print(e)
-    os.system("pause")
 
 dir = os.getcwd()
 path = os.path.join(dir[:-10], 'oss')
@@ -77,7 +81,5 @@ def Gen_log():
             f.write('{}: {}\n'.format(key, val))
 
 if __name__ == '__main__':
-    #Gen_log()
-    #for now diaglog is not working so raise exception
-    raise Exception('Diaglog is not working in this build. It will be soon restored.')
-    exit()
+    Gen_log()
+    os.system("pause >NUL")
