@@ -3,8 +3,15 @@ if __name__ == "__main__":
 	sys.exit()
 
 import sys
-from PIL import Image
 import pygame
+try:
+	from PIL import Image
+except ImportError:
+	try:
+		import Image
+	except ImportError:
+		print("Cannot load resource manager.")
+		raise
 
 class ResourceManager(object):
 	def __init__(self, name, _id):

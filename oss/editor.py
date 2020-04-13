@@ -4,16 +4,15 @@ if __name__ == "__main__":
 
 try:
 	import pygame
-	from helper import logError, exitAll
 	from Utils.memory import FreeMem
 	from Utils.game import GetPlayfield
 	from Utils.graphics import Color, TranslateCoord, TranslationMode
 	import concurrent.futures
 	from launcher import debugging, mapsPath, CS, mainResManager, prefs
 	import time
-except ImportError as e:
-	logError(e)
-	exitAll()
+except ImportError:
+	print("Cannot import editor.")
+	raise
 
 #register files
 TIME_FILE = open(mapsPath + "editor/time.txt", 'w+')

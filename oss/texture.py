@@ -48,6 +48,10 @@ class Texture(object):
 	def SetAlpha(self, alpha):
 		self.tex.set_alpha(alpha)
 
+	def Color(self, r, g, b):
+		self.tex.fill((0, 0, 0, 255), None, pygame.BLEND_RGBA_MULT)
+		self.tex.fill((r, g, b, 0), None, pygame.BLEND_RGBA_ADD)
+
 	def Get(self):
 		return self.tex
 

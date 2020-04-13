@@ -2,18 +2,21 @@ if __name__ == '__main__':
 	import sys
 	sys.exit()
 
-import pygame
-from launcher import debugging, AR, HP, CS, mainResManager, LauncherInfo, prefs
-from eventhandler import EventHandler
-from Utils.memory import FreeMem
-from Utils.graphics import Color
-from Utils.game import Stats, GetPlayfield
-import time
-import random
-from eventhandler import EventHandler
-from GameElements.circle import Circle
-from GameElements.map import Map, EmptyMap
-
+try:
+	import pygame
+	from launcher import debugging, AR, HP, CS, mainResManager, LauncherInfo, prefs
+	from eventhandler import EventHandler
+	from Utils.memory import FreeMem
+	from Utils.graphics import Color
+	from Utils.game import Stats, GetPlayfield
+	import time
+	import random
+	from eventhandler import EventHandler
+	from GameElements.circle import Circle
+	from GameElements.map import Map, EmptyMap
+except ImportError:
+	print("Cannot load game.")
+	raise
 #import cuncurrent.futures ONLY if it's available
 if LauncherInfo.concurrencyAvailable:
 	import concurrent.futures

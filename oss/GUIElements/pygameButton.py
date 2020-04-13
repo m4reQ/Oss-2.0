@@ -12,7 +12,7 @@ class Button:
 	def LoadFont(cls, name, font):
 		cls.FONTS[name] = font
 
-	def __init__(self, rect, color, onClickFunc, text="", textColor=(255, 255, 255)):
+	def __init__(self, rect, color, onClickFunc, text="", textColor=(255, 255, 255), backgroundImg = None):
 		if isinstance(rect, pygame.Rect):
 			self.rect = rect
 		elif isinstance(rect, tuple):
@@ -30,6 +30,7 @@ class Button:
 		self.textColor = textColor
 		self.usedFont = "default"
 		self.textCentered = True
+		self.backgroundImg = backgroundImg
 
 		self.colorOnHover = False
 
@@ -39,15 +40,20 @@ class Button:
 		self.__previousHoverState = False
 
 	def Render(self, surf):
-		pygame.draw.rect(surf, self.color, self.rect)
-		rText = Button.FONTS[self.usedFont].render(self.text, True, self.textColor)
-
-		if self.textCentered:
-			pos = (self.rect.centerx - rText.get_width() / 2, self.rect.centery - rText.get_height() / 2)
+		if self.backgroundImg:
+			surf.blit(self.backgroundImg, (self.rect.x, self.rect.y))
 		else:
-			pos = (self.rect.left, self.rect.centery - rText.get_height() / 2)
+			pygame.draw.rect(surf, self.color, self.rect)
+		
+		if self.text != "":
+			rText = Button.FONTS[self.usedFont].render(self.text, True, self.textColor)
 
-		surf.blit(rText, pos)
+			if self.textCentered:
+				pos = (self.rect.centerx - rText.get_width() / 2, self.rect.centery - rText.get_height() / 2)
+			else:
+				pos = (self.rect.left, self.rect.centery - rText.get_height() / 2)
+
+			surf.blit(rText, pos)
 
 	def Update(self):
 		self.color = self.inactiveColor

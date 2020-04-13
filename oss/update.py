@@ -1,6 +1,5 @@
 import os
 import sys
-from helper import ask, logError, exitAll
 import requests
 
 directory = os.getcwd()

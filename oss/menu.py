@@ -3,7 +3,6 @@ if __name__ == "__main__":
 	sys.exit()
 
 try:
-	from helper import exitAll, logError
 	from Utils.graphics import Color
 	from launcher import mainResManager, LauncherInfo, prefs, debugging
 	from GUIElements.pygameButton import Button
@@ -39,6 +38,7 @@ class Menu():
 		self.startButton = Button((25, self.height - 80, 170, 32), (156, 45, 119), self.Start, "Start new game!")
 		self.exitButton = Button((25, self.height - 40, 170, 32), (156, 45, 119), self.Close, "Exit")
 		self.editorButton = Button((25, self.height - 120, 170, 32), (156, 45, 119), self.OpenEditor, "Maps editor")
+		self.settingsButton = Button((25, 25, 48, 48), (0, 0, 0), self.OpenSettings, backgroundImg=mainResManager.GetTexture("setsIcn").Get())
 
 		self.startButton.activeColor = Color.Gray
 		self.exitButton.activeColor = Color.Gray
@@ -48,6 +48,7 @@ class Menu():
 		self.exitButton.colorOnHover = True
 		self.editorButton.colorOnHover = True
 
+		self.AddMessage("Welcome to Oss!")
 		pygame.display.set_caption("Oss! - Menu")
 
 	def Run(self):
@@ -68,7 +69,7 @@ class Menu():
 						prefs.ExportToFile(prefs.PREFS_FILE)
 						if debugging:
 							print("[INFO]<{}> Saved user settings.".format(__name__))
-							self.AddMessage("Saved user settings")	
+						self.AddMessage("Saved user settings")	
 					if event.key == prefs.keyBinds["debugGetPos"] and debugging:
 						pos = pygame.mouse.get_pos()
 						print('[INFO]<{}> Current mouse position: {}, mapped coords (current resolution): {}'.format(__name__, pos, (pos[0] / self.width, pos[1] / self.height)))
@@ -79,6 +80,7 @@ class Menu():
 			self.startButton.Update()
 			self.exitButton.Update()
 			self.editorButton.Update()
+			self.settingsButton.Update()
 			for msg in self.messages:
 				msg.Update(self.frameTime)
 				if msg.dispose:
@@ -109,6 +111,9 @@ class Menu():
 	def OpenEditor(self):
 		Editor.Start(self.win, self)
 	
+	def OpenSettings(self):
+		self.AddMessage("Not working yet...")
+	
 	def AddMessage(self, message):
 		self.messages.append(Notification(pygame.Rect(205, self.height - 32, self.width - 205, 32), message, (128, 128, 128), (205, self.height + 32)))
 
@@ -123,6 +128,7 @@ class Menu():
 		self.startButton.Render(self.win)
 		self.exitButton.Render(self.win)
 		self.editorButton.Render(self.win)
+		self.settingsButton.Render(self.win)
 	
 	def DrawMessageBox(self):
 		if len(self.messages) != 0:

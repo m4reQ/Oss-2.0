@@ -17,7 +17,7 @@ try:
 	import pygame
 	sys.stdout = oldStdout
 except ImportError:
-	print("Cannot import pygame!")
+	print("Cannot import pygame.")
 
 #create launcher infos to allow backward compatibility
 #assume user uses python 3.x
@@ -38,7 +38,6 @@ if not 'perf_counter' in dir(time):
 
 #import internal modules
 try:
-	from helper import ask
 	import repair
 	from resourceManager import ResourceManager
 	from texture import Texture
@@ -46,6 +45,7 @@ try:
 	from Utils.graphics import Resolutions, ConvertImage, DimImage
 	from Utils.memory import FreeMem
 	from Utils.game import Stats
+	from Utils.other import Ask
 	from preferencies import Preferencies
 	import pygameWindow
 	from pygameWindow import WindowFlags
@@ -65,7 +65,7 @@ except ImportError as e:
 	print('Error! One of modules cannot be resolved.')
 
 	if repair.CheckResponse():
-		if ask("Do you want to launch the repair module?"):
+		if Ask("Do you want to launch the repair module?"):
 			repair.InstallPackages()
 	else:
 		raise Exception('Error! Cannot use repair module.')
@@ -238,6 +238,10 @@ def LoadInterfaceTextures():
 	miss.Scale(16 * scale)
 	mainResManager.AddTexture("miss", miss)
 
+	setsIcn = Texture(texPath + 'settingsIcon.png')
+	setsIcn.Scale(48 * scale)
+	mainResManager.AddTexture('setsIcn', setsIcn)
+
 def LoadBackgroundTextures():
 	#get names and number of files in backgrounds directory
 	filenames = [name for name in os.listdir(os.path.join(texPath, 'backgrounds')) if os.path.isfile(os.path.join(texPath, 'backgrounds', name))]
@@ -313,7 +317,9 @@ def Start(debugMode):
 
 	global initialized
 	if initialized:
-		raise Exception("Error! Program is already initialized.")
+		print("Error. Program already initialized.")
+		os.system("pause >NUL")
+		sys.exit()
 
 	#if perf_counter() is unavailable use less precise time.time() method
 	start = time.perf_counter() if LauncherInfo.timePerfCounterAvailable else time.time()
@@ -363,9 +369,6 @@ def Start(debugMode):
 	FreeMem(debugging)
 
 	try:
-		if not debugging:
-			update.Check_version()
-
 		if debugging:
 			print('[INFO]<{}> Program loaded in {} seconds.'.format(__name__, ((time.perf_counter() if LauncherInfo.timePerfCounterAvailable else time.time()) - start)))
 

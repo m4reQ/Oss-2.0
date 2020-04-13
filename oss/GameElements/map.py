@@ -1,7 +1,6 @@
 if __name__ == '__main__':
 	quit()
 
-from helper import logError, exitAll
 from Utils.graphics import TranslateCoord, TranslationMode
 from Utils.game import GetMaxPoints
 from launcher import debugging

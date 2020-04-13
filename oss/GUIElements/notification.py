@@ -5,8 +5,8 @@ from launcher import prefs
 import pygame
 
 class Notification:
-	flyInDuration = 0.5
-	flyOutDuration = 0.5
+	flyInDuration = 0.35
+	flyOutDuration = 0.35
 
 	class AnimationDirection:
 		Up, Down, Left, Right = range(4)

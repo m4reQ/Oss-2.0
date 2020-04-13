@@ -3,9 +3,14 @@ import sys
 import launcher
 
 if __name__ == '__main__':
-	launcher.Start(False)
+	try:
+		launcher.Start(True)
+	except Exception as e:
+		print("Error: {}".format(e))
+		raise
+
 else:
-	raise Exception('[ERROR] Tried to access main launch method from external module.')
+	raise RuntimeError('Error. Tried to access main launch method from external module.')
 
 os.system('pause >NUL')
 sys.exit()
