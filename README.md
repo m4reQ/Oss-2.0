@@ -4,9 +4,11 @@ A for-fun rework of popular rhythm game: Osu!.
 Requirements:  
 - python 3.4 or newer  
 - pip library  
+- git  
 
 python download: https://www.python.org/downloads/  
 pip download:    https://pip.pypa.io/en/stable/installing/  
+git download:    https://git-scm.com/download/win  
 
 ## FAQ
 > *Why my Oss! doesn't work?*  
