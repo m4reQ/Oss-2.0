@@ -114,3 +114,7 @@ maps/
 
 #VS code
 .vscode
+
+#archives
+*.zip
+*.rar
