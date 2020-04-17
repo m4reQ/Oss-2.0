@@ -118,3 +118,6 @@ maps/
 #archives
 *.zip
 *.rar
+
+#installer files
+Installer
