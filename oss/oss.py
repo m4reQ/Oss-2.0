@@ -1,9 +1,9 @@
 import os
 import sys
-import launcher
 
 if __name__ == '__main__':
 	try:
+		import launcher
 		launcher.Start(False)
 	except Exception as e:
 		print("Error: {}".format(e))

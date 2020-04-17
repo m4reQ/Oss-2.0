@@ -16,7 +16,7 @@ try:
 	sys.stdout = open(os.devnull, 'w')
 	import pygame
 	sys.stdout = oldStdout
-except ImportError:
+except (ImportError, ModuleNotFoundError):
 	print("Cannot import pygame.")
 
 #create launcher infos to allow backward compatibility
@@ -28,13 +28,33 @@ class LauncherInfo:
 #check if python supports modern concurrent execution
 try:
 	import concurrent.futures
-except ImportError:
+except (ImportError, ModuleNotFoundError):
 	LauncherInfo.concurrencyAvailable = False
 
 #check if time module has function perf_counter
 import time
 if not 'perf_counter' in dir(time):
 	LauncherInfo.timePerfCounterAvailable = False
+
+#import external modules
+try:
+	import pygame
+	import PIL
+	import requests
+	import wmi
+	import pywin
+except (ImportError, ModuleNotFoundError):
+	import repair
+	from Utils.other import Ask
+	print('Error! One of modules cannot be resolved.')
+
+	if repair.CheckResponse():
+		if Ask("Do you want to launch the repair module?"):
+			repair.InstallPackages()
+	else:
+		raise Exception('Error! Cannot use repair module.')
+	
+	raise
 
 #import internal modules
 try:
@@ -52,24 +72,6 @@ try:
 	import update
 except ImportError:
 	print("Error during importing internal modules")
-	raise
-
-#import external modules
-try:
-	import pygame
-	import PIL
-	import requests
-	import wmi
-	import pywin
-except ImportError as e:
-	print('Error! One of modules cannot be resolved.')
-
-	if repair.CheckResponse():
-		if Ask("Do you want to launch the repair module?"):
-			repair.InstallPackages()
-	else:
-		raise Exception('Error! Cannot use repair module.')
-	
 	raise
 
 #check maps folder
