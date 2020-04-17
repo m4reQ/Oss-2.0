@@ -21,6 +21,6 @@ python upgrade to newest version should fix the issue.
   
 > *Where is my Oss! installed?*  
 
-It's actually not that easy (I'm working on this) to get into Oss  
-installation directory. It's localized in AppData\Roaming in folder  
-called Oss.
+It's actually not that easy (I'm working on this) to get into Oss
+installation directory. It's localized in AppData\Roaming in folder
+called Oss.  
