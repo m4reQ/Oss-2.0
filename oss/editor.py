@@ -4,7 +4,7 @@ if __name__ == "__main__":
 
 try:
 	import pygame
-	from Utils.memory import FreeMem
+	from Utils.performance import FreeMem
 	from Utils.game import GetPlayfield
 	from Utils.graphics import Color, TranslateCoord, TranslationMode
 	import concurrent.futures

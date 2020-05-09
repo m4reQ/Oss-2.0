@@ -4,11 +4,15 @@ if __name__ == '__main__':
 
 try:
 	import pygame
-	from launcher import debugging, AR, HP, CS, mainResManager, LauncherInfo, prefs
+	from launcher import debugging, AR, HP, CS, mainResManager, prefs
 	from eventhandler import EventHandler
-	from Utils.memory import FreeMem
+	from Utils.performance import FreeMem, Profiler
 	from Utils.graphics import Color
 	from Utils.game import Stats, GetPlayfield
+	try:
+		from time import perf_counter as timer
+	except (ImportError, ModuleNotFoundError):
+		from time import time as timer
 	import time
 	import random
 	from eventhandler import EventHandler
@@ -17,9 +21,6 @@ try:
 except ImportError:
 	print("Cannot load game.")
 	raise
-#import cuncurrent.futures ONLY if it's available
-if LauncherInfo.concurrencyAvailable:
-	import concurrent.futures
 
 class Game:
 	@classmethod
@@ -44,21 +45,32 @@ class Game:
 		self.maxhealth = 100
 		self.pointsColor = Color.Random()
 		self.health = self.maxhealth
-		self.frameTime = 0.0
-		self.fps = 0.0
-		self.time = 0.0
-		self.time_ms = 0
+
+		self.eventHandler = EventHandler(self)
+		
 		self.draw_interface = True
 		self.toUpdate = []
 		self.backgroundName = 'bg_' + str(random.randint(0, 6))
 		self.events = pygame.event.get()
 
+		self.frameTime = 0.0
+		self.updateTime = 0.0
+		self.renderTime = 0.0
+		self.eventHandlingTime = 0.0
+
+		self.fps = 0.0
+		self.time = 0.0
+		self.time_ms = 0
+		
+		self.profiler = None
+		if debugging:
+			self.profiling = False
+			self.profiler = Profiler()
+
 		#at the end of initialization trigger garbage collection
 		FreeMem(debugging, 'Started after-init garbage collection.')
 
 	def Run(self):
-		global debugging
-		
 		if not prefs.autoGenerate:
 			Map.resolution = (self.width, self.height)
 			self.map = Map('Resources/maps/test.txt')
@@ -72,15 +84,16 @@ class Game:
 			self.menu.AddMessage("An error appeared during map loading.")
 			self.isRunning = False
 		
+		if prefs.useNewFpsCounter:
+			print('[WARNING]<{}> Using new style fps counter. This can drastically decrease performance.'.format(__name__))
+		
 		#free memory after map loading
 		FreeMem(debugging, 'Started after map loading garbage collection.')
 
 		while self.isRunning:
-			if LauncherInfo.timePerfCounterAvailable:
-				start = time.perf_counter()
-			else:
-				start = time.time()
+			frameTimeStart = timer()
 			
+			eventTimeStart = timer()
 			self.events = pygame.event.get()
 
 			#event handling
@@ -89,19 +102,26 @@ class Game:
 					self.cursorPos = pygame.mouse.get_pos()
 
 				if event.type == pygame.KEYDOWN:
-					EventHandler.HandleKeys(self, event)
+					self.eventHandler.HandleKeys(event)
+				
+				if event.type == pygame.MOUSEBUTTONDOWN:
+					self.eventHandler.HandleMouse(event)
 
-				EventHandler.HandleEvents(self, event)
+				self.eventHandler.HandleEvents(event)
 
-			EventHandler.HandleInternalEvents(self)
+			self.eventHandler.HandleInternalEvents()
 
 			self.health -= HP * self.frameTime * 79.2 #constant to compensate FPS multiplication
 
+			self.eventHandlingTime = timer() - eventTimeStart
+
+			
 			#render
 			#drawing section
 			#NOTE!
 			#Don't put anything below this section
 			#it may cause glitches
+			renderTimeStart = timer()
 			self.DrawPlayGround()
 			if self.draw_interface:
 				self.DrawCombo()
@@ -109,23 +129,33 @@ class Game:
 				self.DrawPoints()
 				self.DrawClicksCounter()
 				if debugging:
-					self.DrawFPSCounter()
+					if prefs.useNewFpsCounter:
+						self.DrawNewFPSCounter()
+					else:
+				 		self.DrawFPSCounter()
 			self.DrawCursor()
 
+			self.renderTime = timer() - renderTimeStart
+
+			updateTimeStart = timer()
+
 			pygame.display.flip()
+
+			self.updateTime = timer() - updateTimeStart
 
 			#calculate fps etc.
 			if prefs.useFpsCap:
 				time.sleep(1.0 / 120.0)
 
-			if LauncherInfo.timePerfCounterAvailable:
-				self.frameTime = time.perf_counter() - start
-			else:
-				self.frameTime = time.time() - start
+			self.frameTime = timer() - frameTimeStart
 
 			self.fps = float(1.0 / self.frameTime)
 			self.time += self.frameTime
 			self.time_ms += self.frameTime * 1000
+
+			#debug only code idk if this should be in release
+			if self.profiler and self.profiling:
+				self.profiler.Profile(self.frameTime)
 		
 		#close if game has ended
 		self.Close()
@@ -143,6 +173,10 @@ class Game:
 		Circle.background_count = 0
 
 		FreeMem(debugging, 'Started onclose garbage collection.')
+
+		if getattr(self.profiler, "used", False):
+			print(self.profiler.GetProfileData())
+			self.profiler.SaveProfileData("perfLog.txt")
 
 	def DrawPlayGround(self):
 		self.win.blit(mainResManager.GetTexture(self.backgroundName).Get(), (0, 0))
@@ -165,8 +199,8 @@ class Game:
 					if event.type == pygame.KEYDOWN:
 						if event.key == prefs.keyBinds['kl'] or event.key == prefs.keyBinds['kr']:
 							topCircle.Collide(self, self.cursorPos)
-
-					if event.type == pygame.MOUSEBUTTONDOWN:
+					
+					if event.type == pygame.MOUSEBUTTONDOWN and not prefs.mouseButtonsDisable:
 						EventHandler.HandleMouse(self, event)
 						topCircle.Collide(self, self.cursorPos)
 			elif self.time_ms > circle.endTime:
@@ -225,8 +259,48 @@ class Game:
 
 	def DrawFPSCounter(self):
 		font = mainResManager.GetFont("comicsansms_12")
-		text = 'Frame time: {}ms | FPS: {}'.format(round(self.frameTime * 1000, 3), round(self.fps, 3))
+		text = 'Frame time: {0:.2f}ms'.format(self.frameTime * 1000)
 		rText = font.render(text, True, Color.White)
-		pos = (int(self.width - 38 * 6), self.height - rText.get_height() - 2)
+		pos = (int(self.width - rText.get_width() - 1), self.height - rText.get_height() - 2)
 
 		self.win.blit(rText, pos)
+
+	def DrawNewFPSCounter(self):
+		font = mainResManager.GetFont("comicsansms_10")
+		
+		textOffset = 0
+
+		frameText = "FrameTime: {0:.2f}ms".format(self.frameTime * 1000)
+		renderText = "Render: {0:.2f}ms".format(self.renderTime * 1000)
+		updateText = "Update: {0:.2f}ms".format(self.updateTime * 1000)
+		eventText = "Event: {0:.2f}ms".format(self.eventHandlingTime * 1000)
+
+		font.set_bold(True)
+		rFrameText = font.render(frameText, True, Color.White)
+		font.set_bold(False)
+		rRenderText = font.render(renderText, True, Color.White)
+		rUpdateText = font.render(updateText, True, Color.White)
+		rEventText = font.render(eventText, True, Color.White)
+
+		surfWidth = 115
+		surfHeight = rFrameText.get_height() + rRenderText.get_height() + rUpdateText.get_height() + rEventText.get_height() + 19
+
+		textSurface = pygame.Surface((surfWidth, surfHeight), pygame.SRCALPHA).convert()
+		textSurface.set_colorkey((0, 0, 0))
+		
+		textSurface.blit(rFrameText, (0, textOffset))
+		textOffset += rFrameText.get_height() + 1
+		textSurface.blit(rRenderText, (0, textOffset))
+		textOffset += rRenderText.get_height() + 1
+		textSurface.blit(rUpdateText, (0, textOffset))
+		textOffset += rUpdateText.get_height() + 1
+		textSurface.blit(rEventText, (0, textOffset))
+		textOffset += rEventText.get_height() + 1
+
+		if self.profiling:
+			font.set_bold(True)
+			rText = font.render("[PROFILING]", True, Color.Yellow)
+			font.set_bold(False)
+			textSurface.blit(rText, (0, textOffset))
+
+		self.win.blit(textSurface, (self.width - textSurface.get_width(), self.height / 10))

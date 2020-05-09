@@ -1,3 +1,11 @@
+#if it's available use most accurate time measurement
+try:
+	from time import perf_counter as timer
+except (ImportError, ModuleNotFoundError):
+	from time import time as timer
+	
+start = timer()
+
 import os
 import sys
 
@@ -19,23 +27,6 @@ try:
 except (ImportError, ModuleNotFoundError):
 	print("Cannot import pygame.")
 
-#create launcher infos to allow backward compatibility
-#assume user uses python 3.x
-class LauncherInfo:
-	concurrencyAvailable = True
-	timePerfCounterAvailable = True
-
-#check if python supports modern concurrent execution
-try:
-	import concurrent.futures
-except (ImportError, ModuleNotFoundError):
-	LauncherInfo.concurrencyAvailable = False
-
-#check if time module has function perf_counter
-import time
-if not 'perf_counter' in dir(time):
-	LauncherInfo.timePerfCounterAvailable = False
-
 #import external modules
 try:
 	import pygame
@@ -43,6 +34,7 @@ try:
 	import requests
 	import wmi
 	import pywin
+	import threading
 except (ImportError, ModuleNotFoundError):
 	import repair
 	from Utils.other import Ask
@@ -62,8 +54,8 @@ try:
 	from resourceManager import ResourceManager
 	from texture import Texture
 	from sound import Sound
-	from Utils.graphics import Resolutions, ConvertImage, DimImage
-	from Utils.memory import FreeMem
+	from Utils.graphics import Resolutions, ConvertImage, DimImage, GetScale, GetScalingFactor
+	from Utils.performance import FreeMem, TimedGarbageCollect, StopGCThreads
 	from Utils.game import Stats
 	from Utils.other import Ask
 	from preferencies import Preferencies
@@ -124,9 +116,6 @@ mainResManager = ResourceManager("mainManager", 0)
 #game window
 mainWindow = None
 
-#indicates if program is already initialized
-initialized = False
-
 def LoadPreferencies():
 	try:
 		global prefs
@@ -140,8 +129,8 @@ def LoadPreferencies():
 
 def InitPygame():
 	try:
-		pygame.mixer.pre_init(22050, -16, 2, 512)
-		pygame.mixer.init()
+		pygame.mixer.pre_init(22050, 16, 2, 512)
+		pygame.mixer.init(allowedchanges=pygame.AUDIO_ALLOW_ANY_CHANGE)
 		pygame.init()
 	except Exception as e:
 		print("An error appeared during pygame initialization.")
@@ -195,15 +184,17 @@ def InitializeWindow(width, height):
 
 def LoadTextures():
 	try:
-		if LauncherInfo.concurrencyAvailable:
-			with concurrent.futures.ThreadPoolExecutor() as executor:
-				executor.submit(LoadBackgroundTextures)
-				executor.submit(LoadCircleTextures)
-				executor.submit(LoadInterfaceTextures)
-		else:
-			LoadBackgroundTextures()
-			LoadCircleTextures()
-			LoadInterfaceTextures()
+		texLoadThreads = [
+			threading.Thread(name="BgTexLoadThread", target=LoadBackgroundTextures),
+			threading.Thread(name="CircleTexLoadThread", target=LoadCircleTextures),
+			threading.Thread(name="InterfaceTexLoadThread", target=LoadInterfaceTextures)]
+
+		for thread in texLoadThreads:
+			thread.start()
+		
+		for thread in texLoadThreads:
+			thread.join()
+
 	except Exception as e:
 		print("An error appeared during textures loading.")
 		if debugging:
@@ -267,15 +258,9 @@ def LoadBackgroundTextures():
 	if debugging:
 		print('[INFO]<{}> Processing background images...'.format(__name__))
 
-	if LauncherInfo.concurrencyAvailable:
-		with concurrent.futures.ThreadPoolExecutor() as executor:
-			for idx, tex in enumerate(jpgNames):
-				if not tex in pngNames:
-					executor.submit(ConvertImage, jpgs[idx])
-	else:
-		for idx, tex in enumerate(jpgNames):
-			if not tex in pngNames:
-				ConvertImage(jpgs[idx])
+	for idx, tex in enumerate(jpgNames):
+		if not tex in pngNames:
+			threading.Thread(target=ConvertImage, args=(jpgs[idx],)).start()
 
 	if debugging:
 		print('[INFO]<{}> Background images processing done.'.format(__name__))
@@ -318,31 +303,25 @@ def Start(debugMode):
 	global debugging
 	debugging = debugMode
 
-	global initialized
-	if initialized:
-		print("Error. Program already initialized.")
-		os.system("pause >NUL")
-		sys.exit()
-
-	#if perf_counter() is unavailable use less precise time.time() method
-	start = time.perf_counter() if LauncherInfo.timePerfCounterAvailable else time.time()
-
 	#load prefs
 	LoadPreferencies()
 
-	print('Initiaizing oss!')
+	#set scaling factor (for now doesn't work)
+	global scale
+	scale = GetScalingFactor(GetScale(prefs.resolution[0], prefs.resolution[1]))
+	if scale != 1:
+		scale = 1
 
-	if debugging:
-		if LauncherInfo.concurrencyAvailable:
-			print('[INFO]<{}> Initialization started using multithereading.'.format(__name__))
-		else:
-			print('[INFO]<{}> Initialization started using singlethreading.'.format(__name__))
+	print('Initiaizing oss!')
 
 	#initialize pygame
 	InitPygame()
 
 	if prefs.lockMouse:
 		pygame.event.set_grab(True)
+
+	#set used SDL events
+	pygame.event.set_allowed([pygame.QUIT, pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN, pygame.MOUSEMOTION])
 
 	#set game stats (AR, CS, HP)
 	global AR, CS, HP
@@ -355,12 +334,13 @@ def Start(debugMode):
 	#initialize resources
 	LoadTextures()
 	LoadSounds()
-	mainFont = pygame.font.SysFont('comicsansms', 22)
+	mainFont = pygame.font.SysFont('comicsansms', 22 * scale)
 	mainResManager.AddMainFont(mainFont)
-	mainResManager.AddFont("comicsansms_48", pygame.font.SysFont('comicsansms', 48))
-	mainResManager.AddFont("comicsansms_24", pygame.font.SysFont('comicsansms', 24))
-	mainResManager.AddFont("comicsansms_18", pygame.font.SysFont('comicsansms', 18))
-	mainResManager.AddFont("comicsansms_12", pygame.font.SysFont('comicsansms', 12))
+	mainResManager.AddFont("comicsansms_48", pygame.font.SysFont('comicsansms', 48 * scale))
+	mainResManager.AddFont("comicsansms_24", pygame.font.SysFont('comicsansms', 24 * scale))
+	mainResManager.AddFont("comicsansms_18", pygame.font.SysFont('comicsansms', 18 * scale))
+	mainResManager.AddFont("comicsansms_12", pygame.font.SysFont('comicsansms', 12 * scale))
+	mainResManager.AddFont("comicsansms_10", pygame.font.SysFont("comicsansms", 10 * scale))
 
 	if debugging:
 		print("[INFO]<{}> Initialized resources. Memory reserved: {}kb. (approx.)".format(__name__, mainResManager.Size / 1000.0))
@@ -373,7 +353,7 @@ def Start(debugMode):
 
 	try:
 		if debugging:
-			print('[INFO]<{}> Program loaded in {} seconds.'.format(__name__, ((time.perf_counter() if LauncherInfo.timePerfCounterAvailable else time.time()) - start)))
+			print('[INFO]<{}> Program loaded in {} seconds.'.format(__name__, timer() - start))
 
 		initialized = True
 
@@ -391,6 +371,7 @@ def Start(debugMode):
 		pygame.quit()
 
 		FreeMem(debugging)
+		StopGCThreads()
 		
 		os.system('pause >NUL')
 		sys.exit()

@@ -8,8 +8,11 @@ import os
 import random
 import ctypes
 from .math import Clamp
+import math
 
-user32 = ctypes.windll.user32
+__user32 = ctypes.windll.user32
+
+STANDARD_RESOLUTION = (640, 480)
 
 def ConvertImage(filepath):
 	"""
@@ -88,6 +91,12 @@ def IsPartiallyVisible(rect, winSize):
 
 	return winRect.colliderect(rect)
 
+def GetScale(width, height):
+	return (width / STANDARD_RESOLUTION[0], height / STANDARD_RESOLUTION[1])
+
+def GetScalingFactor(scale):
+	return math.ceil((scale[0] + scale[1]) / 2)
+
 class Color():
 	Red = (255,0,0)
 	Green = (0,255,0)
@@ -126,7 +135,7 @@ class Resolutions():
 		Uses the native display resolution.
 		:returns: tuple(int, int)
 		"""
-		return (user32.GetSystemMetrics(0), user32.GetSystemMetrics(1))
+		return (__user32.GetSystemMetrics(0), __user32.GetSystemMetrics(1))
 
 	@staticmethod
 	def User(width=0, height=0):

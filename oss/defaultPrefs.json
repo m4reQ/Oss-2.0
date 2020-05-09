@@ -7,6 +7,7 @@
     "interfaceEnabled": true,
     "keyBinds": {
         "debugGetPos": 282,
+        "debugProfile": 92,
         "debugUpdateWindow": 96,
         "hideInterface": 291,
         "kl": 122,
@@ -15,10 +16,12 @@
     },
     "lockMouse": false,
     "masterVolume": 0.75,
+    "mouseButtonsDisable": false,
     "mouseVisible": false,
     "resolution": [
         640,
         480
     ],
-    "useFpsCap": false
+    "useFpsCap": false,
+    "useNewFpsCounter": false
 }
