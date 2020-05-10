@@ -6,9 +6,14 @@ try:
 	import pygame
 	from launcher import debugging, AR, HP, CS, mainResManager, prefs
 	from eventhandler import EventHandler
-	from Utils.performance import FreeMem, Profiler
+	from Utils.performance import FreeMem, Profiler, RenderStats
 	from Utils.graphics import Color
 	from Utils.game import Stats, GetPlayfield
+	from GUIElements.GameGUI.fpsCounter import *
+	from GUIElements.GameGUI.healthBar import *
+	from GUIElements.GameGUI.pointsCounter import *
+	from GUIElements.GameGUI.comboCounter import *
+	from GUIElements.GameGUI.clicksCounter import *
 	try:
 		from time import perf_counter as timer
 	except (ImportError, ModuleNotFoundError):
@@ -42,9 +47,8 @@ class Game:
 		self.playfield = GetPlayfield(self.width, self.height, CS)
 		self.points = 0
 		self.combo = 0
-		self.maxhealth = 100
-		self.pointsColor = Color.Random()
-		self.health = self.maxhealth
+		self.maxHealth = 100
+		self.health = self.maxHealth
 
 		self.eventHandler = EventHandler(self)
 		
@@ -53,12 +57,21 @@ class Game:
 		self.backgroundName = 'bg_' + str(random.randint(0, 6))
 		self.events = pygame.event.get()
 
-		self.frameTime = 0.0
-		self.updateTime = 0.0
-		self.renderTime = 0.0
-		self.eventHandlingTime = 0.0
+		self.renderStats = RenderStats()
 
-		self.fps = 0.0
+		self.clock = pygame.time.Clock()
+
+		#GUI elements
+		if prefs.useNewFpsCounter:
+			self.fpsCounter = NewStyleFpsCounter(mainResManager.GetFont("comicsansms_10"), (self.width - 2, 27), (113, 110))
+			print('[WARNING]<{}> Using new style fps counter. This may decrease performance.'.format(__name__))
+		else:
+			self.fpsCounter = FpsCounter(mainResManager.GetFont("comicsansms_12"), (self.width - 2, self.height - 2))
+		self.healthBar = HealthBar(mainResManager.GetFont("comicsansms_22"), (self.width / 10, 0), (self.width - (2 * self.width / 10), 25))
+		self.pointsText = PointsCounter(mainResManager.GetFont("comicsansms_48"), (self.width - 2, self.height - 14))
+		self.comboText = ComboCounter(mainResManager.GetFont("comicsansms_48"), (2, self.height - 14))
+		self.clicksText = ClicksCounter(mainResManager.GetFont("comicsansms_21"), (self.width - 2, self.height / 2))
+
 		self.time = 0.0
 		self.time_ms = 0
 		
@@ -83,14 +96,13 @@ class Game:
 				print('[ERROR]<{}> An error appeared during map loading.'.format(__name__))
 			self.menu.AddMessage("An error appeared during map loading.")
 			self.isRunning = False
-		
-		if prefs.useNewFpsCounter:
-			print('[WARNING]<{}> Using new style fps counter. This can drastically decrease performance.'.format(__name__))
-		
+
 		#free memory after map loading
 		FreeMem(debugging, 'Started after map loading garbage collection.')
 
 		while self.isRunning:
+			self.renderStats.Reset()
+
 			frameTimeStart = timer()
 			
 			eventTimeStart = timer()
@@ -111,51 +123,50 @@ class Game:
 
 			self.eventHandler.HandleInternalEvents()
 
-			self.health -= HP * self.frameTime * 79.2 #constant to compensate FPS multiplication
+			self.health -= HP * self.renderStats.frameTime * 79.2
 
-			self.eventHandlingTime = timer() - eventTimeStart
+			#get total blits count
+			self.renderStats.blitCount += self.pointsText.blitsRequired + self.comboText.blitsRequired + self.fpsCounter.blitsRequired + self.healthBar.blitsRequired + self.clicksText.blitsRequired
+			if self.profiling:
+				self.renderStats.blitCount += 1
 
-			
+			self.renderStats.eventHandlingTime = timer() - eventTimeStart
+
 			#render
 			#drawing section
 			#NOTE!
 			#Don't put anything below this section
 			#it may cause glitches
 			renderTimeStart = timer()
+			playgroundTimeStart = timer()
 			self.DrawPlayGround()
+			self.renderStats.playgroundDrawTime = timer() - playgroundTimeStart
 			if self.draw_interface:
-				self.DrawCombo()
-				self.DrawHealthBar()
-				self.DrawPoints()
-				self.DrawClicksCounter()
-				if debugging:
-					if prefs.useNewFpsCounter:
-						self.DrawNewFPSCounter()
-					else:
-				 		self.DrawFPSCounter()
+				self.DrawGui()
 			self.DrawCursor()
 
-			self.renderTime = timer() - renderTimeStart
+			self.renderStats.renderTime = timer() - renderTimeStart
 
 			updateTimeStart = timer()
 
 			pygame.display.flip()
 
-			self.updateTime = timer() - updateTimeStart
+			self.renderStats.updateTime = timer() - updateTimeStart
 
 			#calculate fps etc.
 			if prefs.useFpsCap:
-				time.sleep(1.0 / 120.0)
+				waitTimeStart = timer()
+				self.clock.tick(prefs.targetFps)
+				self.renderStats.waitTime = timer() - waitTimeStart
 
-			self.frameTime = timer() - frameTimeStart
+			self.renderStats.frameTime = timer() - frameTimeStart
 
-			self.fps = float(1.0 / self.frameTime)
-			self.time += self.frameTime
-			self.time_ms += self.frameTime * 1000
+			self.time += self.renderStats.frameTime
+			self.time_ms += self.renderStats.frameTime * 1000
 
 			#debug only code idk if this should be in release
 			if self.profiler and self.profiling:
-				self.profiler.Profile(self.frameTime)
+				self.profiler.Profile(self.renderStats.frameTime)
 		
 		#close if game has ended
 		self.Close()
@@ -180,6 +191,7 @@ class Game:
 
 	def DrawPlayGround(self):
 		self.win.blit(mainResManager.GetTexture(self.backgroundName).Get(), (0, 0))
+		self.renderStats.blitCount += 1
 
 		if len(self.map.objectsLeft) == 0:
 			return
@@ -193,7 +205,7 @@ class Game:
 		for circle in self.map.objectsLeft:
 			circle.Update(self)
 			if self.time_ms >= circle.startTime and self.time_ms <= circle.endTime:
-				circle.Draw(self.win, self.time_ms)
+				circle.Draw(self.win, self.time_ms, self)
 						
 				for event in self.events:
 					if event.type == pygame.KEYDOWN:
@@ -207,100 +219,21 @@ class Game:
 				topCircle.Miss(self)
 							
 	def DrawCursor(self):
-		self.win.blit(mainResManager.GetTexture('cursor').Get(), (self.cursorPos[0] - mainResManager.GetTexture('cursor').Width / 2, self.cursorPos[1] - mainResManager.GetTexture('cursor').Height / 2))
+		tex = mainResManager.GetTexture('cursor')
+		self.win.blit(tex.Get(), (self.cursorPos[0] - tex.Width / 2, self.cursorPos[1] - tex.Height / 2))
+		self.renderStats.blitCount += 1
+	
+	def DrawGui(self):
+		self.comboText.Render(self.win, self.combo)
+		self.healthBar.Render(self.win, self.health, self.maxHealth, self.time)
+		self.pointsText.Render(self.win, self.points)
+		self.clicksText.Render(self.win, self.click_count[0], self.click_count[1])
+		if debugging:
+			if prefs.useNewFpsCounter:
+				self.fpsCounter.Render(self.win, self.profiling, self.renderStats.frameTime, self.renderStats.renderTime, self.renderStats.updateTime, self.renderStats.eventHandlingTime, self.renderStats.playgroundDrawTime, self.renderStats.waitTime, self.renderStats.blitCount)
+			else:
+				self.fpsCounter.Render(self.win, self.profiling, self.renderStats.frameTime)
 
-	def DrawCombo(self):
-		font = mainResManager.GetFont("comicsansms_48")
-
-		rText = font.render('combo: {}'.format(self.combo), True, Color.White)
-
-		pos = (3, self.height - rText.get_height() - 3 - 12)
-		self.win.blit(rText, pos)
-
-	def DrawPoints(self):
-		font = mainResManager.GetFont("comicsansms_48")
-
-		rText = font.render('points: {}'.format(self.points), True, self.pointsColor)
-
-		pos = (self.width - rText.get_width() - 3, self.height - rText.get_height() - 3 - 12)
-
-		self.win.blit(rText, pos)
-
-	def DrawHealthBar(self):
-		bgSize = (self.width - (2 * self.width / 10), self.height / 10)
-		barSize = ((self.width - (2 * self.width / 10)) * (self.health / self.maxhealth), self.height / 10)
-		pos = (self.width / 10, 0)
-
-		barBgRect = pygame.Rect(pos, bgSize)
-
-		if self.health <= self.maxhealth / 5:
-			c = Color.Red
-		else:
-			c = Color.Green
-
-		pygame.draw.rect(self.win, Color.Gray, (pos, bgSize))
-		pygame.draw.rect(self.win, c, (pos, barSize))
-
-		font = mainResManager.GetFont("comicsansms_24")
-		rText = font.render('Time: {}s'.format(round(self.time, 2)), True, Color.White)
-
-		self.win.blit(rText, (barBgRect.x, barBgRect.centery - rText.get_height() / 2))
-
-	def DrawClicksCounter(self):
-		font = mainResManager.GetFont("comicsansms_24")
-		rTextLeft = font.render(str(self.click_count[0]), True, Color.White)
-		rTextRight = font.render(str(self.click_count[1]), True, Color.White)
-
-		leftPos = (self.width - rTextLeft.get_width() - 3, self.height / 2 - rTextLeft.get_height() / 2)
-		rightPos = (self.width - rTextRight.get_width() - 3, self.height / 2 + rTextRight.get_height() / 2)
-
-		self.win.blit(rTextLeft, leftPos)
-		self.win.blit(rTextRight, rightPos)
-
-	def DrawFPSCounter(self):
-		font = mainResManager.GetFont("comicsansms_12")
-		text = 'Frame time: {0:.2f}ms'.format(self.frameTime * 1000)
-		rText = font.render(text, True, Color.White)
-		pos = (int(self.width - rText.get_width() - 1), self.height - rText.get_height() - 2)
-
-		self.win.blit(rText, pos)
-
-	def DrawNewFPSCounter(self):
-		font = mainResManager.GetFont("comicsansms_10")
 		
-		textOffset = 0
 
-		frameText = "FrameTime: {0:.2f}ms".format(self.frameTime * 1000)
-		renderText = "Render: {0:.2f}ms".format(self.renderTime * 1000)
-		updateText = "Update: {0:.2f}ms".format(self.updateTime * 1000)
-		eventText = "Event: {0:.2f}ms".format(self.eventHandlingTime * 1000)
-
-		font.set_bold(True)
-		rFrameText = font.render(frameText, True, Color.White)
-		font.set_bold(False)
-		rRenderText = font.render(renderText, True, Color.White)
-		rUpdateText = font.render(updateText, True, Color.White)
-		rEventText = font.render(eventText, True, Color.White)
-
-		surfWidth = 115
-		surfHeight = rFrameText.get_height() + rRenderText.get_height() + rUpdateText.get_height() + rEventText.get_height() + 19
-
-		textSurface = pygame.Surface((surfWidth, surfHeight), pygame.SRCALPHA).convert()
-		textSurface.set_colorkey((0, 0, 0))
-		
-		textSurface.blit(rFrameText, (0, textOffset))
-		textOffset += rFrameText.get_height() + 1
-		textSurface.blit(rRenderText, (0, textOffset))
-		textOffset += rRenderText.get_height() + 1
-		textSurface.blit(rUpdateText, (0, textOffset))
-		textOffset += rUpdateText.get_height() + 1
-		textSurface.blit(rEventText, (0, textOffset))
-		textOffset += rEventText.get_height() + 1
-
-		if self.profiling:
-			font.set_bold(True)
-			rText = font.render("[PROFILING]", True, Color.Yellow)
-			font.set_bold(False)
-			textSurface.blit(rText, (0, textOffset))
-
-		self.win.blit(textSurface, (self.width - textSurface.get_width(), self.height / 10))
+	

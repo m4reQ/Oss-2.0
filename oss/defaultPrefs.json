@@ -23,5 +23,6 @@
         480
     ],
     "useFpsCap": false,
-    "useNewFpsCounter": false
+    "targetFps": 120,
+    "useNewFpsCounter": true
 }

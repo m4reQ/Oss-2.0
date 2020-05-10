@@ -107,6 +107,7 @@ class Color():
 	White = (255,255,255)
 	Black = (0,0,0)
 	Gray = (128, 128, 128)
+	LightGray = (192, 192, 192)
 
 	@staticmethod
 	def Random():

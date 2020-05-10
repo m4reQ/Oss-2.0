@@ -62,8 +62,8 @@ class EventHandler:
 				print('[INFO]<{}> Health reached {}.'.format(__name__, self.game.health))
 			self.game.isRunning = False
 
-		if self.game.health >= self.game.maxhealth:
-			self.game.health = self.game.maxhealth
+		if self.game.health >= self.game.maxHealth:
+			self.game.health = self.game.maxHealth
 
 		if self.game.time_ms >= self.game.map.length:
 			self.game.map.shouldPlay = False

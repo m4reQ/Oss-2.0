@@ -338,12 +338,11 @@ def Start(debugMode):
 	mainResManager.AddMainFont(mainFont)
 	mainResManager.AddFont("comicsansms_48", pygame.font.SysFont('comicsansms', 48 * scale))
 	mainResManager.AddFont("comicsansms_24", pygame.font.SysFont('comicsansms', 24 * scale))
+	mainResManager.AddFont("comicsansms_22", pygame.font.SysFont("comicsansms", 22 * scale))
+	mainResManager.AddFont("comicsansms_21", pygame.font.SysFont("comicsansms", 21 * scale))
 	mainResManager.AddFont("comicsansms_18", pygame.font.SysFont('comicsansms', 18 * scale))
 	mainResManager.AddFont("comicsansms_12", pygame.font.SysFont('comicsansms', 12 * scale))
 	mainResManager.AddFont("comicsansms_10", pygame.font.SysFont("comicsansms", 10 * scale))
-
-	if debugging:
-		print("[INFO]<{}> Initialized resources. Memory reserved: {}kb. (approx.)".format(__name__, mainResManager.Size / 1000.0))
 
 	#import menu module here to avoid circular import
 	import menu

@@ -9,6 +9,8 @@ try:
 except (ImportError, ModuleNotFoundError):
 	from time import time as timer
 
+from time import sleep
+
 __GCTHREAD_STOP_FLAG = False
 
 def FreeMem(useDebugging, msg='Starting garbage collection'):
@@ -33,7 +35,7 @@ def TimedGarbageCollect(interval):
 		objectsCount = gc.get_count()[0]
 		gc.collect()
 		print('[INFO]<{}> GC thread freed {} objects.'.format(__name__, objectsCount - gc.get_count()[0]))
-		time.sleep(interval)
+		sleep(interval)
 		global __GCTHREAD_STOP_FLAG
 		if __GCTHREAD_STOP_FLAG:
 			break
@@ -41,6 +43,20 @@ def TimedGarbageCollect(interval):
 def StopGCThreads():
 	global __GCTHREAD_STOP_FLAG
 	__GCTHREAD_STOP_FLAG = True
+
+class RenderStats:
+	def __init__(self):
+		self.frameTime = 0.0
+		self.updateTime = 0.0
+		self.renderTime = 0.0
+		self.eventHandlingTime = 0.0
+		self.playgroundDrawTime = 0.0
+		self.waitTime = 0.0
+
+		self.blitCount = 0
+	
+	def Reset(self):
+		self.blitCount = 0
 
 class Profiler:
 	def __init__(self):

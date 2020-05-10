@@ -124,3 +124,6 @@ Installer
 
 #shortcut file
 Oss!.lnk
+
+#performance log
+perfLog.txt

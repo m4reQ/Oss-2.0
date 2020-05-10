@@ -65,17 +65,21 @@ class Circle(object):
 	def __repr__(self):
 		return str('Circle at position: {}. Font texture: {}. Background texture: {}.'.format(self.pos, self.textureCount, self.backgroundCount))
 		
-	def Draw(self, surf, time):
+	def Draw(self, surf, time, game):
 		if time >= self.startTime and time <= self.endTime:
 			self.circleSurf.set_alpha(self.alpha)
+
 			surf.blit(self.circleSurf, (self.pos[0] - Circle.radius, self.pos[1] - Circle.radius))
+			game.renderStats.blitCount += 1
+
 			if time >= self.hitTime and time <= self.endTime:
 				if not self.destroyed:
 					surf.blit(mainResManager.GetTexture("hitlayout").Get(), (self.pos[0] - Circle.radius, self.pos[1] - Circle.radius))
+					game.renderStats.blitCount += 1
 
 	def Update(self, game):
 		if self.destroyed:
-			self.alpha -= 255 / Circle.fadeOutDuration * game.frameTime
+			self.alpha -= 255 / Circle.fadeOutDuration * game.renderStats.frameTime
 
 		if self.alpha <= 0:
 			game.map.objectsLeft.remove(self)

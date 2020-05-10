@@ -30,6 +30,7 @@ class Preferencies:
 			self.mouseVisible = False
 			self.autoGenerate = True
 			self.useFpsCap = False
+			self.targetFps = 120
 			self.interfaceEnabled = True
 			self.mouseButtonsDisable = False
 			self.keyBinds = {
