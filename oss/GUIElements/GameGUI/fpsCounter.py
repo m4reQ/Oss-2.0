@@ -7,21 +7,24 @@ class FpsCounter(object):
 
 		self.textColor = textColor
 		self.textColor2 = textColor2
+
+		self.objectRect = pygame.Rect(pos, (1, 1))
 	
-	def Render(self, surf, profiling, frameTime):
+	def Render(self, surf, frameTime):
 		text = 'Frame time: {0:.2f}ms'.format(frameTime * 1000)
 		rText = self.font.render(text, True, self.textColor)
 		pos = (self.pos[0] - rText.get_width(), self.pos[1] - rText.get_height())
-
-		if profiling:
-			rProfilingText = self.font.render("[PROFILING]", True, self.textColor2)
-			surf.blit(rProfilingText, (pos[0] - rProfilingText.get_width(), pos[1]))
-
+		
+		self.objectRect = pygame.Rect(pos, (rText.get_width(), rText.get_height()))
 		surf.blit(rText, pos)
 	
 	@property
 	def blitsRequired(self):
 		return 1
+	
+	@property
+	def rect(self):
+		return self.objectRect
 
 class NewStyleFpsCounter(object):
 	def __init__(self, baseFont, pos, size, textColor1=(255, 255, 255), textColor2=(128, 128, 128), textColor3=(255, 255, 0)):
@@ -38,6 +41,8 @@ class NewStyleFpsCounter(object):
 
 		self.textSurface = pygame.Surface((self.textBaseOffset, self.surfHeight), pygame.SRCALPHA).convert()
 		self.textSurface.set_colorkey((0, 0, 0))
+
+		self.objectRect = pygame.Rect((self.pos[0] - self.surfWidth, self.pos[1]), size)
 
 		self.InitTextBase()
 	
@@ -69,7 +74,7 @@ class NewStyleFpsCounter(object):
 		self.textSurface.blit(rBaseBlitsText, (0, textOffset))
 		textOffset += rBaseBlitsText.get_height() + 1
 
-	def Render(self, surf, profiling, frameTime, renderTime, updateTime, eventTime, playgroundTime, waitTime, blitsCount):
+	def Render(self, surf, frameTime, renderTime, updateTime, eventTime, playgroundTime, waitTime, blitsCount):
 		textOffset = 0
 
 		frameText = "{0:.2f}ms".format(frameTime * 1000)
@@ -107,12 +112,6 @@ class NewStyleFpsCounter(object):
 		textOffset += rWaitText.get_height() + 1
 		numberSurface.blit(rBlitsText, (0, textOffset))
 		textOffset += rBlitsText.get_height() + 1
-		
-		if profiling:
-			self.font.set_bold(True)
-			rText = self.font.render("[PROFILING]", True, self.profilingTextColor)
-			self.font.set_bold(False)
-			surf.blit(rText, (self.pos[0] - int(self.surfWidth / 2) - int(rText.get_width() / 2), self.pos[1] + textOffset))
 
 		surf.blit(self.textSurface, (self.pos[0] - self.surfWidth, self.pos[1]))
 		surf.blit(numberSurface, (self.pos[0] - self.surfWidth + self.textSurface.get_width(), self.pos[1]))
@@ -120,3 +119,7 @@ class NewStyleFpsCounter(object):
 	@property
 	def blitsRequired(self):
 		return 2
+
+	@property
+	def rect(self):
+		return self.objectRect

@@ -4,7 +4,7 @@ import sys
 if __name__ == '__main__':
 	try:
 		import launcher
-		launcher.Start(False)
+		launcher.Start(True)
 	except Exception as e:
 		print("Error: {}".format(e))
 		raise

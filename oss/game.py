@@ -4,23 +4,25 @@ if __name__ == '__main__':
 
 try:
 	import pygame
-	from launcher import debugging, AR, HP, CS, mainResManager, prefs
-	from eventhandler import EventHandler
-	from Utils.performance import FreeMem, Profiler, RenderStats
+	import threading
+	import time
+	import random
+	try:
+		from time import perf_counter as timer
+	except (ImportError, ModuleNotFoundError):
+		from time import time as timer
+
+	from launcher import AR, HP, CS, mainResManager, prefs
+	from Utils.performance import FreeMem, RenderStats
 	from Utils.graphics import Color
 	from Utils.game import Stats, GetPlayfield
+	from Utils import debug
 	from GUIElements.GameGUI.fpsCounter import *
 	from GUIElements.GameGUI.healthBar import *
 	from GUIElements.GameGUI.pointsCounter import *
 	from GUIElements.GameGUI.comboCounter import *
 	from GUIElements.GameGUI.clicksCounter import *
-	try:
-		from time import perf_counter as timer
-	except (ImportError, ModuleNotFoundError):
-		from time import time as timer
-	import time
-	import random
-	from eventhandler import EventHandler
+	from Utils.debug import Log, LogLevel
 	from GameElements.circle import Circle
 	from GameElements.map import Map, EmptyMap
 except ImportError:
@@ -40,20 +42,18 @@ class Game:
 		self.width = win.get_width()
 		self.height = win.get_height()
 		self.isRunning = True
-		self.click_count = [0, 0] #[0] stands for left key, [1] for right
+		self.clickCount = [0, 0] #[0] stands for left key, [1] for right
 		self.cursorPos = (0, 0)
 		self.map = None
-		self.circles = []
 		self.playfield = GetPlayfield(self.width, self.height, CS)
 		self.points = 0
 		self.combo = 0
 		self.maxHealth = 100
 		self.health = self.maxHealth
 
-		self.eventHandler = EventHandler(self)
+		self.buttonClicked = False
 		
-		self.draw_interface = True
-		self.toUpdate = []
+		self.drawInterface = True
 		self.backgroundName = 'bg_' + str(random.randint(0, 6))
 		self.events = pygame.event.get()
 
@@ -64,9 +64,10 @@ class Game:
 		#GUI elements
 		if prefs.useNewFpsCounter:
 			self.fpsCounter = NewStyleFpsCounter(mainResManager.GetFont("comicsansms_10"), (self.width - 2, 27), (113, 110))
-			print('[WARNING]<{}> Using new style fps counter. This may decrease performance.'.format(__name__))
+			Log("Using new style fps counter. This may decrease performance.", LogLevel.Warning, __name__)
 		else:
 			self.fpsCounter = FpsCounter(mainResManager.GetFont("comicsansms_12"), (self.width - 2, self.height - 2))
+
 		self.healthBar = HealthBar(mainResManager.GetFont("comicsansms_22"), (self.width / 10, 0), (self.width - (2 * self.width / 10), 25))
 		self.pointsText = PointsCounter(mainResManager.GetFont("comicsansms_48"), (self.width - 2, self.height - 14))
 		self.comboText = ComboCounter(mainResManager.GetFont("comicsansms_48"), (2, self.height - 14))
@@ -74,14 +75,133 @@ class Game:
 
 		self.time = 0.0
 		self.time_ms = 0
-		
-		self.profiler = None
-		if debugging:
-			self.profiling = False
-			self.profiler = Profiler()
+
+		self.renderThread = threading.Thread(target=self.Render, name="ossRender")
 
 		#at the end of initialization trigger garbage collection
-		FreeMem(debugging, 'Started after-init garbage collection.')
+		FreeMem('Started after-init garbage collection.')
+
+	def __UpdateCircles(self):
+		if len(self.map.objectsLeft) == 0:
+			return
+
+		#get the top circle (first circle active)
+		for circle in self.map.objectsLeft:
+			if not circle.destroyed:
+				topCircle = circle
+				break
+
+		for circle in self.map.objectsLeft:
+			circle.Update(self)
+			if self.time_ms >= circle.startTime and self.time_ms <= circle.endTime:
+				circle.shouldDraw = True
+						
+				for event in self.events:
+					if event.type == pygame.KEYDOWN:
+						if self.buttonClicked:
+							topCircle.Collide(self, self.cursorPos)
+					
+					if event.type == pygame.MOUSEBUTTONDOWN and not prefs.mouseButtonsDisable:
+						topCircle.Collide(self, self.cursorPos)
+
+			elif self.time_ms > circle.endTime:
+				topCircle.Miss(self)
+
+	def Render(self):
+		while self.isRunning:
+			renderStart = timer()
+
+			playgroundStart = timer()
+			self.win.blit(mainResManager.GetTexture(self.backgroundName).Get(), (0, 0))
+			self.renderStats.blitCount += 1
+
+			for circle in self.map.objectsLeft:
+				circle.Draw(self.win, self.time_ms, self)
+			
+			self.renderStats.playgroundDrawTime = timer() - playgroundStart
+			
+			if self.drawInterface:
+				self.DrawGui()
+
+			self.DrawCursor()
+
+			pygame.display.flip()
+
+			if prefs.useFpsCap:
+				waitStart = timer()
+				self.clock.tick(prefs.targetFps)
+				self.renderStats.waitTime = timer() - waitStart
+
+			self.renderStats.renderTime = timer() - renderStart
+			self.time += self.renderStats.renderTime
+			self.time_ms += self.renderStats.renderTime * 1000
+		
+	def Update(self):
+		updateStart = timer()
+
+		eventStart = timer()
+		self.events = pygame.event.get()
+		
+		for event in self.events: 
+			if event.type == pygame.MOUSEMOTION:
+				self.cursorPos = pygame.mouse.get_pos()
+
+			if event.type == pygame.KEYDOWN:
+				if event.key == pygame.K_ESCAPE:
+					self.isRunning = False
+					Log("User interruption by closing window.", LogLevel.Info, __name__)
+						
+				if event.key == prefs.keyBinds['hideInterface']:
+					self.drawInterface = not self.drawInterface
+					Log("Interface hidden.", LogLevel.Info, __name__)
+				
+				if event.key == prefs.keyBinds['kl']:
+					self.clickCount[0] += 1
+					self.buttonClicked = True
+				if event.key == prefs.keyBinds['kr']:
+					self.clickCount[1] += 1
+					self.buttonClicked = True
+				
+				if event.key != prefs.keyBinds['kl'] and event.key != prefs.keyBinds['kr']:
+					self.buttonClicked = False
+				
+			if event.type == pygame.MOUSEBUTTONDOWN and not prefs.mouseButtonsDisable:
+				if event.button == 1:
+					self.clickCount[0] += 1
+				elif event.button == 3:
+					self.clickCount[1] += 1
+
+			if event.type == pygame.QUIT:
+				self.isRunning = False
+				
+				Log("User interruption by closing window.", LogLevel.Info, __name__)
+		
+		self.renderStats.eventHandlingTime = timer() - eventStart
+
+		if self.health <= 0:
+			Log("Health reached below zero.", LogLevel.Info, __name__)
+			self.isRunning = False
+
+		if self.health >= self.maxHealth:
+			self.health = self.maxHealth
+
+		if self.time_ms >= self.map.length:
+			self.map.shouldPlay = False
+
+		if not self.map.shouldPlay:
+			Log("Map has ended.", LogLevel.Info, __name__)
+			self.isRunning = False
+
+		self.__UpdateCircles()
+
+		self.renderStats.blitCount = self.pointsText.blitsRequired + self.comboText.blitsRequired + self.fpsCounter.blitsRequired + self.healthBar.blitsRequired + self.clicksText.blitsRequired
+		for circle in self.map.objectsLeft:
+			if circle.shouldDraw:
+				self.renderStats.blitCount += 1
+
+		self.renderStats.updateTime = timer() - updateStart
+		self.renderStats.frameTime = self.renderStats.updateTime + self.renderStats.renderTime
+		self.health -= HP * self.renderStats.updateTime * 79.2
 
 	def Run(self):
 		if not prefs.autoGenerate:
@@ -92,83 +212,19 @@ class Game:
 			self.GenerateRandomCircle()
 
 		if self.map.loadSuccess == -1:
-			if debugging:
-				print('[ERROR]<{}> An error appeared during map loading.'.format(__name__))
+			Log("An error appeared during map loading.", LogLevel.Error, __name__)
 			self.menu.AddMessage("An error appeared during map loading.")
 			self.isRunning = False
 
 		#free memory after map loading
-		FreeMem(debugging, 'Started after map loading garbage collection.')
+		FreeMem('Started after map loading garbage collection.')
 
+		self.renderThread.start()
 		while self.isRunning:
-			self.renderStats.Reset()
-
-			frameTimeStart = timer()
-			
-			eventTimeStart = timer()
-			self.events = pygame.event.get()
-
-			#event handling
-			for event in self.events: 
-				if event.type == pygame.MOUSEMOTION:
-					self.cursorPos = pygame.mouse.get_pos()
-
-				if event.type == pygame.KEYDOWN:
-					self.eventHandler.HandleKeys(event)
-				
-				if event.type == pygame.MOUSEBUTTONDOWN:
-					self.eventHandler.HandleMouse(event)
-
-				self.eventHandler.HandleEvents(event)
-
-			self.eventHandler.HandleInternalEvents()
-
-			self.health -= HP * self.renderStats.frameTime * 79.2
-
-			#get total blits count
-			self.renderStats.blitCount += self.pointsText.blitsRequired + self.comboText.blitsRequired + self.fpsCounter.blitsRequired + self.healthBar.blitsRequired + self.clicksText.blitsRequired
-			if self.profiling:
-				self.renderStats.blitCount += 1
-
-			self.renderStats.eventHandlingTime = timer() - eventTimeStart
-
-			#render
-			#drawing section
-			#NOTE!
-			#Don't put anything below this section
-			#it may cause glitches
-			renderTimeStart = timer()
-			playgroundTimeStart = timer()
-			self.DrawPlayGround()
-			self.renderStats.playgroundDrawTime = timer() - playgroundTimeStart
-			if self.draw_interface:
-				self.DrawGui()
-			self.DrawCursor()
-
-			self.renderStats.renderTime = timer() - renderTimeStart
-
-			updateTimeStart = timer()
-
-			pygame.display.flip()
-
-			self.renderStats.updateTime = timer() - updateTimeStart
-
-			#calculate fps etc.
-			if prefs.useFpsCap:
-				waitTimeStart = timer()
-				self.clock.tick(prefs.targetFps)
-				self.renderStats.waitTime = timer() - waitTimeStart
-
-			self.renderStats.frameTime = timer() - frameTimeStart
-
-			self.time += self.renderStats.frameTime
-			self.time_ms += self.renderStats.frameTime * 1000
-
-			#debug only code idk if this should be in release
-			if self.profiler and self.profiling:
-				self.profiler.Profile(self.renderStats.frameTime)
+			self.Update()
 		
-		#close if game has ended
+		self.renderThread.join()
+
 		self.Close()
 	
 	def GenerateRandomCircle(self):
@@ -183,40 +239,7 @@ class Game:
 		Circle.texture_count = 0
 		Circle.background_count = 0
 
-		FreeMem(debugging, 'Started onclose garbage collection.')
-
-		if getattr(self.profiler, "used", False):
-			print(self.profiler.GetProfileData())
-			self.profiler.SaveProfileData("perfLog.txt")
-
-	def DrawPlayGround(self):
-		self.win.blit(mainResManager.GetTexture(self.backgroundName).Get(), (0, 0))
-		self.renderStats.blitCount += 1
-
-		if len(self.map.objectsLeft) == 0:
-			return
-
-		#get the top circle (first circle active)
-		for circle in self.map.objectsLeft:
-			if not circle.destroyed:
-				topCircle = circle
-				break
-
-		for circle in self.map.objectsLeft:
-			circle.Update(self)
-			if self.time_ms >= circle.startTime and self.time_ms <= circle.endTime:
-				circle.Draw(self.win, self.time_ms, self)
-						
-				for event in self.events:
-					if event.type == pygame.KEYDOWN:
-						if event.key == prefs.keyBinds['kl'] or event.key == prefs.keyBinds['kr']:
-							topCircle.Collide(self, self.cursorPos)
-					
-					if event.type == pygame.MOUSEBUTTONDOWN and not prefs.mouseButtonsDisable:
-						EventHandler.HandleMouse(self, event)
-						topCircle.Collide(self, self.cursorPos)
-			elif self.time_ms > circle.endTime:
-				topCircle.Miss(self)
+		FreeMem("Started onclose garbage collection.")
 							
 	def DrawCursor(self):
 		tex = mainResManager.GetTexture('cursor')
@@ -227,13 +250,9 @@ class Game:
 		self.comboText.Render(self.win, self.combo)
 		self.healthBar.Render(self.win, self.health, self.maxHealth, self.time)
 		self.pointsText.Render(self.win, self.points)
-		self.clicksText.Render(self.win, self.click_count[0], self.click_count[1])
-		if debugging:
+		self.clicksText.Render(self.win, self.clickCount[0], self.clickCount[1])
+		if debug.ENABLE:
 			if prefs.useNewFpsCounter:
-				self.fpsCounter.Render(self.win, self.profiling, self.renderStats.frameTime, self.renderStats.renderTime, self.renderStats.updateTime, self.renderStats.eventHandlingTime, self.renderStats.playgroundDrawTime, self.renderStats.waitTime, self.renderStats.blitCount)
+				self.fpsCounter.Render(self.win, self.renderStats.frameTime, self.renderStats.renderTime, self.renderStats.updateTime, self.renderStats.eventHandlingTime, self.renderStats.playgroundDrawTime, self.renderStats.waitTime, self.renderStats.blitCount)
 			else:
-				self.fpsCounter.Render(self.win, self.profiling, self.renderStats.frameTime)
-
-		
-
-	
+				self.fpsCounter.Render(self.win, self.renderStats.frameTime)

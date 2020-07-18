@@ -3,16 +3,7 @@ if __name__ == '__main__':
 
 from Utils.graphics import TranslateCoord, TranslationMode
 from Utils.game import GetMaxPoints
-from launcher import debugging
-
-def SetDebugging(val):
-	"""
-	sets debugging mode to given value
-	rtype: bool
-	returns: None
-	"""
-	global debugging
-	debugging = val
+from Utils.debug import Log, LogLevel
 
 def ParseMap(filepath):
 	data = []
@@ -36,8 +27,7 @@ def ParseMap(filepath):
 					try:
 						x = float(x)
 					except ValueError: #if even a single fragment of any line failed to parse stop loading rest of map
-						if debugging:
-							print("[ERROR]<{}> Invalid map format at line {}".format(__name__, lineCount))
+						Log("Invalid map format at line {}".format(lineCount), LogLevel.Error, __name__)
 
 						return -1
 
@@ -47,7 +37,7 @@ def ParseMap(filepath):
 
 	except IOError:
 		print("Error cannot load map: File {} didn't found.".format(filepath))
-		return -1 #indicate that a error appeared
+		return -1
 
 	return data
 
@@ -79,8 +69,7 @@ def MakeMap(filepath, targetRes):
 			print('Cannot make object {}.\n Maybe map has outdated or invalid format.'.format(str(obj)))
 			return
 	
-	if debugging:
-		print('[INFO]<{}> Map "{}" loaded.'.format(__name__, filepath))
+	Log("Map '{}' loaded succesfully.".format(filepath), LogLevel.Info, __name__)
 
 	return circles
 

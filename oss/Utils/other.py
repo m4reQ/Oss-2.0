@@ -17,3 +17,9 @@ def Ask(question):
 			return True
 		elif q.upper() == 'N':
 			return False
+
+def GetFileExtension(filename):
+	return filename.split('.')[-1]
+
+def GetFilenameFromPath(filepath):
+	return filepath.split('/')[-1]

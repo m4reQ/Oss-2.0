@@ -61,7 +61,8 @@ try:
 	from preferencies import Preferencies
 	import pygameWindow
 	from pygameWindow import WindowFlags
-	import update
+	from Utils.debug import Log, LogLevel
+	from Utils import debug
 except ImportError:
 	print("Error during importing internal modules")
 	raise
@@ -79,9 +80,6 @@ if not os.path.exists('./Resources/maps'):
 		raise
 
 	print('Directory created.')
-
-#indicates if program is running in debug mode
-debugging = False
 
 #scale
 #used to change size of objects depending on used resolution
@@ -122,9 +120,7 @@ def LoadPreferencies():
 		prefs = Preferencies.ImportFromFile(Preferencies.PREFS_FILE)
 	except Exception as e:
 		print("An error appeared during user preferencies loading.")
-		if debugging:
-			print('[ERROR]<{}> {}'.format(__name__, str(e)))
-
+		Log(str(e), LogLevel.Error, __name__)
 		raise
 
 def InitPygame():
@@ -134,9 +130,7 @@ def InitPygame():
 		pygame.init()
 	except Exception as e:
 		print("An error appeared during pygame initialization.")
-		if debugging:
-			print('[ERROR]<{}> {}'.format(__name__, str(e)))
-		
+		Log(str(e), LogLevel.Error, __name__)
 		raise
 
 def SetGameStats(ar, cs, hp):
@@ -150,9 +144,7 @@ def SetGameStats(ar, cs, hp):
 		return (Stats.GetAR(ar), Stats.GetCS(cs), Stats.GetHP(hp))
 	except Exception as e:
 		print("An error appeared during initializing game stats.")
-		if debugging:
-			print('[ERROR]<{}> {}'.format(__name__, str(e)))
-
+		Log(str(e), LogLevel.Error, __name__)
 		raise
 
 def InitializeWindow(width, height):
@@ -171,15 +163,12 @@ def InitializeWindow(width, height):
 			else:
 				win = pygameWindow.CreateWindow(width, height,"Oss!",  WindowFlags.DoubleBuf | WindowFlags.Accelerated)
 
-		if debugging:
-			print('[INFO]<{}> Current display driver: {}.'.format(__name__, pygame.display.get_driver()))
+		Log("Current display driver: {}.".format(pygame.display.get_driver()), LogLevel.Info, __name__)
 
 		return win
 	except Exception as e:
 		print("An error appeared during window initialization.")
-		if debugging:
-			print('[ERROR]<{}> {}'.format(__name__, str(e)))
-		
+		Log(str(e), LogLevel.Error, __name__)
 		raise
 
 def LoadTextures():
@@ -197,9 +186,7 @@ def LoadTextures():
 
 	except Exception as e:
 		print("An error appeared during textures loading.")
-		if debugging:
-			print('[ERROR]<{}> {}'.format(__name__, str(e)))
-		
+		Log(str(e), LogLevel.Error, __name__)
 		raise
 
 def LoadCircleTextures():
@@ -209,7 +196,7 @@ def LoadCircleTextures():
 		texName = 'circlefont_' + str(i)
 
 		tex = Texture("{}circles/{}.png".format(texPath, i))
-		tex.Scale(radius * 2 * scale)
+		tex.ScaleLinear(radius * 2 * scale)
 		mainResManager.AddTexture(texName, tex)
 
 	for i in range(5):
@@ -237,42 +224,21 @@ def LoadInterfaceTextures():
 	mainResManager.AddTexture('setsIcn', setsIcn)
 
 def LoadBackgroundTextures():
-	#get names and number of files in backgrounds directory
 	filenames = [name for name in os.listdir(os.path.join(texPath, 'backgrounds')) if os.path.isfile(os.path.join(texPath, 'backgrounds', name))]
 
-	#remove Thumbs.db from filename list if it's present
-	try: filenames.remove('Thumbs.db')
-	except ValueError: pass
+	try:
+		filenames.remove("Thumbs.db")
+	except Exception:
+		pass
 
-	#get all images
-	jpgs = [os.path.join(texPath, 'backgrounds', name) for name in filenames if name[-4:] != '.png']
-	pngs = [os.path.join(texPath, 'backgrounds', name) for name in filenames if name[-4:] != '.jpg']
+	for idx, filename in enumerate(filenames):
+		texName = 'bg_' + str(idx)
 
-	#get all names without .jpg or .png
-	jpgNames = [name[:-4] for name in jpgs]
-	pngNames = [name[:-4] for name in pngs]
-
-	jpgCount = len(jpgs)
-
-	#convert jpg images to png
-	if debugging:
-		print('[INFO]<{}> Processing background images...'.format(__name__))
-
-	for idx, tex in enumerate(jpgNames):
-		if not tex in pngNames:
-			threading.Thread(target=ConvertImage, args=(jpgs[idx],)).start()
-
-	if debugging:
-		print('[INFO]<{}> Background images processing done.'.format(__name__))
-
-	for i in range(jpgCount - 1):
-		texName = 'bg_' + str(i)
-
-		tex = Texture("{}backgrounds/bg{}.png".format(texPath, i))
-		tex.ScaleXY(prefs.resolution[0], prefs.resolution[1])
+		tex = Texture("{}backgrounds/{}".format(texPath, filename))
+		tex.ScaleLinearXY(prefs.resolution[0], prefs.resolution[1])
 		tex.Dim(prefs.darkenPercent)
 		mainResManager.AddTexture(texName, tex)
-
+	
 	menuBg = Texture(texPath + 'backgrounds/menu_background.png')
 	menuBg.ScaleXY(prefs.resolution[0], prefs.resolution[1])
 	mainResManager.AddTexture("menu_background", menuBg)
@@ -294,14 +260,11 @@ def LoadSounds():
 
 	except Exception as e:
 		print("An error appeared during sounds loading.")
-		if debugging:
-			print('[ERROR]<{}> {}'.format(__name__, str(e)))
-		
+		Log(str(e), LogLevel.Error, __name__)
 		raise
 
 def Start(debugMode):
-	global debugging
-	debugging = debugMode
+	debug.Enable()
 
 	#load prefs
 	LoadPreferencies()
@@ -348,11 +311,10 @@ def Start(debugMode):
 	import menu
 
 	#free memory after initialization
-	FreeMem(debugging)
+	FreeMem()
 
 	try:
-		if debugging:
-			print('[INFO]<{}> Program loaded in {} seconds.'.format(__name__, timer() - start))
+		Log("Program loaded in {} seconds.".format(timer() - start), LogLevel.Info, __name__)
 
 		initialized = True
 
@@ -363,13 +325,12 @@ def Start(debugMode):
 
 		print('Goodbye!')
 
-		if debugging:
-			print('[INFO]<{}> Program exited after: {} seconds.'.format(__name__, m.time))
+		Log("Program exited after: {} seconds.".format(m.time), LogLevel.Info, __name__)
 		
 		pygame.mixer.quit()
 		pygame.quit()
 
-		FreeMem(debugging)
+		FreeMem()
 		StopGCThreads()
 		
 		os.system('pause >NUL')

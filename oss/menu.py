@@ -3,17 +3,19 @@ if __name__ == "__main__":
 	sys.exit()
 
 try:
-	from Utils.graphics import Color
-	from launcher import mainResManager, prefs, debugging
-	from GUIElements.pygameButton import Button
-	from GUIElements.notification import Notification
 	try:
 		from time import perf_counter as timer
 	except (ImportError, ModuleNotFoundError):
 		from time import time as timer
-	from game import Game
 	import pygame
+
+	from Utils.graphics import Color
+	from launcher import mainResManager, prefs
+	from GUIElements.pygameButton import Button
+	from GUIElements.notification import Notification
+	from game import Game
 	from editor import Editor
+	from Utils.debug import Log, LogLevel
 except ImportError:
 	print("Cannot load menu.")
 	raise
@@ -52,7 +54,6 @@ class Menu():
 
 	def Run(self):
 		while self.isRunning:
-			#event handling
 			start = timer()
 			for event in pygame.event.get(): 
 				if event.type == pygame.MOUSEMOTION:
@@ -66,31 +67,24 @@ class Menu():
 						self.isRunning = False
 					if event.key == prefs.keyBinds["savePreferencies"]:
 						prefs.ExportToFile(prefs.PREFS_FILE)
-						if debugging:
-							print("[INFO]<{}> Saved user settings.".format(__name__))
-						self.AddMessage("Saved user settings")	
-					if event.key == prefs.keyBinds["debugGetPos"] and debugging:
-						pos = pygame.mouse.get_pos()
-						print('[INFO]<{}> Current mouse position: {}, mapped coords (current resolution): {}'.format(__name__, pos, (pos[0] / self.width, pos[1] / self.height)))
-					if event.key == prefs.keyBinds["debugUpdateWindow"] and debugging:
-						pygame.display.flip()
+						Log("Saved user settings.", LogLevel.Info, __name__)
+						self.AddMessage("Saved user settings")
 
-			#update
 			self.startButton.Update()
 			self.exitButton.Update()
 			self.editorButton.Update()
 			self.settingsButton.Update()
-			for msg in self.messages:
-				msg.Update(self.frameTime)
-				if msg.dispose:
-					self.messages.remove(msg)
+
+			if len(self.messages) != 0:
+				self.messages[0].Update(self.frameTime)
+				if self.messages[0].dispose:
+					self.messages.remove(self.messages[0])
 
 			if self.game:
 				self.startButton.text = 'Game is currently running'
 				self.startButton.activeColor = Color.Red
 				self.startButton.inactiveColor = Color.Red
 
-			#render
 			self.DrawBackground()
 			self.DrawButtons()
 			self.DrawMessageBox()

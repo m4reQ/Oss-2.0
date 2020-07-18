@@ -2,7 +2,7 @@
     "autoGenerate": true,
     "borderless": true,
     "cursorSize": 1.0,
-    "darkenPercent": 0.75,
+    "darkenPercent": 0.8,
     "fullscreen": false,
     "interfaceEnabled": true,
     "keyBinds": {
@@ -19,10 +19,10 @@
     "mouseButtonsDisable": false,
     "mouseVisible": false,
     "resolution": [
-        640,
-        480
+        800,
+        600
     ],
+    "targetFps": 144,
     "useFpsCap": false,
-    "targetFps": 120,
     "useNewFpsCounter": true
 }

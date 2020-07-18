@@ -60,12 +60,17 @@ class Circle(object):
 			else:
 				Circle.backgroundCount = 0
 
+		self.shouldDraw = True
+
 		Circle.count += 1
 
 	def __repr__(self):
 		return str('Circle at position: {}. Font texture: {}. Background texture: {}.'.format(self.pos, self.textureCount, self.backgroundCount))
 		
 	def Draw(self, surf, time, game):
+		if not self.shouldDraw:
+			return
+			
 		if time >= self.startTime and time <= self.endTime:
 			self.circleSurf.set_alpha(self.alpha)
 
@@ -75,21 +80,16 @@ class Circle(object):
 			if time >= self.hitTime and time <= self.endTime:
 				if not self.destroyed:
 					surf.blit(mainResManager.GetTexture("hitlayout").Get(), (self.pos[0] - Circle.radius, self.pos[1] - Circle.radius))
-					game.renderStats.blitCount += 1
 
 	def Update(self, game):
 		if self.destroyed:
-			self.alpha -= 255 / Circle.fadeOutDuration * game.renderStats.frameTime
+			self.alpha -= 255 / Circle.fadeOutDuration * game.renderStats.updateTime
 
 		if self.alpha <= 0:
+			self.shouldDraw = False
 			game.map.objectsLeft.remove(self)
 	
 	def Collide(self, game, cursor_pos):
-		"""
-		checks if clicked point is inside a circle
-		rtype: tuple
-		returns: bool
-		"""
 		if math.sqrt((self.pos[0] - cursor_pos[0])**2 + (self.pos[1] - cursor_pos[1])**2) <= self.radius:
 			self.Hit(game)
 		else:
@@ -140,4 +140,5 @@ class Circle(object):
 
 		if isinstance(game.map, EmptyMap):
 			game.GenerateRandomCircle()
+			
 		self.destroyed = True

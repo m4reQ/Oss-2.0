@@ -4,12 +4,13 @@ if __name__ == "__main__":
 
 try:
 	import pygame
+	import time
+
 	from Utils.performance import FreeMem
 	from Utils.game import GetPlayfield
 	from Utils.graphics import Color, TranslateCoord, TranslationMode
-	import concurrent.futures
-	from launcher import debugging, mapsPath, CS, mainResManager, prefs
-	import time
+	from Utils.debug import Log, LogLevel
+	from launcher import mapsPath, CS, mainResManager, prefs
 except ImportError:
 	print("Cannot import editor.")
 	raise
@@ -80,7 +81,7 @@ class Editor:
 		POS_FILE.close()
 		TIME_FILE.close()
 		self.menu.game = None
-		FreeMem(debugging, 'Started onclose garbage collection.')
+		FreeMem("Started onclose garbage collection.")
 	
 	def Render(self):
 		#clear
@@ -113,8 +114,7 @@ class Editor:
 		self.win.blit(mainResManager.GetTexture('cursor').Get(), (self.cursorPos[0] - mainResManager.GetTexture('cursor').Width / 2, self.cursorPos[1] - mainResManager.GetTexture('cursor').Height / 2))
 	
 	def Click(self):
-		if debugging:
-			print('[INFO]<{}>Last registered: {}, {}'.format(__name__, self.time, self.cursorPos))
+		Log("Last registered: {}, {}".format(self.time, self.cursorPos), LogLevel.Info, __name__)
 
 		if Editor.regMode == RegisterMode.Time:
 			TIME_FILE.write("{}. object at time: {}\n".format(self.objCount, self.time))

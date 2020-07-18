@@ -2,9 +2,14 @@ if __name__ == "__main__":
 	import sys
 	sys.exit()
 
+from Utils.other import GetFileExtension, GetFilenameFromPath
+from Utils.debug import Log, LogLevel
 import pygame
 
 LOG_TEXTURES = False
+
+class TextureType:
+	PNG, JPG = range(2)
 
 class Texture(object):
 	texId = 0
@@ -15,33 +20,52 @@ class Texture(object):
 		self.id = Texture.texId
 		Texture.texId += 1
 
-		self.tex = self.LoadTexture(filename)
+		extension = GetFileExtension(GetFilenameFromPath(filename))
+		if extension == "jpg" or extension == "jpeg":
+			fileType = TextureType.JPG
+		elif extension == "png":
+			fileType = TextureType.PNG
+		else:
+			raise RuntimeError("Invalid file extension: {}".format(extension))
+
+		self.tex = self.LoadTexture(filename, fileType)
 
 		self._width = self.tex.get_width()
 		self._height = self.tex.get_height()
 
-		if LOG_TEXTURES:
-			print("[INFO]<{}> Texture from file '{}' initialized succesfully.".format(__name__, filename))
-
-	def LoadTexture(self, filename):
+	def LoadTexture(self, filename, type):
 		try:
-			tex = pygame.image.load(filename).convert_alpha()
-		except Exception as e:
-			print("[ERROR]<{}> Error: {} Cannot load texture from file: {}".format(__name__, e, filename))
+			if type == TextureType.JPG:
+				tex = pygame.image.load(filename).convert()
+			elif type == TextureType.PNG:
+				tex = pygame.image.load(filename).convert_alpha()
+			else:
+				raise RuntimeError("Invalid texture type.")
+		except Exception:
+			Log("Cannot load texture from file '{}'.".format(filename), LogLevel.Error, __name__)
+			raise
 
 		return tex
 
 	def Scale(self, scale):
 		self.ScaleXY(scale, scale)
-
+	
 	def ScaleXY(self, x, y):
 		self.tex = pygame.transform.scale(self.tex, (x, y))
+		self._width = x
+		self._height = y
+	
+	def ScaleLinear(self, scale):
+		self.ScaleLinearXY(scale, scale)
+		
+	def ScaleLinearXY(self, x, y):
+		self.tex = pygame.transform.smoothscale(self.tex, (x, y))
 		self._width = x
 		self._height = y
 
 	def Dim(self, dimPercent):
 		dark = pygame.Surface((self.Width, self.Height)).convert_alpha()
-		dark.fill((0, 0, 0, dimPercent*255))
+		dark.fill((0, 0, 0, int(dimPercent * 255)))
 
 		self.tex.blit(dark, (0, 0))
 	
@@ -49,7 +73,6 @@ class Texture(object):
 		self.tex.set_alpha(alpha)
 
 	def Color(self, r, g, b):
-		self.tex.fill((0, 0, 0, 255), None, pygame.BLEND_RGBA_MULT)
 		self.tex.fill((r, g, b, 0), None, pygame.BLEND_RGBA_ADD)
 
 	def Get(self):
