@@ -4,14 +4,7 @@ if __name__ == "__main__":
 
 import sys
 import pygame
-try:
-	from PIL import Image
-except ImportError:
-	try:
-		import Image
-	except ImportError:
-		print("Cannot load resource manager.")
-		raise
+from PIL import Image
 
 class ResourceManager(object):
 	def __init__(self, name, _id):

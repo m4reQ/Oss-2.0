@@ -2,18 +2,14 @@ if __name__ == "__main__":
 	import sys
 	sys.exit()
 
-try:
-	import pygame
-	import time
+from Utils.performance import FreeMem
+from Utils.game import GetPlayfield
+from Utils.graphics import Color, TranslateCoord, TranslationMode
+from Utils.debug import Log, LogLevel
+from launcher import mapsPath, CS, mainResManager, prefs
 
-	from Utils.performance import FreeMem
-	from Utils.game import GetPlayfield
-	from Utils.graphics import Color, TranslateCoord, TranslationMode
-	from Utils.debug import Log, LogLevel
-	from launcher import mapsPath, CS, mainResManager, prefs
-except ImportError:
-	print("Cannot import editor.")
-	raise
+import pygame
+import time
 
 #register files
 TIME_FILE = open(mapsPath + "editor/time.txt", 'w+')
@@ -47,7 +43,7 @@ class Editor:
 
 	def Run(self):
 		while self.isRunning:
-			start = time.time()
+			start = time.perf_counter()
 			#update
 			for event in pygame.event.get():
 				if event.type == pygame.MOUSEMOTION:
@@ -73,7 +69,7 @@ class Editor:
 			pygame.display.flip()
 			time.sleep(1.0 / 60.0)
 
-			self.time += time.time() - start
+			self.time += time.perf_counter() - start
 		
 		self.Close()
 	

@@ -1,10 +1,6 @@
-#if it's available use most accurate time measurement
-try:
-	from time import perf_counter as timer
-except (ImportError, ModuleNotFoundError):
-	from time import time as timer
-	
-start = timer()
+import time
+
+start = time.perf_counter()
 
 import os
 import sys
@@ -17,55 +13,32 @@ if not sys.warnoptions:
 #route error output to file
 sys.stderr = open('log.txt', 'w+')
 
-#suppress pygame welcome message, import pygame
-#and handle errors
-try:
-	oldStdout = sys.stdout
-	sys.stdout = open(os.devnull, 'w')
-	import pygame
-	sys.stdout = oldStdout
-except (ImportError, ModuleNotFoundError):
-	print("Cannot import pygame.")
+#suppress pygame welcome message
+oldStdout = sys.stdout
+sys.stdout = open(os.devnull, 'w')
+import pygame
+sys.stdout = oldStdout
 
-#import external modules
-try:
-	import pygame
-	import PIL
-	import requests
-	import wmi
-	import pywin
-	import threading
-except (ImportError, ModuleNotFoundError):
-	import repair
-	from Utils.other import Ask
-	print('Error! One of modules cannot be resolved.')
+import pygame
+import PIL
+import requests
+import wmi
+import pywin
+import threading
 
-	if repair.CheckResponse():
-		if Ask("Do you want to launch the repair module?"):
-			repair.InstallPackages()
-	else:
-		raise Exception('Error! Cannot use repair module.')
-	
-	raise
-
-#import internal modules
-try:
-	import repair
-	from resourceManager import ResourceManager
-	from texture import Texture
-	from sound import Sound
-	from Utils.graphics import Resolutions, ConvertImage, DimImage, GetScale, GetScalingFactor
-	from Utils.performance import FreeMem, TimedGarbageCollect, StopGCThreads
-	from Utils.game import Stats
-	from Utils.other import Ask
-	from preferencies import Preferencies
-	import pygameWindow
-	from pygameWindow import WindowFlags
-	from Utils.debug import Log, LogLevel
-	from Utils import debug
-except ImportError:
-	print("Error during importing internal modules")
-	raise
+import repair
+from resourceManager import ResourceManager
+from texture import Texture
+from sound import Sound
+from Utils.graphics import Resolutions, ConvertImage, DimImage, GetScale, GetScalingFactor
+from Utils.performance import FreeMem, TimedGarbageCollect, StopGCThreads
+from Utils.game import Stats
+from Utils.other import Ask
+from preferencies import Preferencies
+import pygameWindow
+from pygameWindow import WindowFlags
+from Utils.debug import Log, LogLevel
+from Utils import debug
 
 #check maps folder
 if not os.path.exists('./Resources/maps'):
@@ -235,6 +208,7 @@ def LoadBackgroundTextures():
 		texName = 'bg_' + str(idx)
 
 		tex = Texture("{}backgrounds/{}".format(texPath, filename))
+		tex.ScaleLinearXY(int(tex.Width * prefs.bgScaleMultiplier), int(tex.Height * prefs.bgScaleMultiplier))
 		tex.ScaleLinearXY(prefs.resolution[0], prefs.resolution[1])
 		tex.Dim(prefs.darkenPercent)
 		mainResManager.AddTexture(texName, tex)
@@ -314,7 +288,7 @@ def Start(debugMode):
 	FreeMem()
 
 	try:
-		Log("Program loaded in {} seconds.".format(timer() - start), LogLevel.Info, __name__)
+		Log("Program loaded in {} seconds.".format(time.perf_counter() - start), LogLevel.Info, __name__)
 
 		initialized = True
 

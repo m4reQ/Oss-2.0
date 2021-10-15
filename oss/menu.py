@@ -2,23 +2,16 @@ if __name__ == "__main__":
 	import sys
 	sys.exit()
 
-try:
-	try:
-		from time import perf_counter as timer
-	except (ImportError, ModuleNotFoundError):
-		from time import time as timer
-	import pygame
+from Utils.graphics import Color
+from launcher import mainResManager, prefs
+from GUIElements.pygameButton import Button
+from GUIElements.notification import Notification
+from game import Game
+from editor import Editor
+from Utils.debug import Log, LogLevel
 
-	from Utils.graphics import Color
-	from launcher import mainResManager, prefs
-	from GUIElements.pygameButton import Button
-	from GUIElements.notification import Notification
-	from game import Game
-	from editor import Editor
-	from Utils.debug import Log, LogLevel
-except ImportError:
-	print("Cannot load menu.")
-	raise
+import pygame
+import time
 
 Button.LoadFont("default", mainResManager.MainFont)
 
@@ -54,7 +47,7 @@ class Menu():
 
 	def Run(self):
 		while self.isRunning:
-			start = timer()
+			start = time.perf_counter()
 			for event in pygame.event.get(): 
 				if event.type == pygame.MOUSEMOTION:
 					self.cursorPos = pygame.mouse.get_pos()
@@ -91,7 +84,7 @@ class Menu():
 			self.DrawCursor()
 			pygame.display.flip()
 			
-			self.frameTime = timer() - start
+			self.frameTime = time.perf_counter() - start
 			self.time += self.frameTime
 		
 	def Close(self):

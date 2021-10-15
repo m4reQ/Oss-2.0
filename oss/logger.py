@@ -1,6 +1,6 @@
 if __name__ == "__main__": 
 	import sys
-    sys.exit()
+	sys.exit()
 
 import time
 from datetime import datetime
@@ -19,13 +19,12 @@ class Logger(object):
 	def Set(cls, setting, value):
 		try:
 			if value != True and value != False:
-				raise LExc
+				raise Logger.LExc()
 
 			cls.settings[setting] = value
-
 		except KeyError:
 			print(f"Invalid key: {setting}")
-		except LExc:
+		except Logger.LExc:
 			print(f"Invalid value: {value}")
 
 	@classmethod

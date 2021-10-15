@@ -2,32 +2,24 @@ if __name__ == '__main__':
 	import sys
 	sys.exit()
 
-try:
-	import pygame
-	import threading
-	import time
-	import random
-	try:
-		from time import perf_counter as timer
-	except (ImportError, ModuleNotFoundError):
-		from time import time as timer
+import pygame
+import threading
+import time
+import random
 
-	from launcher import AR, HP, CS, mainResManager, prefs
-	from Utils.performance import FreeMem, RenderStats
-	from Utils.graphics import Color
-	from Utils.game import Stats, GetPlayfield
-	from Utils import debug
-	from GUIElements.GameGUI.fpsCounter import *
-	from GUIElements.GameGUI.healthBar import *
-	from GUIElements.GameGUI.pointsCounter import *
-	from GUIElements.GameGUI.comboCounter import *
-	from GUIElements.GameGUI.clicksCounter import *
-	from Utils.debug import Log, LogLevel
-	from GameElements.circle import Circle
-	from GameElements.map import Map, EmptyMap
-except ImportError:
-	print("Cannot load game.")
-	raise
+from launcher import AR, HP, CS, mainResManager, prefs
+from Utils.performance import FreeMem, RenderStats
+from Utils.graphics import Color
+from Utils.game import Stats, GetPlayfield
+from Utils import debug
+from GUIElements.GameGUI.fpsCounter import *
+from GUIElements.GameGUI.healthBar import *
+from GUIElements.GameGUI.pointsCounter import *
+from GUIElements.GameGUI.comboCounter import *
+from GUIElements.GameGUI.clicksCounter import *
+from Utils.debug import Log, LogLevel
+from GameElements.circle import Circle
+from GameElements.map import Map, EmptyMap
 
 class Game:
 	@classmethod
@@ -109,16 +101,16 @@ class Game:
 
 	def Render(self):
 		while self.isRunning:
-			renderStart = timer()
+			renderStart = time.perf_counter()
 
-			playgroundStart = timer()
+			playgroundStart = time.perf_counter()
 			self.win.blit(mainResManager.GetTexture(self.backgroundName).Get(), (0, 0))
 			self.renderStats.blitCount += 1
 
 			for circle in self.map.objectsLeft:
 				circle.Draw(self.win, self.time_ms, self)
 			
-			self.renderStats.playgroundDrawTime = timer() - playgroundStart
+			self.renderStats.playgroundDrawTime = time.perf_counter() - playgroundStart
 			
 			if self.drawInterface:
 				self.DrawGui()
@@ -128,18 +120,18 @@ class Game:
 			pygame.display.flip()
 
 			if prefs.useFpsCap:
-				waitStart = timer()
+				waitStart = time.perf_counter()
 				self.clock.tick(prefs.targetFps)
-				self.renderStats.waitTime = timer() - waitStart
+				self.renderStats.waitTime = time.perf_counter() - waitStart
 
-			self.renderStats.renderTime = timer() - renderStart
+			self.renderStats.renderTime = time.perf_counter() - renderStart
 			self.time += self.renderStats.renderTime
 			self.time_ms += self.renderStats.renderTime * 1000
 		
 	def Update(self):
-		updateStart = timer()
+		updateStart = time.perf_counter()
 
-		eventStart = timer()
+		eventStart = time.perf_counter()
 		self.events = pygame.event.get()
 		
 		for event in self.events: 
@@ -176,7 +168,7 @@ class Game:
 				
 				Log("User interruption by closing window.", LogLevel.Info, __name__)
 		
-		self.renderStats.eventHandlingTime = timer() - eventStart
+		self.renderStats.eventHandlingTime = time.perf_counter() - eventStart
 
 		if self.health <= 0:
 			Log("Health reached below zero.", LogLevel.Info, __name__)
@@ -199,7 +191,7 @@ class Game:
 			if circle.shouldDraw:
 				self.renderStats.blitCount += 1
 
-		self.renderStats.updateTime = timer() - updateStart
+		self.renderStats.updateTime = time.perf_counter() - updateStart
 		self.renderStats.frameTime = self.renderStats.updateTime + self.renderStats.renderTime
 		self.health -= HP * self.renderStats.updateTime * 79.2
 

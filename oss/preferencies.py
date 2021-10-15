@@ -33,6 +33,7 @@ class Preferencies:
 			self.targetFps = 120
 			self.interfaceEnabled = True
 			self.mouseButtonsDisable = False
+			self.bgScaleMultiplier = 1.0
 			self.keyBinds = {
 				"kl": pygame.K_z,
 				"kr": pygame.K_x,

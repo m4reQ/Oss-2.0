@@ -14,6 +14,7 @@
         "kr": 120,
         "savePreferencies": 115
     },
+    "bgScaleMultiplier": 1.0,
     "lockMouse": false,
     "masterVolume": 0.75,
     "mouseButtonsDisable": false,

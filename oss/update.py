@@ -63,6 +63,3 @@ def Check_version():
 		print('Your version of the game is outdated.\nCurrent version: {}.\nLatest version: {}.'.format(version, late_ver))
 		if ask("Do you want to download the latest version?"):
 			Update(directory)
-
-if __name__ == '__main__':
-	exitAll()
